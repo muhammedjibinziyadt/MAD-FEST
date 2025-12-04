@@ -209,7 +209,7 @@ export function ResultPosterShareButton({
       disabled={isGenerating}
       loading={isGenerating}
       title="Share Poster"
-      className={cn("rounded-xl border-0 bg-green-600 hover:bg-green-700 text-white bg-none shadow-none", className)}
+      className={cn("rounded-xl border-0 bg-[#0d7377] hover:bg-[#0a5a5d] text-white shadow-none", className)}
     >
       {size === "icon" ? (
         <Share2 className="w-4 h-4" />

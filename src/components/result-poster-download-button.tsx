@@ -98,7 +98,7 @@ export function ResultPosterDownloadButton({
       disabled={isGenerating}
       loading={isGenerating}
       title="Download Poster"
-      className={cn("rounded-xl border-0 hover:bg-purple-700 text-white", className)}
+      className={cn("rounded-xl border-0 bg-[#8B4513] hover:bg-[#6B3410] transition-all duration-300 text-white", className)}
     >
       {size === "icon" ? (
         <Download className="w-4 h-4" />
