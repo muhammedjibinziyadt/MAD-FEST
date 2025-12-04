@@ -1,10 +1,12 @@
-import { getApprovedResults, getPrograms } from "@/lib/data";
+import { getApprovedResults, getPrograms, getStudents, getTeams } from "@/lib/data";
 import { ResultsRealtime } from "@/components/results-realtime";
 
 async function getResultsData() {
-  const [results, programs] = await Promise.all([
+  const [results, programs, students, teams] = await Promise.all([
     getApprovedResults(),
     getPrograms(),
+    getStudents(),
+    getTeams(),
   ]);
 
   // Sort results by submitted_at descending (newest first)
@@ -20,6 +22,8 @@ async function getResultsData() {
     results: sortedResults,
     programs,
     programMap,
+    students,
+    teams,
   };
 }
 
@@ -31,6 +35,8 @@ export default async function ResultsPage() {
       programs={data.programs}
       results={data.results}
       programMap={data.programMap}
+      students={data.students}
+      teams={data.teams}
     />
   );
 }

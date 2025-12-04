@@ -4,12 +4,14 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Search, Trophy, Medal } from "lucide-react";
-import type { Program, ResultRecord } from "@/lib/types";
+import type { Program, ResultRecord, Student, Team } from "@/lib/types";
 
 interface ProgramsGridProps {
   programs: Program[];
   results: ResultRecord[];
   programMap: Map<string, Program>;
+  students: Student[];
+  teams: Team[];
 }
 
 const fadeIn = (direction: string, delay: number) => ({
@@ -29,27 +31,33 @@ const fadeIn = (direction: string, delay: number) => ({
   },
 });
 
-export function ProgramsGrid({ programs, results, programMap }: ProgramsGridProps) {
+export function ProgramsGrid({ programs, results, programMap, students, teams }: ProgramsGridProps) {
   const [search, setSearch] = useState("");
+
+
+  // Create Maps for efficient lookup
+  const studentMap = useMemo(() => new Map(students.map((s) => [s.id, s])), [students]);
+  const teamMap = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  const resultMap = useMemo(() => new Map(results.map((r) => [r.program_id, r])), [results]);
 
   // Get unique programs that have results, sorted by latest result date
   const programsWithResults = useMemo(() => {
     const programIds = new Set(results.map((r) => r.program_id));
     const programsWithResultsList = programs.filter((p) => programIds.has(p.id));
-    
+
     // Sort programs by their latest result's submitted_at date (newest first)
     return programsWithResultsList.sort((a, b) => {
       const aResults = results.filter((r) => r.program_id === a.id);
       const bResults = results.filter((r) => r.program_id === b.id);
-      
+
       if (aResults.length === 0 && bResults.length === 0) return 0;
       if (aResults.length === 0) return 1;
       if (bResults.length === 0) return -1;
-      
+
       // Get the most recent result for each program
       const aLatest = Math.max(...aResults.map((r) => new Date(r.submitted_at).getTime()));
       const bLatest = Math.max(...bResults.map((r) => new Date(r.submitted_at).getTime()));
-      
+
       return bLatest - aLatest; // Descending order (newest first)
     });
   }, [programs, results]);
@@ -78,7 +86,7 @@ export function ProgramsGrid({ programs, results, programMap }: ProgramsGridProp
     const programResults = results.filter((r) => r.program_id === programId);
     const hasResults = programResults.length > 0;
     const program = programMap.get(programId);
-    
+
     return {
       hasResults,
       section: program?.section || "general",
@@ -134,6 +142,7 @@ export function ProgramsGrid({ programs, results, programMap }: ProgramsGridProp
             >
               {filteredPrograms.map(({ id, program, index }) => {
                 const stats = getProgramStats(program.id);
+                const result = resultMap.get(program.id);
                 return (
                   <motion.div
                     key={id}
@@ -151,7 +160,7 @@ export function ProgramsGrid({ programs, results, programMap }: ProgramsGridProp
                       <div className="group cursor-pointer p-6 rounded-2xl border border-gray-200 bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:border-[#8B4513] relative overflow-hidden">
                         {/* Background gradient effect */}
                         <div className="absolute inset-0 bg-gradient-to-br from-[#8B4513]/0 to-[#0d7377]/0 group-hover:from-[#8B4513]/5 group-hover:to-[#0d7377]/5 transition-all duration-300" />
-                        
+
                         <div className="relative z-10">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-3">
@@ -176,7 +185,7 @@ export function ProgramsGrid({ programs, results, programMap }: ProgramsGridProp
                             </div>
                             <Medal className="w-6 h-6 text-yellow-500/70 group-hover:text-yellow-600 transition-colors" />
                           </div>
-                          
+
                           <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
                             <span className="text-sm text-gray-600">View Results</span>
                             <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-[#8B4513]/10 transition-colors">

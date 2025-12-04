@@ -11,6 +11,7 @@ import {
   getTeams,
 } from "@/lib/data";
 import { formatNumber } from "@/lib/utils";
+import { ResultPosterPreview } from "@/components/result-poster-preview";
 
 interface ProgramDetailPageProps {
   params: Promise<{ program_id: string }>;
@@ -201,6 +202,15 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
           <p className="mt-6 text-xs text-gray-500">
             Approved on {new Date(data.result.submitted_at).toLocaleString()}
           </p>
+        </Card>
+
+        <Card className="border-gray-200 bg-white shadow-md">
+          <ResultPosterPreview
+            result={data.result}
+            program={data.program}
+            students={Array.from(data.studentMap.values())}
+            teams={Array.from(data.teamMap.values())}
+          />
         </Card>
       </div>
     </main>
