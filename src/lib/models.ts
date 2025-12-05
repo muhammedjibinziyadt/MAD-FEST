@@ -1,6 +1,7 @@
 import { Schema, model, models, type Model } from "mongoose";
 import type {
   AssignedProgram,
+  AdminSettings,
   Jury,
   LiveScore,
   Notification,
@@ -236,4 +237,16 @@ NotificationSchema.index({ read: 1, createdAt: -1 });
 export const NotificationModel =
   (models.Notification as Model<Notification>) ??
   model<Notification>("Notification", NotificationSchema);
+
+const AdminSettingsSchema = new Schema<AdminSettings>(
+  {
+    username: { type: String, required: true, default: "admin" },
+    password: { type: String, required: true, default: "admin123" },
+  },
+  { timestamps: true },
+);
+
+export const AdminSettingsModel =
+  (models.AdminSettings as Model<AdminSettings>) ??
+  model<AdminSettings>("AdminSettings", AdminSettingsSchema);
 

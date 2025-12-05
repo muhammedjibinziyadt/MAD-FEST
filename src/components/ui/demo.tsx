@@ -13,6 +13,7 @@ import {
   Layers,
   Menu,
   PenSquare,
+  Settings,
   type LucideIcon,
   Users,
 } from "lucide-react";
@@ -46,6 +47,7 @@ const ICONS = {
   addResult: PenSquare,
   pending: Hourglass,
   approved: BadgeCheck,
+  settings: Settings,
 } satisfies Record<string, LucideIcon>;
 
 type IconName = keyof typeof ICONS;
@@ -106,7 +108,7 @@ export default function Sidenavbar({
                           className={cn(
                             "flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm",
                             pathname?.startsWith(item.href ?? "") &&
-                              "bg-white/10 text-white",
+                            "bg-white/10 text-white",
                           )}
                         >
                           {IconComponent && (
@@ -147,7 +149,7 @@ export default function Sidenavbar({
             >
               {heading}
             </span>
-            <Button 
+            <Button
               variant="ghost"
               size="icon"
               onClick={() => setIsOpen((prev) => !prev)}
@@ -161,14 +163,14 @@ export default function Sidenavbar({
               {items.map((item) => {
                 const IconComponent = item.icon ? ICONS[item.icon] : undefined;
                 const isActive = pathname?.startsWith(item.href ?? "");
-                const hasActiveChild = item.children?.some((child) => 
+                const hasActiveChild = item.children?.some((child) =>
                   pathname?.startsWith(child.href)
                 ) ?? false;
-                
+
                 return item.children && item.children.length > 0 ? (
-                  <Collapsible 
-                    key={item.label} 
-                    className="space-y-1" 
+                  <Collapsible
+                    key={item.label}
+                    className="space-y-1"
                     defaultOpen={hasActiveChild && isOpen}
                   >
                     <CollapsibleTrigger asChild>
@@ -206,7 +208,7 @@ export default function Sidenavbar({
                             className={cn(
                               "w-full justify-start rounded-2xl h-9 text-white/80",
                               pathname?.startsWith(child.href) &&
-                                "bg-white/10 text-white",
+                              "bg-white/10 text-white",
                               !pathname?.startsWith(child.href) && "hover:bg-white/10 hover:text-white"
                             )}
                             asChild
@@ -224,7 +226,7 @@ export default function Sidenavbar({
                     className={cn(
                       "w-full rounded-2xl h-10",
                       pathname?.startsWith(item.href ?? "") &&
-                        "bg-white/10 text-white",
+                      "bg-white/10 text-white",
                       !pathname?.startsWith(item.href ?? "") && "text-white/70 hover:bg-white/10 hover:text-white",
                       !isOpen ? "justify-center px-0" : "justify-start px-3",
                     )}

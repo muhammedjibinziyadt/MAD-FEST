@@ -1,13 +1,31 @@
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE, ADMIN_CREDENTIALS, JURY_COOKIE, TEAM_COOKIE } from "./config";
+import { connectDB } from "./db";
+import { AdminSettingsModel } from "./models";
 import { getJuries as loadJuries } from "./data";
 import { getPortalTeams } from "./team-data";
 import type { Jury, PortalTeam } from "./types";
 
+export async function getAdminCredentials() {
+  await connectDB();
+  let settings = await AdminSettingsModel.findOne();
+  if (!settings) {
+    // Seed default credentials if not found
+    settings = await AdminSettingsModel.create({
+      username: ADMIN_CREDENTIALS.username,
+      password: ADMIN_CREDENTIALS.password,
+    });
+  }
+  return { username: settings.username, password: settings.password };
+}
+
 export async function isAdminAuthenticated(): Promise<boolean> {
   const store = await cookies();
   const token = store.get(ADMIN_COOKIE)?.value;
-  return token === ADMIN_CREDENTIALS.username;
+  if (!token) return false;
+
+  const credentials = await getAdminCredentials();
+  return token === credentials.username;
 }
 
 export async function findJury(

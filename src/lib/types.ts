@@ -142,3 +142,9 @@ export interface Notification {
   createdAt: string;
 }
 
+export interface AdminSettings {
+  username: string;
+  password: string; // In a real app, this should be hashed. For this request, storing as is per user context implies simple storage or handled elsewhere, but I will store plain text as per current simple auth implementation in config.ts, or maybe I should hash it? The user asked to "change it to my mongo db", implying moving the current hardcoded behavior to DB. The current behavior is plain text comparison. I will stick to plain text for now to match existing logic, but I should probably mention hashing later.
+  updatedAt: string;
+}
+

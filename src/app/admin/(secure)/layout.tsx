@@ -25,6 +25,7 @@ const adminNav: SidebarItem[] = [
       { href: "/admin/request-approvals", label: "Request Approvals" },
     ],
   },
+  { href: "/admin/settings", label: "Settings", icon: "settings" },
 ];
 
 async function logoutAction() {

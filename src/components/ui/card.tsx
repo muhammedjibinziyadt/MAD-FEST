@@ -19,6 +19,18 @@ export function Card({
   );
 }
 
+export function CardHeader({
+  className,
+  children,
+  ...props
+}: HTMLAttributes<HTMLDivElement> & PropsWithChildren) {
+  return (
+    <div className={cn("flex flex-col space-y-1.5", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
 export function CardTitle({
   className,
   children,
