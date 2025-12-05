@@ -16,14 +16,25 @@ interface PosterData {
 
 export type PosterStyle = 1 | 2 | 3;
 
+// Cache for loaded images to prevent redundant network requests and decoding
+const imageCache = new Map<string, HTMLImageElement>();
+
 /**
  * Load image from URL and return as Image element
+ * Uses caching to improve performance on repeated calls
  */
 function loadImage(url: string): Promise<HTMLImageElement> {
+  if (imageCache.has(url)) {
+    return Promise.resolve(imageCache.get(url)!);
+  }
+
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
+    img.onload = () => {
+      imageCache.set(url, img);
+      resolve(img);
+    };
     img.onerror = reject;
     img.src = url;
   });
@@ -90,11 +101,11 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
   // 1. Load poster template background first to get its dimensions
   const gradientColors = getGradientColors(style);
   const templateUrl = `/poster-template-${style}.jpeg`;
-  
+
   let templateImage: HTMLImageElement | null = null;
   let imageWidth = 1080; // Default fallback width
   let imageHeight = 1350; // Default fallback height
-  
+
   try {
     templateImage = await loadImage(templateUrl);
     imageWidth = templateImage.width;
@@ -139,7 +150,7 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
   ctx.fillStyle = "#ffffff";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  
+
   // Program Name - scaled font size
   const titleY = 120 * scaleY;
   const fontSize = 64 * scaleY;
@@ -203,14 +214,14 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
     const nameFontSize = 48 * scaleY;
     ctx.font = `bold ${nameFontSize}px 'Arial', sans-serif`;
     ctx.textAlign = "left";
-    
+
     // Calculate icon size and spacing (scaled)
     const iconSize = 50 * scaleX; // Approximate size for emoji
     const iconSpacing = 15 * scaleX; // Space between icon and name
     const nameStartX = sectionX + 40 * scaleX;
     const nameY = positionY + 50 * scaleY;
     const teamNameY = nameY + 50 * scaleY; // Team name Y position
-    
+
     // Truncate long names to fit (accounting for icon width)
     const maxNameWidth = sectionWidth - 80 * scaleX - iconSize - iconSpacing;
     let displayName = name;
@@ -222,17 +233,17 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
       }
       displayName = displayName + "...";
     }
-    
+
     // Calculate icon Y position to be centered between student name and team name
     // If there's a team name, center between both lines; otherwise align with student name
     const hasTeamName = (prize.studentName && prize.teamName) || (!prize.studentName && prize.teamName);
     const iconY = hasTeamName ? (nameY + teamNameY) / 2 : nameY;
-    
+
     // Draw emoji icon (centered vertically between student and team name)
     const iconFontSize = 50 * scaleY;
     ctx.font = `${iconFontSize}px 'Arial', sans-serif`;
     ctx.fillText(config.emoji, nameStartX, iconY);
-    
+
     // Draw student/team name next to icon
     ctx.font = `bold ${nameFontSize}px 'Arial', sans-serif`;
     ctx.fillText(displayName, nameStartX + iconSize + iconSpacing, nameY);
