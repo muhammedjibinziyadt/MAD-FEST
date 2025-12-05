@@ -43,7 +43,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
             style={{ width: '100%' }}
           />
         </div>
-        
+
         <div className="container mx-auto max-w-7xl relative z-10 flex-1 flex flex-col lg:justify-center">
           {/* Mobile Layout: Vertical Stack */}
           <div className="flex flex-col lg:hidden space-y-4 sm:space-y-5 w-full pt-2">
@@ -149,6 +149,9 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
                 <h1 className="text-4xl xl:text-5xl 2xl:text-7xl font-serif text-[#8B4513] leading-15 mb-2 ">
                   Funoon Fiesta
                 </h1>
+                <p className="text-lg xl:text-xl text-gray-600 font-medium tracking-wide">
+                  Showcasing Islamic Art & Culture
+                </p>
                 <p className="text-xl xl:text-2xl text-[#8B4513] font-light tracking-widest">
                   2025 - 26
                 </p>
@@ -196,36 +199,36 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
                 Celebrating Islamic Art & Culture
               </h2>
               <p className="text-gray-700 text-base sm:text-lg md:text-xl leading-relaxed">
-                Funoon Fiesta is a premier platform for students to showcase their talents and highlight 
-                the rich art forms of Islamic culture. Through music, calligraphy, poetry, traditional 
-                dance, visual arts, and more, we present these beautiful expressions to a wider audience, 
+                Funoon Fiesta is a premier platform for students to showcase their talents and highlight
+                the rich art forms of Islamic culture. Through music, calligraphy, poetry, traditional
+                dance, visual arts, and more, we present these beautiful expressions to a wider audience,
                 fostering creativity, cultural appreciation, and artistic excellence.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-8 sm:mt-12">
               {[
-                { 
-                  title: "Cultural Heritage", 
-                  copy: "We celebrate the diverse and rich art forms rooted in Islamic culture, from traditional calligraphy to contemporary expressions, preserving and promoting cultural appreciation.", 
+                {
+                  title: "Cultural Heritage",
+                  copy: "We celebrate the diverse and rich art forms rooted in Islamic culture, from traditional calligraphy to contemporary expressions, preserving and promoting cultural appreciation.",
                   tag: "Cultural showcase",
                   icon: "🎨"
                 },
-                { 
-                  title: "Student Excellence", 
-                  copy: "A premier platform designed for students to showcase their talents, creativity, and artistic expression in a supportive and competitive environment.", 
+                {
+                  title: "Student Excellence",
+                  copy: "A premier platform designed for students to showcase their talents, creativity, and artistic expression in a supportive and competitive environment.",
                   tag: "Talent platform",
                   icon: "⭐"
                 },
-                { 
-                  title: "Transparent Judging", 
-                  copy: "All scoring rules are codified in the platform. Every entry is auto-scored before human review, ensuring fairness and transparency in every evaluation.", 
+                {
+                  title: "Transparent Judging",
+                  copy: "All scoring rules are codified in the platform. Every entry is auto-scored before human review, ensuring fairness and transparency in every evaluation.",
                   tag: "Fair evaluation",
                   icon: "⚖️"
                 },
-                { 
-                  title: "Live Updates", 
-                  copy: "Once admins approve submissions, both team and student scores refresh in seconds, keeping everyone connected to the action in real-time.", 
+                {
+                  title: "Live Updates",
+                  copy: "Once admins approve submissions, both team and student scores refresh in seconds, keeping everyone connected to the action in real-time.",
                   tag: "Realtime sync",
                   icon: "⚡"
                 },
@@ -253,13 +256,13 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
                   Funoon Fiesta Control Room
                 </h2>
                 <p className="text-gray-700 text-base sm:text-lg leading-relaxed max-w-2xl">
-                  Contact us for support, inquiries, or assistance with the platform. 
+                  Contact us for support, inquiries, or assistance with the platform.
                   Our team is here to help ensure a smooth and enjoyable experience.
                   <Link href="/admin/login" className="">
-                  <Button variant="secondary" className="text-sm text-black font-normal">
-                    Admin Login
-                  </Button>
-                </Link>
+                    <Button variant="secondary" className="text-sm text-black font-normal">
+                      Admin Login
+                    </Button>
+                  </Link>
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
@@ -278,7 +281,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
           </div>
         </div>
       </section>
-    </main>
+    </main >
   );
 }
 

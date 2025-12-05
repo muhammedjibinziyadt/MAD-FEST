@@ -9,6 +9,23 @@ interface ParticipantPageProps {
     params: Promise<{ chestNumber: string }>;
 }
 
+export async function generateMetadata({ params }: ParticipantPageProps) {
+    const { chestNumber } = await params;
+    const profile = await getParticipantProfile(chestNumber);
+
+    if (!profile) {
+        return {
+            title: "Participant Not Found",
+            description: "The requested participant could not be found.",
+        };
+    }
+
+    return {
+        title: `${profile.student.name} (Chest No: ${profile.student.chest_no}) - Participant Profile`,
+        description: `View results and performance stats for ${profile.student.name} from ${profile.team.name}.`,
+    };
+}
+
 export default async function ParticipantPage({ params }: ParticipantPageProps) {
     const { chestNumber } = await params;
     const profile = await getParticipantProfile(chestNumber);

@@ -22,6 +22,11 @@ async function getScoreboardData() {
   return { teams, programs, results: sortedResults, students, liveScores: scoreMap };
 }
 
+export const metadata = {
+  title: "Live Scoreboard",
+  description: "View the live team standings and points table for Funoon Fiesta. Track the leading teams in real-time.",
+};
+
 export default async function ScoreboardPage() {
   const data = await getScoreboardData();
 

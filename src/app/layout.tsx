@@ -7,6 +7,7 @@ import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { OfflineIndicator } from "@/components/offline-indicator";
 import { RealtimeProvider } from "@/components/realtime-provider";
 import { PublicPageWrapper } from "@/components/public-page-wrapper";
+import { JsonLd } from "@/components/json-ld";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,10 +22,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Funoon Fiesta - Showcasing Islamic Art & Culture",
+  title: {
+    default: "Funoon Fiesta - Showcasing Islamic Art & Culture",
+    template: "%s | Funoon Fiesta",
+  },
   description:
     "A premier platform for students to showcase their talents and highlight the rich art forms of Islamic culture. Live scoreboard, admin controls, and jury tools for Funoon Fiesta.",
-  metadataBase: new URL("https://funoonfiesta.local"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://funoonfiesta.noorululama.org"),
+  keywords: ["Funoon Fiesta", "Islamic Art", "Culture", "Student Festival", "Live Scoreboard", "Arts Competition"],
+  authors: [{ name: "Funoon Fiesta Team" }],
+  creator: "Funoon Fiesta",
+  publisher: "Funoon Fiesta",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -39,6 +52,39 @@ export const metadata: Metadata = {
     apple: [
       { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
     ],
+  },
+  openGraph: {
+    title: "Funoon Fiesta - Showcasing Islamic Art & Culture",
+    description: "A premier platform for students to showcase their talents and highlight the rich art forms of Islamic culture.",
+    url: process.env.NEXT_PUBLIC_APP_URL || "https://funoonfiesta.noorululama.org",
+    siteName: "Funoon Fiesta",
+    images: [
+      {
+        url: "/img/hero/Fest-logo.webp",
+        width: 800,
+        height: 600,
+        alt: "Funoon Fiesta Logo",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Funoon Fiesta",
+    description: "Celebrating Islamic Art & Culture through student talent.",
+    images: ["/img/hero/Fest-logo.webp"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
@@ -74,16 +120,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SpeedInsights/>
+        <SpeedInsights />
         <RealtimeProvider>
           <OfflineIndicator />
           <ToastProvider>
             <PublicPageWrapper>
-            {children}
+              {children}
             </PublicPageWrapper>
           </ToastProvider>
           <PWAInstallPrompt />
         </RealtimeProvider>
+        <JsonLd />
       </body>
     </html>
   );

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Sidenavbar, {
   type SidebarItem,
-} from "@/components/ui/demo";
+} from "@/components/ui/sidebar";
 import { ADMIN_COOKIE } from "@/lib/config";
 
 const adminNav: SidebarItem[] = [

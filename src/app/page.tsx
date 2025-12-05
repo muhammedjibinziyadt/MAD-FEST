@@ -17,6 +17,11 @@ async function getHomeData() {
   return { teams: sorted, live: scoreMap };
 }
 
+export const metadata = {
+  title: "Funoon Fiesta | Home",
+  description: "Welcome to Funoon Fiesta. Explore live scores, results, and participant performances.",
+};
+
 export default async function HomePage() {
   const { teams, live } = await getHomeData();
 

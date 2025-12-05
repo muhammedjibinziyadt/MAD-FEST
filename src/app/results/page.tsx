@@ -27,6 +27,11 @@ async function getResultsData() {
   };
 }
 
+export const metadata = {
+  title: "Live Results",
+  description: "Check the latest results of Funoon Fiesta competitions. Real-time updates on winners and grades.",
+};
+
 export default async function ResultsPage() {
   const data = await getResultsData();
 

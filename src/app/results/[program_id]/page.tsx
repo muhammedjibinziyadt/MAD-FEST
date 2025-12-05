@@ -44,6 +44,24 @@ async function getProgramDetail(programId: string) {
   };
 }
 
+export async function generateMetadata({ params }: ProgramDetailPageProps) {
+  const { program_id } = await params;
+  const programs = await getPrograms();
+  const program = programs.find((p) => p.id === program_id);
+
+  if (!program) {
+    return {
+      title: "Program Not Found",
+      description: "The requested program result could not be found.",
+    };
+  }
+
+  return {
+    title: `${program.name} Results - Funoon Fiesta`,
+    description: `View the winners and full results for ${program.name} (${program.category}) at Funoon Fiesta.`,
+  };
+}
+
 export default async function ProgramDetailPage({ params }: ProgramDetailPageProps) {
   const { program_id } = await params;
   const data = await getProgramDetail(program_id);

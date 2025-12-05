@@ -1,6 +1,6 @@
 # AI Chatbot Feature
 
-This feature adds an AI-powered chatbot to the Funoon Fiesta 2.0 application.
+This feature adds an AI-powered chatbot to the Funoon Fiesta application.
 It uses Google's Gemini 2.5 (via `gemini-1.5-flash` model) to answer questions about the fest.
 
 ## Setup

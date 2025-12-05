@@ -28,7 +28,7 @@ export async function POST(req: Request) {
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const systemPrompt = `
-You are the official AI Assistant for "Funoon Fiesta 2.0", a school arts fest.
+You are the official AI Assistant for "Funoon Fiesta", a school arts fest.
 Your goal is to help users (students, parents, teachers) by answering questions based on the provided data.
 
 EVENT INFORMATION:

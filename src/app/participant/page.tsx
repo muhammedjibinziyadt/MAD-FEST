@@ -2,6 +2,13 @@ import { ParticipantSearch } from "@/components/participant-search";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Search, QrCode, Users, Trophy, Sparkles } from "lucide-react";
 
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Participant Search",
+  description: "Find participants by name or chest number. View individual profiles, results, and performance stats.",
+};
+
 export default function ParticipantSearchPage() {
   return (
     <div className="min-h-screen bg-[#fffcf5] dark:bg-gray-950">
