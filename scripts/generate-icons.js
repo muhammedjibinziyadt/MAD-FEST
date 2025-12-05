@@ -13,7 +13,7 @@ const fs = require('fs');
 const path = require('path');
 
 const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
-const sourceImage = path.join(__dirname, '../public/funoon-logo.webp');
+const sourceImage = path.join(__dirname, '../public/festlogo.png');
 const outputDir = path.join(__dirname, '../public');
 
 async function generateIcons() {
@@ -29,7 +29,7 @@ async function generateIcons() {
 
     for (const size of sizes) {
       const outputPath = path.join(outputDir, `icon-${size}x${size}.png`);
-      
+
       await sharp(sourceImage)
         .resize(size, size, {
           fit: 'contain',
@@ -37,7 +37,7 @@ async function generateIcons() {
         })
         .png()
         .toFile(outputPath);
-      
+
       console.log(`✓ Generated icon-${size}x${size}.png`);
     }
 
