@@ -101,16 +101,6 @@ Use these credentials to access the various portals in development mode:
 
 ---
 
-## 📸 Screenshots
-
-*(Add screenshots of your application here)*
-
-| Home Page | Scoreboard |
-| :---: | :---: |
-| ![Home](public/img/hero/Fest-logo.webp) | ![Scoreboard](public/img/hero/Fest-logo.webp) |
-
----
-
 ## 🤝 Contribution
 
 Contributions are welcome! Please feel free to submit a Pull Request.
