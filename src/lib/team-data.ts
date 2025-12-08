@@ -161,10 +161,12 @@ export async function deletePortalStudent(studentId: string) {
 export async function getProgramsWithLimits(): Promise<Program[]> {
   await connectDB();
   const programs = await ProgramModel.find().lean();
-  return programs.map((program) => ({
+  const mapped = programs.map((program) => ({
     ...program,
     candidateLimit: program.candidateLimit ?? 1,
   }));
+  // Ensure plain JSON objects to prevent Next.js serialization errors
+  return JSON.parse(JSON.stringify(mapped));
 }
 
 export async function getProgramRegistrations(): Promise<ProgramRegistration[]> {
@@ -447,4 +449,3 @@ export async function rejectReplacementRequest(
     },
   );
 }
-

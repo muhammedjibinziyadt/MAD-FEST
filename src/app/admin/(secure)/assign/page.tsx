@@ -33,26 +33,26 @@ async function assignProgramAction(formData: FormData) {
     }
 
     const payload = parsed.data;
-    
+
     // Check if assignment already exists before attempting to assign
     const currentAssignments = await getAssignments();
     const existingAssignment = currentAssignments.find(
       (a) => a.program_id === payload.program_id && a.jury_id === payload.jury_id
     );
-    
+
     if (existingAssignment) {
       revalidatePath("/admin/assign");
       redirectWithToast("/admin/assign", "Program is already assigned to this jury.", "info");
       return;
     }
-    
+
     try {
       await assignProgramToJury(payload.program_id, payload.jury_id);
       revalidatePath("/admin/assign");
       redirectWithToast("/admin/assign", "Program assigned to jury successfully!", "success");
     } catch (error: any) {
       revalidatePath("/admin/assign");
-      
+
       // Handle different error types
       if (error.message?.includes("already published")) {
         redirectWithToast("/admin/assign", error.message, "error");
@@ -76,7 +76,7 @@ async function deleteAssignmentAction(formData: FormData) {
   try {
     const programId = String(formData.get("program_id") ?? "");
     const juryId = String(formData.get("jury_id") ?? "");
-    
+
     if (!programId || !juryId) {
       revalidatePath("/admin/assign");
       redirectWithToast("/admin/assign", "Program ID and Jury ID are required", "error");
@@ -118,11 +118,17 @@ export default async function AssignProgramPage() {
     value: program.id,
     label: program.name,
     meta: `${program.section} · Cat ${program.category}${program.stage ? " · On stage" : " · Off stage"}`,
+    name: program.name, // Keep for AssignmentManager if needed, though typically it uses id
   }));
   const juryOptions = validJuries.map((jury) => ({
     value: jury.id,
     label: jury.name,
   }));
+
+  // SERIALIZATION FIX: Ensure plain objects for client component
+  const plainAssignments = JSON.parse(JSON.stringify(validAssignments));
+  const plainPrograms = JSON.parse(JSON.stringify(validPrograms));
+  const plainJuries = JSON.parse(JSON.stringify(validJuries));
 
   return (
     <div className="space-y-8">
@@ -139,7 +145,7 @@ export default async function AssignProgramPage() {
             <SearchSelect
               name="program_id"
               required
-              options={programOptions}
+              options={programOptions} // SearchSelect handles options internally, usually fine if options are plain objects
               defaultValue={programOptions[0]?.value}
               placeholder="Search program..."
             />
@@ -156,12 +162,11 @@ export default async function AssignProgramPage() {
       </div>
 
       <AssignmentManager
-        assignments={validAssignments}
-        programs={validPrograms}
-        juries={validJuries}
+        assignments={plainAssignments}
+        programs={plainPrograms}
+        juries={plainJuries}
         deleteAction={deleteAssignmentAction}
       />
     </div>
   );
 }
-

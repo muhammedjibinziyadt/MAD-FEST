@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAssignmentUpdates } from "@/hooks/use-realtime";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
@@ -11,12 +11,15 @@ import {
   FileCheck,
   Search,
   Users,
-  Filter,
   ChevronDown,
   ChevronUp,
-  Calendar,
   Award,
   Trash2,
+  Mic2,
+  Palette,
+  Music,
+  Video,
+  LayoutGrid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,23 +42,30 @@ type ViewMode = "by-jury" | "all";
 const statusConfig = {
   pending: {
     label: "Pending",
-    color: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+    color: "bg-amber-500/10 text-amber-500 border-amber-500/20",
     icon: Clock,
-    description: "Awaiting evaluation",
   },
   submitted: {
     label: "Submitted",
-    color: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+    color: "bg-blue-500/10 text-blue-400 border-blue-500/20",
     icon: FileCheck,
-    description: "Results submitted",
   },
   completed: {
     label: "Completed",
-    color: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+    color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
     icon: CheckCircle2,
-    description: "Evaluation complete",
   },
 };
+
+// Helper utility to pick an icon based on program name
+function getProgramIcon(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes("paint") || lower.includes("draw") || lower.includes("art")) return Palette;
+  if (lower.includes("song") || lower.includes("music") || lower.includes("vocals")) return Music;
+  if (lower.includes("film") || lower.includes("video")) return Video;
+  if (lower.includes("quiz") || lower.includes("write")) return LayoutGrid;
+  return Award;
+}
 
 export const AssignmentManager = React.memo(function AssignmentManager({
   assignments,
@@ -82,13 +92,11 @@ export const AssignmentManager = React.memo(function AssignmentManager({
     router.refresh();
   });
 
-  // Create maps with proper error handling
+  // Create maps
   const programMap = useMemo(() => {
     const map = new Map<string, Program>();
     programs.forEach((p) => {
-      if (p?.id && p?.name) {
-        map.set(p.id, p);
-      }
+      if (p?.id && p?.name) map.set(p.id, p);
     });
     return map;
   }, [programs]);
@@ -96,9 +104,7 @@ export const AssignmentManager = React.memo(function AssignmentManager({
   const juryMap = useMemo(() => {
     const map = new Map<string, Jury>();
     juries.forEach((j) => {
-      if (j?.id && j?.name) {
-        map.set(j.id, j);
-      }
+      if (j?.id && j?.name) map.set(j.id, j);
     });
     return map;
   }, [juries]);
@@ -156,357 +162,297 @@ export const AssignmentManager = React.memo(function AssignmentManager({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Statistics Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gradient-to-br from-slate-900/70 to-slate-800/50 border-white/10">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-widest text-white/50">Total</p>
-                <p className="mt-1 text-2xl font-semibold text-white">{stats.total}</p>
-              </div>
-              <Users className="h-8 w-8 text-white/20" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-amber-900/20 to-amber-800/10 border-amber-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-widest text-amber-300/70">Pending</p>
-                <p className="mt-1 text-2xl font-semibold text-amber-300">{stats.pending}</p>
-              </div>
-              <Clock className="h-8 w-8 text-amber-400/30" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 border-blue-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-widest text-blue-300/70">Submitted</p>
-                <p className="mt-1 text-2xl font-semibold text-blue-300">{stats.submitted}</p>
-              </div>
-              <FileCheck className="h-8 w-8 text-blue-400/30" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-emerald-900/20 to-emerald-800/10 border-emerald-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-widest text-emerald-300/70">Completed</p>
-                <p className="mt-1 text-2xl font-semibold text-emerald-300">{stats.completed}</p>
-              </div>
-              <CheckCircle2 className="h-8 w-8 text-emerald-400/30" />
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-8">
+      {/* Stats Summary */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {[
+          { label: "Total Assignments", value: stats.total, color: "text-white", sub: "All active" },
+          { label: "Pending", value: stats.pending, color: "text-amber-400", sub: "To evaluate" },
+          { label: "Submitted", value: stats.submitted, color: "text-blue-400", sub: "Waiting check" },
+          { label: "Completed", value: stats.completed, color: "text-emerald-400", sub: "Done" },
+        ].map((stat, i) => (
+          <div key={i} className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wider text-white/50">{stat.label}</p>
+            <p className={cn("mt-1 text-3xl font-bold", stat.color)}>{stat.value}</p>
+            <p className="text-xs text-white/30">{stat.sub}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Filters and View Toggle */}
-      <Card className="relative z-20 bg-slate-900/70 border-white/10">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="relative z-20 flex-1 min-w-[200px] flex items-center rounded-xl border border-white/10 bg-white/5 px-3 transition-all duration-200 hover:border-white/20 focus-within:border-fuchsia-400/50 focus-within:ring-2 focus-within:ring-fuchsia-400/30 focus-within:bg-white/10">
-              <Search className="mr-2 h-4 w-4 text-white/50 flex-shrink-0" />
-              <Input
-                type="text"
-                placeholder="Search by program or jury..."
-                className="border-none bg-transparent px-0 placeholder:text-white/40"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+      {/* Controls & Filters */}
+      <div className="sticky top-4 z-30 space-y-4 rounded-3xl border border-white/10 bg-slate-950/80 p-4 backdrop-blur-xl shadow-2xl">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <Input
+              placeholder="Search programs or juries..."
+              className="pl-10 border-white/10 bg-white/5 focus-visible:ring-fuchsia-400/50"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
             <SearchSelect
               name="status_filter"
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as StatusFilter)}
-              className="w-full sm:w-auto"
+              className="w-[180px]"
               options={[
                 { value: "all", label: "All Status" },
                 { value: "pending", label: "Pending" },
                 { value: "submitted", label: "Submitted" },
                 { value: "completed", label: "Completed" },
               ]}
-              placeholder="Filter by status"
+              placeholder="Filter Status"
             />
-            <div className="flex gap-2">
-              <Button
-                variant={viewMode === "by-jury" ? "default" : "secondary"}
-                size="sm"
+            <div className="flex rounded-2xl border border-white/10 bg-white/5 p-1">
+              <button
                 onClick={() => setViewMode("by-jury")}
+                className={cn(
+                  "px-3 py-1.5 text-sm font-medium rounded-2xl transition-all",
+                  viewMode === "by-jury" ? "bg-fuchsia-500 text-white shadow" : "text-white/60 hover:text-white"
+                )}
               >
                 By Jury
-              </Button>
-              <Button
-                variant={viewMode === "all" ? "default" : "secondary"}
-                size="sm"
+              </button>
+              <button
                 onClick={() => setViewMode("all")}
+                className={cn(
+                  "px-3 py-1.5 text-sm font-medium rounded-2xl transition-all",
+                  viewMode === "all" ? "bg-fuchsia-500 text-white shadow" : "text-white/60 hover:text-white"
+                )}
               >
-                All Assignments
-              </Button>
+                All List
+              </button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Content */}
-      {viewMode === "by-jury" ? (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-lg font-semibold text-white">Assignments by Jury</h3>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={expandAll}>
-                Expand All
-              </Button>
-              <Button variant="ghost" size="sm" onClick={collapseAll}>
-                Collapse All
-              </Button>
+      <AnimatePresence mode="wait">
+        {viewMode === "by-jury" ? (
+          <motion.div
+            key="by-jury"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center justify-between px-2">
+              <h3 className="text-xl font-bold text-white">Jury Assignments</h3>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={expandAll} className="text-xs text-white/60">
+                  Expand All
+                </Button>
+                <Button variant="ghost" size="sm" onClick={collapseAll} className="text-xs text-white/60">
+                  Collapse All
+                </Button>
+              </div>
             </div>
-          </div>
-          {Array.from(assignmentsByJury.entries()).map(([juryId, juryAssignments]) => {
-            const jury = juryMap.get(juryId);
-            const isExpanded = expandedJuries.has(juryId);
-            const filtered = juryAssignments.filter((assignment) => {
-              const program = programMap.get(assignment.program_id);
-              const matchesSearch =
-                program?.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-                jury?.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
-              const matchesStatus = statusFilter === "all" || assignment.status === statusFilter;
-              return matchesSearch && matchesStatus;
-            });
 
-            if (filtered.length === 0) return null;
+            {Array.from(assignmentsByJury.entries()).map(([juryId, juryAssignments]) => {
+              const jury = juryMap.get(juryId);
+              const isExpanded = expandedJuries.has(juryId);
 
-            const juryStats = {
-              total: juryAssignments.length,
-              pending: juryAssignments.filter((a) => a.status === "pending").length,
-              submitted: juryAssignments.filter((a) => a.status === "submitted").length,
-              completed: juryAssignments.filter((a) => a.status === "completed").length,
-            };
+              // Apply filters to ONLY list the relevant assignments inside, 
+              // BUT we might want to show the jury card even if some assignments don't match, 
+              // showing only matching ones inside.
+              const matchingAssignments = juryAssignments.filter((assignment) => {
+                const program = programMap.get(assignment.program_id);
+                const matchesSearch =
+                  program?.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+                  jury?.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+                const matchesStatus = statusFilter === "all" || assignment.status === statusFilter;
+                return matchesSearch && matchesStatus;
+              });
 
-            return (
-              <motion.div
-                key={juryId}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card className="bg-gradient-to-br from-slate-900/70 to-slate-800/50 border-white/10 overflow-hidden">
-                  <button
+              if (matchingAssignments.length === 0 && (searchQuery || statusFilter !== "all")) {
+                return null;
+              }
+
+              const progress = Math.round(
+                (juryAssignments.filter((a) => a.status === "completed").length /
+                  juryAssignments.length) * 100
+              ) || 0;
+
+              return (
+                <div key={juryId} className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 transition-all hover:border-white/20">
+                  <div
                     onClick={() => toggleJuryExpansion(juryId)}
-                    className="w-full"
+                    className="flex cursor-pointer items-center justify-between p-5 hover:bg-white/[0.02]"
                   >
-                    <CardContent className="p-4 hover:bg-white/5 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-wrap items-center gap-4">
-                          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-fuchsia-500/20 to-rose-500/20 flex items-center justify-center ring-2 ring-fuchsia-400/30">
-                            <Users className="h-6 w-6 text-fuchsia-300" />
-                          </div>
-                          <div className="text-left">
-                            <h4 className="text-lg font-semibold text-white">{jury?.name}</h4>
-                            <div className="flex items-center gap-3 mt-1 text-xs text-white/60">
-                              <span>{juryStats.total} assigned</span>
-                              <span>•</span>
-                              <span className="text-amber-300">{juryStats.pending} pending</span>
-                              <span>•</span>
-                              <span className="text-blue-300">{juryStats.submitted} submitted</span>
-                              <span>•</span>
-                              <span className="text-emerald-300">{juryStats.completed} completed</span>
-                            </div>
-                          </div>
+                    <div className="flex items-center gap-4">
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/10 bg-slate-800">
+                        {/* Avatar Fallback */}
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-fuchsia-600 to-purple-700 text-lg font-bold text-white">
+                          {(jury?.name?.[0] || "J").toUpperCase()}
                         </div>
-                        {isExpanded ? (
-                          <ChevronUp className="h-5 w-5 text-white/60" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-white/60" />
-                        )}
                       </div>
-                    </CardContent>
-                  </button>
+                      <div>
+                        <h4 className="text-lg font-semibold text-white">{jury?.name || "Unknown Jury"}</h4>
+                        <div className="flex items-center gap-2 text-xs text-white/50">
+                          <span>{juryAssignments.length} Assigned</span>
+                          <span>•</span>
+                          <span className={`${progress === 100 ? "text-emerald-400" : "text-fuchsia-400"}`}>
+                            {progress}% Done
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {/* Mini Progress Bar */}
+                      <div className="hidden h-1.5 w-24 overflow-hidden rounded-full bg-white/10 sm:block">
+                        <div
+                          className="h-full bg-gradient-to-r from-fuchsia-500 to-emerald-400 transition-all duration-500"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      {isExpanded ? (
+                        <ChevronUp className="h-5 w-5 text-white/40" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-white/40" />
+                      )}
+                    </div>
+                  </div>
 
-                  {isExpanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-4 pb-4 space-y-3">
-                        {filtered.map((assignment) => {
-                          const program = programMap.get(assignment.program_id);
-                          const jury = juryMap.get(assignment.jury_id);
-                          const statusInfo = statusConfig[assignment.status];
-                          const StatusIcon = statusInfo.icon;
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={{ height: "auto" }}
+                        exit={{ height: 0 }}
+                        className="overflow-hidden bg-black/20"
+                      >
+                        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+                          {matchingAssignments.map((assignment) => {
+                            const program = programMap.get(assignment.program_id);
+                            const statusInfo = statusConfig[assignment.status];
+                            const StatusIcon = statusInfo.icon;
+                            const ProgramIcon = getProgramIcon(program?.name || "");
 
-                          // Fallback if program not found
-                          const programName = program?.name || `Program ID: ${assignment.program_id}`;
-                          const juryName = jury?.name || `Jury ID: ${assignment.jury_id}`;
-                          const programSection = program?.section || "Unknown";
-                          const programCategory = program?.category || "N/A";
-                          const programStage = program?.stage !== undefined ? program.stage : false;
-
-                          return (
-                            <motion.div
-                              key={`${assignment.program_id}-${assignment.jury_id}`}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              className="rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-all"
-                            >
-                              <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-3 mb-2">
-                                    <Award className="h-4 w-4 text-fuchsia-400 shrink-0" />
-                                    <h5 className="font-semibold text-white truncate">
-                                      {programName}
-                                    </h5>
+                            return (
+                              <div
+                                key={assignment.program_id}
+                                className="group relative flex flex-col justify-between rounded-2xl border border-white/5 bg-white/5 p-4 transition-all hover:border-white/10 hover:bg-white/[0.08]"
+                              >
+                                <div>
+                                  <div className="mb-3 flex items-start justify-between">
+                                    <div className="rounded-2xl bg-white/10 p-2 text-fuchsia-300">
+                                      <ProgramIcon className="h-5 w-5" />
+                                    </div>
+                                    <div
+                                      className={cn(
+                                        "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider",
+                                        statusInfo.color
+                                      )}
+                                    >
+                                      <StatusIcon className="h-3 w-3" />
+                                      {statusInfo.label}
+                                    </div>
                                   </div>
-                                  <div className="flex flex-wrap items-center gap-3 text-xs text-white/60">
-                                    <span className="capitalize">{programSection}</span>
-                                    <span>•</span>
-                                    <span>Cat {programCategory}</span>
-                                    <span>•</span>
-                                    <span>{programStage ? "On Stage" : "Off Stage"}</span>
+                                  <h5 className="font-semibold text-white line-clamp-1" title={program?.name}>
+                                    {program?.name || "Unknown Program"}
+                                  </h5>
+                                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-white/50">
+                                    <span className="rounded bg-white/5 px-1.5 py-0.5">
+                                      {program?.section === "single" ? "Solo" : "Group"}
+                                    </span>
+                                    <span className="rounded bg-white/5 px-1.5 py-0.5">
+                                      Cat {program?.category}
+                                    </span>
+                                    {program?.stage && (
+                                      <span className="rounded bg-fuchsia-500/10 px-1.5 py-0.5 text-fuchsia-300">
+                                        On Stage
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-3 lg:justify-end">
-                                  <div
-                                    className={cn(
-                                      "flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium",
-                                      statusInfo.color,
-                                    )}
-                                  >
-                                    <StatusIcon className="h-3 w-3" />
-                                    <span>{statusInfo.label}</span>
-                                  </div>
+                                <div className="mt-4 flex items-center justify-end border-t border-white/5 pt-3 opacity-100 transition-opacity group-hover:opacity-100">
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() =>
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       setDeleteTarget({
                                         programId: assignment.program_id,
                                         juryId: assignment.jury_id,
-                                        programName,
-                                        juryName,
-                                      })
-                                    }
-                                    className=" p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                        programName: program?.name || "Unknown",
+                                        juryName: jury?.name || "Unknown",
+                                      });
+                                    }}
+                                    className="h-8 w-8 rounded-full p-0 text-white/40 hover:bg-red-500/20 hover:text-red-400"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
                               </div>
-                            </motion.div>
-                          );
-                        })}
-                        {filtered.length === 0 && (
-                          <p className="text-sm text-white/60 text-center py-4">
-                            No assignments match the filters.
-                          </p>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </Card>
-              </motion.div>
-            );
-          })}
-          {Array.from(assignmentsByJury.keys()).length === 0 && (
-            <Card className="bg-slate-900/70">
-              <CardContent className="p-8 text-center">
-                <Users className="h-12 w-12 text-white/20 mx-auto mb-4" />
-                <p className="text-white/60">No jury assignments found.</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filteredAssignments.map((assignment) => {
-            const program = programMap.get(assignment.program_id);
-            const jury = juryMap.get(assignment.jury_id);
-            const statusInfo = statusConfig[assignment.status];
-            const StatusIcon = statusInfo.icon;
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="all-list"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {filteredAssignments.map((assignment) => {
+              const program = programMap.get(assignment.program_id);
+              const jury = juryMap.get(assignment.jury_id);
+              const statusInfo = statusConfig[assignment.status];
+              const ProgramIcon = getProgramIcon(program?.name || "");
 
-            // Fallback if program/jury not found
-            const programName = program?.name || `Program ID: ${assignment.program_id}`;
-            const juryName = jury?.name || `Jury ID: ${assignment.jury_id}`;
-            const programSection = program?.section || "Unknown";
-            const programCategory = program?.category || "N/A";
-
-            return (
-              <motion.div
-                key={`${assignment.program_id}-${assignment.jury_id}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/70 to-slate-800/50 p-4 hover:border-fuchsia-400/40 transition-all"
-              >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Award className="h-5 w-5 text-fuchsia-400 shrink-0" />
-                      <h5 className="font-semibold text-white truncate">{programName}</h5>
+              return (
+                <div
+                  key={`${assignment.program_id}-${assignment.jury_id}`}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-4 hover:border-white/20 hover:bg-white/[0.08]"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-2xl bg-white/10 p-2">
+                      <ProgramIcon className="h-5 w-5 text-white/70" />
                     </div>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-white/60">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-3 w-3" />
-                        <span>{juryName}</span>
-                      </div>
-                      <span>•</span>
-                      <span className="capitalize">{programSection}</span>
-                      <span>•</span>
-                      <span>Cat {programCategory}</span>
+                    <div className="min-w-0 flex-1">
+                      <h5 className="font-semibold text-white truncate">{program?.name}</h5>
+                      <p className="text-xs text-white/50">Assigned to <span className="text-white/80">{jury?.name}</span></p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 lg:justify-end">
-                    <div
-                      className={cn(
-                        "flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium shrink-0",
-                        statusInfo.color,
-                      )}
-                    >
-                      <StatusIcon className="h-4 w-4" />
-                      <span>{statusInfo.label}</span>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className={cn("text-xs px-2 py-1 rounded border", statusInfo.color)}>
+                      {statusInfo.label}
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() =>
-                        setDeleteTarget({
-                          programId: assignment.program_id,
-                          juryId: assignment.jury_id,
-                          programName,
-                          juryName,
-                        })
-                      }
-                      className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      onClick={() => setDeleteTarget({
+                        programId: assignment.program_id,
+                        juryId: assignment.jury_id,
+                        programName: program?.name || "Unknown",
+                        juryName: jury?.name || "Unknown",
+                      })}
+                      className="h-7 w-7 p-0 text-white/30 hover:text-red-400"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-              </motion.div>
-            );
-          })}
-          {filteredAssignments.length === 0 && (
-            <Card className="bg-slate-900/70">
-              <CardContent className="p-8 text-center">
-                <Search className="h-12 w-12 text-white/20 mx-auto mb-4" />
-                <p className="text-white/60">No assignments match your filters.</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Delete Confirmation Modal */}
       <Modal
         open={Boolean(deleteTarget)}
         onClose={() => !isDeleting && setDeleteTarget(null)}
-        title="Delete Assignment"
+        title="Unassign Program"
         actions={
           <>
             <Button
@@ -521,13 +467,13 @@ export const AssignmentManager = React.memo(function AssignmentManager({
               onClick={async () => {
                 if (!deleteTarget) return;
                 setIsDeleting(true);
-                
+
                 // Set a timeout fallback to reset state if redirect doesn't happen quickly
                 const timeoutId = setTimeout(() => {
                   setIsDeleting(false);
                   setDeleteTarget(null);
                 }, 2000);
-                
+
                 try {
                   const formData = new FormData();
                   formData.append("program_id", deleteTarget.programId);
@@ -552,23 +498,15 @@ export const AssignmentManager = React.memo(function AssignmentManager({
               }}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? "Removing..." : "Remove Assignment"}
             </Button>
           </>
         }
       >
-        <div className="space-y-3 text-white/80">
-          <p>
-            Are you sure you want to remove the assignment of{" "}
-            <strong className="text-white">{deleteTarget?.programName}</strong> from{" "}
-            <strong className="text-white">{deleteTarget?.juryName}</strong>?
-          </p>
-          <p className="text-sm text-amber-300">
-            This action cannot be undone. The jury will no longer be able to evaluate this program.
-          </p>
-        </div>
+        <p className="text-white/80">
+          Are you sure you want to remove <strong>{deleteTarget?.programName}</strong> from <strong>{deleteTarget?.juryName}</strong>?
+        </p>
       </Modal>
     </div>
   );
 });
-

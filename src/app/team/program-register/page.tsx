@@ -14,9 +14,9 @@ import {
 } from "@/lib/team-data";
 
 function redirectWithMessage(message: string, type: "error" | "success" = "error") {
-  const params = new URLSearchParams({ 
+  const params = new URLSearchParams({
     message: encodeURIComponent(message),
-    toastType: type 
+    toastType: type
   });
   redirect(`/team/program-register?${params.toString()}`);
 }
@@ -79,13 +79,12 @@ async function registerProgramAction(formData: FormData) {
       teamName: team.teamName,
     });
   } catch (error: any) {
-    // Handle duplicate registration error (race condition protection)
     if (error.message.includes("already registered")) {
       redirectWithMessage(error.message);
     }
     redirectWithMessage(`Registration failed: ${error.message}`);
   }
-  
+
   revalidatePath("/team/program-register");
   redirectWithMessage("Registration submitted.", "success");
 }
@@ -115,7 +114,6 @@ async function registerMultipleStudentsAction(formData: FormData) {
   }
   const candidateLimit = program.candidateLimit ?? 1;
 
-  // Validate all students belong to the team
   const teamStudents = students.filter((s) => s.teamId === team.id);
   const selectedStudents = teamStudents.filter((s) => studentIds.includes(s.id));
   if (selectedStudents.length !== studentIds.length) {
@@ -123,7 +121,6 @@ async function registerMultipleStudentsAction(formData: FormData) {
     return;
   }
 
-  // Check candidate limit
   const teamEntries = registrations.filter(
     (registration) => registration.programId === programId && registration.teamId === team.id,
   );
@@ -133,7 +130,6 @@ async function registerMultipleStudentsAction(formData: FormData) {
     );
   }
 
-  // Check for duplicates
   const alreadyRegistered = selectedStudents.some((student) =>
     registrations.some(
       (registration) =>
@@ -144,7 +140,6 @@ async function registerMultipleStudentsAction(formData: FormData) {
     redirectWithMessage("One or more students are already registered for this program.");
   }
 
-  // Check participation limits for each student
   const limitViolations: string[] = [];
   for (const student of selectedStudents) {
     const limitCheck = validateParticipationLimit(student.id, program, programs, registrations);
@@ -156,10 +151,9 @@ async function registerMultipleStudentsAction(formData: FormData) {
     redirectWithMessage(limitViolations.join("; "));
   }
 
-  // Register all students with error handling
   const registrationErrors: string[] = [];
   let successCount = 0;
-  
+
   for (const student of selectedStudents) {
     try {
       await registerCandidate({
@@ -173,7 +167,6 @@ async function registerMultipleStudentsAction(formData: FormData) {
       });
       successCount++;
     } catch (error: any) {
-      // Handle duplicate registration error
       if (error.message.includes("already registered")) {
         registrationErrors.push(`${student.name}: ${error.message}`);
       } else {
@@ -183,14 +176,14 @@ async function registerMultipleStudentsAction(formData: FormData) {
   }
 
   revalidatePath("/team/program-register");
-  
+
   if (registrationErrors.length > 0) {
     const errorMessage = registrationErrors.length === selectedStudents.length
       ? `Registration failed: ${registrationErrors.join("; ")}`
       : `Partially completed: ${successCount} registered, ${registrationErrors.length} failed. ${registrationErrors.join("; ")}`;
     redirectWithMessage(errorMessage);
   }
-  
+
   redirectWithMessage(
     `Successfully registered ${successCount} student${successCount !== 1 ? "s" : ""}.`,
     "success",
@@ -233,6 +226,9 @@ export default async function ProgramRegisterPage({
   const error = typeof params?.error === "string" ? params.error : undefined;
   const success = typeof params?.success === "string" ? params.success : undefined;
 
+  // SERIALIZATION FIX: Ensure 'programs' is a plain object without Mongoose buffers
+  const plainPrograms = JSON.parse(JSON.stringify(programs.map(p => ({ ...p, candidateLimit: p.candidateLimit ?? 1 }))));
+
   return (
     <div className="space-y-6 text-white">
       <div>
@@ -247,17 +243,16 @@ export default async function ProgramRegisterPage({
       </div>
       {(error || success) && (
         <Card
-          className={`border ${
-            error ? "border-red-500/40 bg-red-500/10" : "border-emerald-500/40 bg-emerald-500/10"
-          } p-4`}
+          className={`border ${error ? "border-red-500/40 bg-red-500/10" : "border-emerald-500/40 bg-emerald-500/10"
+            } p-4`}
         >
           <p className="text-sm">{error ?? success}</p>
         </Card>
       )}
 
       <TeamProgramRegister
-        programs={programs.map(p => ({ ...p, candidateLimit: p.candidateLimit ?? 1 }))}
-        allPrograms={programs.map(p => ({ ...p, candidateLimit: p.candidateLimit ?? 1 }))}
+        programs={plainPrograms}
+        allPrograms={plainPrograms}
         teamRegistrations={teamRegistrations}
         teamStudents={teamStudents}
         isOpen={open}
@@ -268,4 +263,3 @@ export default async function ProgramRegisterPage({
     </div>
   );
 }
-
