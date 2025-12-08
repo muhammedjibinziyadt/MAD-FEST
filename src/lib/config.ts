@@ -8,3 +8,5 @@ export const JURY_COOKIE = "fest_jury_token";
 export const TEAM_COOKIE = "fest_team_token";
 export const SESSION_MAX_AGE = 60 * 60 * 6; // 6 hours
 
+
+export const JWT_SECRET = process.env.JWT_SECRET || "default_insecure_secret_for_dev_only";

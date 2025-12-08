@@ -60,7 +60,7 @@ export function ProfileCard({
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
         onCopyPassword?.();
-      } catch {}
+      } catch { }
     }
   };
 
@@ -117,39 +117,41 @@ export function ProfileCard({
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row">
             {password && (
               <Button
                 variant="secondary"
                 onClick={handleCopy}
-                className="h-11 w-full justify-start gap-2 rounded-xl border border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-fuchsia-400/40 transition-all"
+                className="h-11 w-full justify-center gap-2 rounded-xl border border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-fuchsia-400/40 transition-all sm:flex-1"
               >
                 <Copy className="h-4 w-4 shrink-0" />
                 <span className="truncate">{copied ? "Copied!" : "Copy Password"}</span>
               </Button>
             )}
-            <div className="flex flex-row gap-2">
-            {onEdit && (
-              <Button
-                variant="secondary"
-                onClick={onEdit}
-                className="h-11 w-full justify-start gap-2 rounded-xl border border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-fuchsia-400/40 transition-all"
-              >
-                <Edit className="h-4 w-4 shrink-0" />
-                <span>Edit</span>
-              </Button>
-            )}
-            {onDelete && (
-              <Button
-                variant="danger"
-                onClick={onDelete}
-                className="h-11 w-full justify-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 text-white hover:bg-red-500/20 hover:border-red-500/50 transition-all"
-              >
-                <Trash2 className="h-4 w-4 shrink-0" />
-                <span>Delete</span>
-              </Button>
-            )}
+
+            <div className="flex flex-1 gap-2">
+              {onEdit && (
+                <Button
+                  variant="secondary"
+                  onClick={onEdit}
+                  className="h-11 flex-1 justify-center gap-2 rounded-xl border border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-fuchsia-400/40 transition-all"
+                >
+                  <Edit className="h-4 w-4 shrink-0" />
+                  <span>Edit</span>
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="danger"
+                  onClick={onDelete}
+                  className="h-11 flex-1 justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 text-white hover:bg-red-500/20 hover:border-red-500/50 transition-all"
+                >
+                  <Trash2 className="h-4 w-4 shrink-0" />
+                  <span>Delete</span>
+                </Button>
+              )}
             </div>
+
             {email && (
               <Button
                 variant="secondary"
@@ -158,9 +160,9 @@ export function ProfileCard({
                     await navigator.clipboard.writeText(email);
                     setCopied(true);
                     setTimeout(() => setCopied(false), 1500);
-                  } catch {}
+                  } catch { }
                 }}
-                className="h-11 w-full justify-start gap-2 rounded-xl border border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-fuchsia-400/40 transition-all"
+                className="h-11 w-full justify-center gap-2 rounded-xl border border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-fuchsia-400/40 transition-all sm:flex-1"
               >
                 <Copy className="h-4 w-4 shrink-0" />
                 <span className="truncate">{copied ? "Copied!" : "Copy Email"}</span>

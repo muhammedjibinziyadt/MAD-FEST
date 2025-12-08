@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AdminLoginForm } from "@/components/forms/admin-login-form";
 import { Badge } from "@/components/ui/badge";
-import { getAdminCredentials } from "@/lib/auth";
+import { authenticateAdmin, createSessionToken } from "@/lib/auth";
 import { ADMIN_COOKIE, SESSION_MAX_AGE } from "@/lib/config";
 
 async function loginAdminAction(
@@ -14,17 +14,16 @@ async function loginAdminAction(
   const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "").trim();
 
-  const credentials = await getAdminCredentials();
+  const isAuthenticated = await authenticateAdmin(username, password);
 
-  if (
-    username !== credentials.username ||
-    password !== credentials.password
-  ) {
+  if (!isAuthenticated) {
     return { error: "Invalid admin credentials." };
   }
 
+  const token = await createSessionToken({ role: "admin", username });
+
   const store = await cookies();
-  store.set(ADMIN_COOKIE, credentials.username, {
+  store.set(ADMIN_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: true,

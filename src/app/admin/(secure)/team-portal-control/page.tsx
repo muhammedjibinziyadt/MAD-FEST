@@ -19,16 +19,29 @@ async function upsertTeamAction(formData: FormData) {
     const password = String(formData.get("password") ?? "").trim();
     const leaderName = String(formData.get("leaderName") ?? "").trim();
     const themeColor = sanitizeColor(String(formData.get("themeColor") ?? "#0ea5e9"));
-    if (!teamName || !password || !leaderName) {
+
+    // Check if we are UPDATING an existing team (id is present in form data)
+    const isUpdate = formData.get("id") !== null;
+
+    // Validation:
+    // - Team Name & Leader Name are always required.
+    // - Password is required ONLY for NEW teams. For updates, it's optional (keeps existing).
+    if (!teamName || !leaderName) {
       revalidatePath("/admin/team-portal-control");
-      redirectWithToast("/admin/team-portal-control", "Team name, password, and leader name are required.", "error");
+      redirectWithToast("/admin/team-portal-control", "Team name and leader name are required.", "error");
       return;
     }
-    const isUpdate = formData.get("id") !== null;
+
+    if (!isUpdate && !password) {
+      revalidatePath("/admin/team-portal-control");
+      redirectWithToast("/admin/team-portal-control", "Password is required for new teams.", "error");
+      return;
+    }
+
     await savePortalTeam({
       id,
       teamName,
-      password,
+      password, // Function handles empty password logic internally
       leaderName,
       themeColor,
     });

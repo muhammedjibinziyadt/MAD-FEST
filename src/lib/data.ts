@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { hash } from "bcryptjs";
 import type {
   AssignedProgram,
   CategoryType,
@@ -24,9 +25,9 @@ import {
 
 let seedPromise: Promise<void> | null = null;
 
-async function seedCollection<T>(
+async function seedCollection(
   count: number,
-  insertFn: () => Promise<T>,
+  insertFn: () => Promise<void>, // Typed clearly
 ): Promise<void> {
   if (count === 0) {
     await insertFn();
@@ -36,6 +37,7 @@ async function seedCollection<T>(
 async function updateTeamNames() {
   await connectDB();
   // Update existing teams with new names and colors from defaultTeams
+  // NOTE: This does NOT update passwords to avoid overwriting user-changed passwords with defaults
   for (const team of defaultTeams) {
     await TeamModel.updateOne(
       { id: team.id },
@@ -62,7 +64,14 @@ async function seedDatabase() {
   await updateTeamNames();
 
   await seedCollection(teamCount, async () => {
-    await TeamModel.insertMany(defaultTeams);
+    // Hash passwords before seeding
+    const teamsToInsert = await Promise.all(
+      defaultTeams.map(async (t) => ({
+        ...t,
+        portal_password: await hash(t.portal_password || "", 10),
+      }))
+    );
+    await TeamModel.insertMany(teamsToInsert);
   });
 
   await seedCollection(liveScoreCount, async () => {
@@ -83,7 +92,14 @@ async function seedDatabase() {
   });
 
   await seedCollection(juryCount, async () => {
-    await JuryModel.insertMany(defaultJury);
+    // Hash passwords before seeding
+    const juriesToInsert = await Promise.all(
+      defaultJury.map(async (j) => ({
+        ...j,
+        password: await hash(j.password, 10),
+      }))
+    );
+    await JuryModel.insertMany(juriesToInsert);
   });
 
   await seedCollection(assignmentCount, async () => {
@@ -105,7 +121,12 @@ function normalize<T>(docs: T[]): T[] {
 export async function getTeams(): Promise<Team[]> {
   await ensureSeedData();
   const teams = await TeamModel.find().lean<Team[]>();
-  return normalize(teams);
+  const normalized = normalize(teams);
+  // SECURITY: Strip passwords from output
+  return normalized.map(t => {
+    const { portal_password, ...rest } = t;
+    return { ...rest, portal_password: "" } as Team;
+  });
 }
 
 export async function getLiveScores(): Promise<LiveScore[]> {
@@ -130,23 +151,27 @@ export async function getJuries(): Promise<Jury[]> {
   await ensureSeedData();
   const juries = await JuryModel.find().lean<Jury[]>();
   const normalized = normalize(juries);
-  
+
   // Ensure all juries have an avatar - assign and persist if missing (only once)
   // Once set, avatar is never changed
   const juriesWithAvatars = await Promise.all(
     normalized.map(async (jury) => {
+      let updatedJury = { ...jury };
+
       if (!jury.avatar) {
         // Assign random avatar only if missing - this will be saved permanently
         const avatar = getRandomJuryAvatar();
         await connectDB();
         await JuryModel.updateOne({ id: jury.id }, { $set: { avatar } });
-        return { ...jury, avatar };
+        updatedJury.avatar = avatar;
       }
-      // Avatar already exists - return as-is (never change it)
-      return jury;
+
+      // SECURITY: Strip passwords
+      updatedJury.password = "";
+      return updatedJury;
     })
   );
-  
+
   return juriesWithAvatars;
 }
 
@@ -216,19 +241,19 @@ export async function deleteProgramById(id: string) {
 
 export async function createStudent(input: Omit<Student, "id" | "total_points">) {
   await connectDB();
-  
+
   // Normalize chest number to uppercase for consistent comparison
   const normalizedChestNo = input.chest_no.trim().toUpperCase();
-  
+
   // Check for duplicate chest number
-  const existing = await StudentModel.findOne({ 
-    chest_no: normalizedChestNo 
+  const existing = await StudentModel.findOne({
+    chest_no: normalizedChestNo
   }).lean();
-  
+
   if (existing) {
     throw new Error(`Chest number "${input.chest_no}" is already registered to student "${existing.name}".`);
   }
-  
+
   try {
     const studentId = randomUUID();
     await StudentModel.create({
@@ -237,7 +262,7 @@ export async function createStudent(input: Omit<Student, "id" | "total_points">)
       id: studentId,
       total_points: 0,
     });
-    
+
     // Emit real-time event
     const { emitStudentCreated } = await import("./pusher");
     await emitStudentCreated(studentId, input.team_id);
@@ -255,32 +280,32 @@ export async function updateStudentById(
   data: Partial<Omit<Student, "id">>,
 ) {
   await connectDB();
-  
+
   // If chest_no is being updated, check for duplicates
   if (data.chest_no) {
     const normalizedChestNo = data.chest_no.trim().toUpperCase();
-    
+
     // Check for duplicate chest number (excluding current student)
-    const existing = await StudentModel.findOne({ 
+    const existing = await StudentModel.findOne({
       chest_no: normalizedChestNo,
       id: { $ne: id }
     }).lean();
-    
+
     if (existing) {
       throw new Error(`Chest number "${data.chest_no}" is already registered to student "${existing.name}".`);
     }
-    
+
     // Normalize the chest number in the update data
     data.chest_no = normalizedChestNo;
   }
-  
+
   try {
     // Get team_id before update
     const student = await StudentModel.findOne({ id }).lean();
     const teamId = student?.team_id || data.team_id || "";
-    
+
     await StudentModel.updateOne({ id }, data);
-    
+
     // Emit real-time event
     if (teamId) {
       const { emitStudentUpdated } = await import("./pusher");
@@ -299,7 +324,7 @@ export async function deleteStudentById(id: string) {
   await connectDB();
   const student = await StudentModel.findOne({ id }).lean();
   await StudentModel.deleteOne({ id });
-  
+
   // Emit real-time event
   if (student?.team_id) {
     const { emitStudentDeleted } = await import("./pusher");
@@ -324,9 +349,14 @@ export async function createJury(input: Omit<Jury, "id">) {
   await connectDB();
   // Assign random avatar if not provided - once set, it never changes
   const avatar = input.avatar || getRandomJuryAvatar();
-  await JuryModel.create({ 
-    ...input, 
+
+  // Hash password
+  const hashedPassword = await hash(input.password, 10);
+
+  await JuryModel.create({
+    ...input,
     id: `jury-${randomUUID().slice(0, 8)}`,
+    password: hashedPassword,
     avatar, // Avatar is set once at creation and never changes
   });
 }
@@ -334,8 +364,14 @@ export async function createJury(input: Omit<Jury, "id">) {
 export async function updateJuryById(id: string, data: Partial<Omit<Jury, "id">>) {
   await connectDB();
   // Explicitly exclude avatar from updates - avatars are immutable once set
-  const { avatar, ...updateData } = data;
-  await JuryModel.updateOne({ id }, updateData);
+  const { avatar, password, ...updateData } = data;
+
+  const updatePayload: any = { ...updateData };
+  if (password) {
+    updatePayload.password = await hash(password, 10);
+  }
+
+  await JuryModel.updateOne({ id }, updatePayload);
 }
 
 export async function deleteJuryById(id: string) {
@@ -350,34 +386,36 @@ export async function getOrCreateAdminJury(): Promise<Jury> {
   let adminJury = await JuryModel.findOne({ id: adminJuryId }).lean<Jury>().exec();
 
   if (!adminJury) {
+    const hashedPassword = await hash("admin@jury", 10);
     await JuryModel.create({
       id: adminJuryId,
       name: "Admin",
-      password: "admin@jury",
+      password: hashedPassword,
       avatar: "/img/jury.webp",
     });
 
     adminJury = await JuryModel.findOne({ id: adminJuryId }).lean<Jury>().exec();
   }
 
-  return adminJury!; // safe because we just created it if missing
+  // SECURITY: Strip password
+  return { ...adminJury!, password: "" };
 }
 
 export async function assignProgramToJury(programId: string, juryId: string) {
   await connectDB();
-  
+
   // Check if program is already approved/published
   const approvedResult = await ApprovedResultModel.findOne({ program_id: programId }).lean();
   if (approvedResult) {
     throw new Error("This program is already published. Cannot assign published programs to juries.");
   }
-  
+
   // Check if assignment already exists
   const existing = await AssignedProgramModel.findOne({
     program_id: programId,
     jury_id: juryId,
   }).lean();
-  
+
   if (existing) {
     // Assignment already exists - update status to pending if needed
     if (existing.status !== "pending") {
@@ -389,14 +427,14 @@ export async function assignProgramToJury(programId: string, juryId: string) {
     // Silently succeed if already assigned (idempotent operation)
     return;
   }
-  
+
   try {
     await AssignedProgramModel.updateOne(
       { program_id: programId, jury_id: juryId },
       { program_id: programId, jury_id: juryId, status: "pending" },
       { upsert: true },
     );
-    
+
     // Emit real-time event only if assignment was newly created
     if (!existing) {
       const { emitAssignmentCreated } = await import("./pusher");
@@ -423,7 +461,7 @@ export async function updateAssignmentStatus(
 export async function deleteAssignment(programId: string, juryId: string) {
   await connectDB();
   await AssignedProgramModel.deleteOne({ program_id: programId, jury_id: juryId });
-  
+
   // Emit real-time event
   const { emitAssignmentDeleted } = await import("./pusher");
   await emitAssignmentDeleted(programId, juryId);

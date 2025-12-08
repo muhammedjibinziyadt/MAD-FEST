@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import withPWA from "next-pwa";
+import withPWA from "@ducanh2912/next-pwa";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -11,12 +11,17 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Disable Turbopack for PWA support (next-pwa requires webpack)
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      // PWA service worker will be handled by next-pwa
-    }
-    return config;
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        ],
+      },
+    ];
   },
 };
 

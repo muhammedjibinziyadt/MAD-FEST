@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { JuryLoginForm } from "@/components/forms/jury-login-form";
 import { JURY_COOKIE, SESSION_MAX_AGE } from "@/lib/config";
-import { findJury } from "@/lib/auth";
+import { authenticateJury, createSessionToken } from "@/lib/auth";
 
 async function juryLoginAction(
   _state: { error?: string },
@@ -13,13 +13,15 @@ async function juryLoginAction(
   const identifier = String(formData.get("identifier") ?? "").trim();
   const password = String(formData.get("password") ?? "").trim();
 
-  const jury = identifier ? await findJury(identifier) : undefined;
-  if (!jury || jury.password !== password) {
+  const jury = await authenticateJury(identifier, password);
+  if (!jury) {
     return { error: "Invalid jury credentials." };
   }
 
+  const token = await createSessionToken({ role: "jury", id: jury.id });
+
   const store = await cookies();
-  store.set(JURY_COOKIE, `jury:${jury.id}`, {
+  store.set(JURY_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: true,

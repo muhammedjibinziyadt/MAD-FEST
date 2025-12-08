@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { hash } from "bcryptjs";
 import {
   PortalStudent,
   PortalTeam,
@@ -28,7 +29,7 @@ export async function getPortalTeams(): Promise<PortalTeam[]> {
   return teams.map((team) => ({
     id: team.id,
     teamName: team.name,
-    password: team.portal_password ?? "",
+    password: "", // SECURITY: Do not leak password
     leaderName: team.leader,
     themeColor: sanitizeColor(team.color),
   }));
@@ -36,15 +37,28 @@ export async function getPortalTeams(): Promise<PortalTeam[]> {
 
 export async function savePortalTeam(team: PortalTeam) {
   await connectDB();
+
+  const updateData: any = {
+    name: team.teamName,
+    leader: team.leaderName,
+    color: sanitizeColor(team.themeColor),
+  };
+
+  // Only update password if provided and not empty
+  if (team.password && team.password.trim() !== "") {
+    // If it looks like a bcrypt hash, assume it's already hashed (e.g. from seed or re-save)
+    // But usually we just re-hash if it's being saved from UI.
+    // To be safe, if the UI sends a new password, we hash it.
+    // If the UI sends the 'placeholder' (empty), we skip this block.
+    if (!team.password.startsWith("$2")) {
+      updateData.portal_password = await hash(team.password, 10);
+    }
+  }
+
   await TeamModel.updateOne(
     { id: team.id },
     {
-      $set: {
-        name: team.teamName,
-        leader: team.leaderName,
-        color: sanitizeColor(team.themeColor),
-        portal_password: team.password,
-      },
+      $set: updateData,
       $setOnInsert: {
         leader_photo: team.leaderName,
         description: `${team.teamName} squad`,
@@ -100,7 +114,7 @@ export async function upsertPortalStudent(input: {
 
   const studentId = input.id ?? randomUUID();
   const isNew = !input.id;
-  
+
   try {
     await StudentModel.updateOne(
       { id: studentId },
@@ -114,7 +128,7 @@ export async function upsertPortalStudent(input: {
       },
       { upsert: true },
     );
-    
+
     // Emit real-time event
     const { emitStudentCreated, emitStudentUpdated } = await import("./pusher");
     if (isNew) {
@@ -136,7 +150,7 @@ export async function deletePortalStudent(studentId: string) {
   const student = await StudentModel.findOne({ id: studentId }).lean();
   await StudentModel.deleteOne({ id: studentId });
   await ProgramRegistrationModel.deleteMany({ studentId });
-  
+
   // Emit real-time event
   if (student?.team_id) {
     const { emitStudentDeleted } = await import("./pusher");
@@ -184,7 +198,7 @@ export async function registerCandidate(entry: {
     ...entry,
     timestamp: new Date().toISOString(),
   };
-  
+
   try {
     await ProgramRegistrationModel.create(record);
     return record;
@@ -201,7 +215,7 @@ export async function removeProgramRegistration(registrationId: string) {
   await connectDB();
   const registration = await ProgramRegistrationModel.findOne({ id: registrationId }).lean();
   await ProgramRegistrationModel.deleteOne({ id: registrationId });
-  
+
   // Emit real-time event
   if (registration) {
     const { emitRegistrationDeleted } = await import("./pusher");
@@ -363,7 +377,7 @@ export async function createReplacementRequest(request: {
     status: "pending",
     submittedAt: new Date().toISOString(),
   };
-  
+
   try {
     await ReplacementRequestModel.create(record);
     return record;

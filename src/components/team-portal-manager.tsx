@@ -126,11 +126,11 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
       reg.teamId.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
       (reg.teamName && reg.teamName.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
     );
-    
+
     if (registrationTeamFilter) {
       filtered = filtered.filter((reg) => reg.teamId === registrationTeamFilter);
     }
-    
+
     return filtered;
   }, [registrations, debouncedSearchQuery, activeView, registrationTeamFilter]);
 
@@ -519,7 +519,7 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
               })
             ) : (
               groupedRegistrations.map(([groupKey, regs]) => {
-                const teamName = registrationGroupBy === "team" 
+                const teamName = registrationGroupBy === "team"
                   ? teams.find(t => t.id === groupKey || t.teamName === groupKey)?.teamName || groupKey
                   : groupKey;
                 return (
@@ -612,10 +612,11 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
               <Input
                 name="password"
                 type="text"
-                defaultValue={editingTeam.password}
-                placeholder="Password"
-                required
+                placeholder="Leave blank to keep current password"
               />
+              <p className="text-xs text-white/40 mt-1">
+                For security, existing passwords are not shown. Enter a new one to update.
+              </p>
             </div>
             <div>
               <label className="text-sm font-semibold text-white/70 mb-2 block">
@@ -661,10 +662,6 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
             <div>
               <p className="text-xs text-white/50">Leader</p>
               <p className="text-sm text-white">{viewingTeam.leaderName}</p>
-            </div>
-            <div>
-              <p className="text-xs text-white/50">Password</p>
-              <p className="text-sm text-white font-mono">{viewingTeam.password}</p>
             </div>
             <div>
               <p className="text-xs text-white/50">Theme Color</p>

@@ -1,6 +1,8 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { TeamLoginForm } from "@/components/team-login-form";
-import { authenticateTeam, getCurrentTeam } from "@/lib/auth";
+import { authenticateTeam, getCurrentTeam, createSessionToken } from "@/lib/auth";
+import { TEAM_COOKIE, SESSION_MAX_AGE } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +17,18 @@ async function teamLoginAction(_state: { error?: string }, formData: FormData) {
   if (!team) {
     return { error: "Invalid team credentials." };
   }
+
+  const token = await createSessionToken({ role: "team", id: team.id });
+
+  const store = await cookies();
+  store.set(TEAM_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: true,
+    maxAge: SESSION_MAX_AGE,
+    path: "/",
+  });
+
   redirect("/team/dashboard");
 }
 

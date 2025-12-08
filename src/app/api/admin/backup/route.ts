@@ -25,10 +25,10 @@ export async function GET() {
     await connectDB();
 
     const data = {
-        teams: await TeamModel.find({}).lean(),
+        teams: await TeamModel.find({}, { portal_password: 0 }).lean(),
         students: await StudentModel.find({}).lean(),
         programs: await ProgramModel.find({}).lean(),
-        juries: await JuryModel.find({}).lean(),
+        juries: await JuryModel.find({}, { password: 0 }).lean(),
         assignedPrograms: await AssignedProgramModel.find({}).lean(),
         programRegistrations: await ProgramRegistrationModel.find({}).lean(),
         registrationSchedules: await RegistrationScheduleModel.find({}).lean(),
@@ -37,9 +37,9 @@ export async function GET() {
         liveScores: await LiveScoreModel.find({}).lean(),
         replacementRequests: await ReplacementRequestModel.find({}).lean(),
         notifications: await NotificationModel.find({}).lean(),
-        adminSettings: await AdminSettingsModel.find({}).lean(),
+        // Security: Do NOT export admin settings (contains hashed credentials)
         timestamp: new Date().toISOString(),
-        version: "1.0",
+        version: "1.1",
     };
 
     const json = JSON.stringify(data, null, 2);
