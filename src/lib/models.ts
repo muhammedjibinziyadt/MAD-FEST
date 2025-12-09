@@ -12,6 +12,11 @@ import type {
   ResultRecord,
   Student,
   Team,
+  Poll,
+  PredictionEvent,
+  Prediction,
+  Vote,
+  UserScore,
 } from "./types";
 
 const TeamSchema = new Schema<Team>(
@@ -249,4 +254,98 @@ const AdminSettingsSchema = new Schema<AdminSettings>(
 export const AdminSettingsModel =
   (models.AdminSettings as Model<AdminSettings>) ??
   model<AdminSettings>("AdminSettings", AdminSettingsSchema);
+
+const PollSchema = new Schema<Poll>(
+  {
+    id: { type: String, required: true, unique: true },
+    question: { type: String, required: true },
+    options: [
+      {
+        id: { type: String, required: true },
+        text: { type: String, required: true },
+        votes: { type: Number, default: 0 },
+      },
+    ],
+    active: { type: Boolean, default: true },
+    createdAt: { type: String, required: true },
+  },
+  { timestamps: true },
+);
+
+const VoteSchema = new Schema<Vote>(
+  {
+    pollId: { type: String, required: true },
+    optionId: { type: String, required: true },
+    voterHash: { type: String, required: true }, // unique index pair with pollId
+    timestamp: { type: String, required: true },
+  },
+  { timestamps: true },
+);
+VoteSchema.index({ pollId: 1, voterHash: 1 }, { unique: true });
+
+const PredictionEventSchema = new Schema<PredictionEvent>(
+  {
+    id: { type: String, required: true, unique: true },
+    programId: { type: String, required: true },
+    programName: { type: String, required: true },
+    question: { type: String, required: true },
+    options: [
+      {
+        id: { type: String, required: true },
+        label: { type: String, required: true },
+        image: String,
+      },
+    ],
+    deadline: { type: String, required: true },
+    status: {
+      type: String,
+      enum: ["open", "closed", "evaluated"],
+      default: "open",
+    },
+    correctOptionId: String,
+    points: { type: Number, default: 10 },
+    createdAt: { type: String, required: true },
+  },
+  { timestamps: true },
+);
+
+const PredictionSchema = new Schema<Prediction>(
+  {
+    id: { type: String, required: true, unique: true },
+    eventId: { type: String, required: true },
+    userId: { type: String, required: true },
+    userName: { type: String, required: true },
+    selectedOptionId: { type: String, required: true },
+    timestamp: { type: String, required: true },
+  },
+  { timestamps: true },
+);
+PredictionSchema.index({ eventId: 1, userId: 1 }, { unique: true });
+
+const UserScoreSchema = new Schema<UserScore>(
+  {
+    userId: { type: String, required: true, unique: true },
+    userName: { type: String, required: true },
+    score: { type: Number, default: 0 },
+  },
+  { timestamps: true },
+);
+
+export const PollModel =
+  (models.Poll as Model<Poll>) ?? model<Poll>("Poll", PollSchema);
+
+export const VoteModel =
+  (models.Vote as Model<Vote>) ?? model<Vote>("Vote", VoteSchema);
+
+export const PredictionEventModel =
+  (models.PredictionEvent as Model<PredictionEvent>) ??
+  model<PredictionEvent>("PredictionEvent", PredictionEventSchema);
+
+export const PredictionModel =
+  (models.Prediction as Model<Prediction>) ??
+  model<Prediction>("Prediction", PredictionSchema);
+
+export const UserScoreModel =
+  (models.UserScore as Model<UserScore>) ??
+  model<UserScore>("UserScore", UserScoreSchema);
 

@@ -9,7 +9,9 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-rose-500/10 backdrop-blur-xl",
+        "rounded-2xl border p-6 shadow-2xl backdrop-blur-xl transition-all duration-200",
+        "bg-white/80 border-slate-200 text-slate-900 shadow-slate-200/50",
+        "dark:bg-white/5 dark:border-white/10 dark:text-white dark:shadow-rose-500/10",
         className,
       )}
       {...props}
@@ -39,7 +41,8 @@ export function CardTitle({
   return (
     <h3
       className={cn(
-        "text-lg font-semibold tracking-tight text-white",
+        "text-lg font-semibold tracking-tight",
+        "text-slate-900 dark:text-white",
         className,
       )}
       {...props}
@@ -55,7 +58,7 @@ export function CardDescription({
   ...props
 }: HTMLAttributes<HTMLParagraphElement> & PropsWithChildren) {
   return (
-    <p className={cn("text-sm text-white/70", className)} {...props}>
+    <p className={cn("text-sm text-slate-500 dark:text-white/70", className)} {...props}>
       {children}
     </p>
   );
@@ -69,6 +72,21 @@ export function CardContent({
   return (
     <div
       className={cn("p-0 pt-4", className)}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function CardFooter({
+  className,
+  children,
+  ...props
+}: HTMLAttributes<HTMLDivElement> & PropsWithChildren) {
+  return (
+    <div
+      className={cn("flex items-center pt-4", className)}
       {...props}
     >
       {children}

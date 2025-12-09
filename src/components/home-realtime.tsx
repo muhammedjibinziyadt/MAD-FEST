@@ -10,6 +10,8 @@ import { Menu, X } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 import { LiveScorePulse } from "@/components/live-score-pulse";
 import { TeamLeadersShowcase } from "@/components/team-leaders-showcase";
+import { HomeEngagementSection } from "@/components/HomeEngagementSection";
+
 import { useScoreboardUpdates } from "@/hooks/use-realtime";
 import { useRouter } from "next/navigation";
 import type { Team } from "@/lib/types";
@@ -182,7 +184,11 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
         </div>
       </section>
 
+      {/* Engagement Section (Polls & Predictions) */}
+      <HomeEngagementSection />
+
       {/* Team Leaders Section */}
+
       <section className="bg-white py-12 sm:py-16 md:py-20">
         <div className="container mx-auto max-w-7xl px-4 sm:px-5 md:px-8">
           <TeamLeadersShowcase teams={initialTeams} />

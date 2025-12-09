@@ -3,15 +3,12 @@
 import Pusher from "pusher-js";
 
 // Client-side Pusher instance (singleton)
-let pusherClient: Pusher | null = null;
+export const pusherClient = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY || "", {
+  cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "mt1",
+  forceTLS: true,
+});
 
 export function getPusherClient(): Pusher {
-  if (!pusherClient) {
-    pusherClient = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY || "", {
-      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "mt1",
-      forceTLS: true,
-    });
-  }
   return pusherClient;
 }
 

@@ -16,6 +16,8 @@ import {
   Settings,
   type LucideIcon,
   Users,
+  BarChart,
+  Trophy,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -48,6 +50,8 @@ const ICONS = {
   pending: Hourglass,
   approved: BadgeCheck,
   settings: Settings,
+  polls: BarChart,
+  predictions: Trophy,
 } satisfies Record<string, LucideIcon>;
 
 type IconName = keyof typeof ICONS;
@@ -131,7 +135,7 @@ export default function Sidenavbar({
       <div className="hidden min-h-screen gap-6 md:flex relative">
         <aside
           className={cn(
-            "fixed left-4 top-10 bottom-10 z-50 flex flex-col rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md transition-all duration-300 ease-in-out shadow-2xl shadow-black/20",
+            "fixed left-4 top-10 bottom-10 z-50 flex flex-col rounded-2xl border border-white/10 bg-slate-900 shadow-2xl transition-all duration-300 ease-in-out",
             isOpen ? "w-64" : "w-20",
           )}
         >

@@ -148,3 +148,57 @@ export interface AdminSettings {
   updatedAt: string;
 }
 
+export interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+}
+
+export interface Poll {
+  id: string;
+  question: string;
+  options: PollOption[];
+  active: boolean;
+  createdAt: string;
+}
+
+export interface Vote {
+  pollId: string;
+  optionId: string;
+  voterHash: string; // Hash of IP + UserAgent or similar
+  timestamp: string;
+}
+
+export interface PredictionEvent {
+  id: string;
+  programId: string; // Link to a Program
+  programName: string;
+  question: string; // e.g., "Who will win?"
+  options: {
+    id: string; // Could be teamId or studentId
+    label: string; // Team Name or Student Name
+    image?: string;
+  }[];
+  deadline: string;
+  status: "open" | "closed" | "evaluated";
+  correctOptionId?: string;
+  points: number;
+  createdAt: string;
+}
+
+export interface Prediction {
+  id: string;
+  eventId: string;
+  userId: string; // User identifier (e.g., hash or session ID)
+  userName: string; // Optional: if we want a leaderboard with names
+  selectedOptionId: string;
+  timestamp: string;
+}
+
+export interface UserScore {
+  userId: string;
+  userName: string;
+  score: number;
+  rank?: number;
+}
+

@@ -16,6 +16,8 @@ export const CHANNELS = {
   REGISTRATIONS: "registrations",
   STUDENTS: "students",
   SCOREBOARD: "scoreboard",
+  POLLS: "polls",
+  PREDICTIONS: "predictions",
 } as const;
 
 // Event names
@@ -32,6 +34,10 @@ export const EVENTS = {
   STUDENT_UPDATED: "student-updated",
   STUDENT_DELETED: "student-deleted",
   SCOREBOARD_UPDATED: "scoreboard-updated",
+  POLL_UPDATED: "poll-updated",
+  PREDICTION_OPENED: "prediction-opened",
+  PREDICTION_CLOSED: "prediction-closed",
+  LEADERBOARD_UPDATED: "leaderboard-updated",
 } as const;
 
 // Helper functions to emit events
@@ -41,7 +47,7 @@ export async function emitResultApproved(resultId: string, programId: string) {
     programId,
     timestamp: new Date().toISOString(),
   });
-  
+
   // Also update scoreboard
   await pusherServer.trigger(CHANNELS.SCOREBOARD, EVENTS.SCOREBOARD_UPDATED, {
     timestamp: new Date().toISOString(),
@@ -71,7 +77,7 @@ export async function emitResultUpdated(resultId: string, programId: string) {
     programId,
     timestamp: new Date().toISOString(),
   });
-  
+
   await pusherServer.trigger(CHANNELS.SCOREBOARD, EVENTS.SCOREBOARD_UPDATED, {
     timestamp: new Date().toISOString(),
   });
@@ -147,6 +153,33 @@ export async function emitNotificationCreated(notification: {
 }) {
   await pusherServer.trigger(CHANNELS.RESULTS, "notification-created", {
     notification,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export async function emitPollUpdated(pollId: string) {
+  await pusherServer.trigger(CHANNELS.POLLS, EVENTS.POLL_UPDATED, {
+    pollId,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export async function emitPredictionOpened(predictionId: string) {
+  await pusherServer.trigger(CHANNELS.PREDICTIONS, EVENTS.PREDICTION_OPENED, {
+    predictionId,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export async function emitPredictionClosed(predictionId: string) {
+  await pusherServer.trigger(CHANNELS.PREDICTIONS, EVENTS.PREDICTION_CLOSED, {
+    predictionId,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export async function emitLeaderboardUpdated() {
+  await pusherServer.trigger(CHANNELS.PREDICTIONS, EVENTS.LEADERBOARD_UPDATED, {
     timestamp: new Date().toISOString(),
   });
 }

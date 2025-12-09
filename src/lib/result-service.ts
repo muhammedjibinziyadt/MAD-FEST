@@ -192,7 +192,7 @@ export async function submitResultToPending({
     PendingResultModel.findOne({ program_id: programId }).lean(),
     ApprovedResultModel.findOne({ program_id: programId }).lean(),
   ]);
-  
+
   if (pendingResult) {
     const existingJury = await JuryModel.findOne({ id: pendingResult.jury_id }).lean();
     const juryName = existingJury?.name || "Unknown Jury";
@@ -200,7 +200,7 @@ export async function submitResultToPending({
       `A pending result already exists for program "${program.name}" submitted by ${juryName}. Please wait for admin approval or contact support.`
     );
   }
-  
+
   if (approvedResult) {
     // Return specific error message for published/approved programs
     throw new Error("Program already published");
@@ -223,7 +223,7 @@ export async function submitResultToPending({
   try {
     await PendingResultModel.create(record);
     await updateAssignmentStatus(program.id, jury.id, "submitted");
-    
+
     // Emit real-time event
     const { emitResultSubmitted } = await import("./pusher");
     await emitResultSubmitted(record.id, program.id, jury.id);
@@ -268,6 +268,15 @@ export async function approveResult(resultId: string) {
   // Emit real-time event
   const { emitResultApproved } = await import("./pusher");
   await emitResultApproved(resultId, record.program_id);
+
+  // Auto-evaluate predictions
+  try {
+    const { evaluatePredictionsForProgram } = await import("./prediction-service");
+    await evaluatePredictionsForProgram(record.program_id, record.entries);
+  } catch (error) {
+    console.error("Failed to auto-evaluate predictions:", error);
+    // Don't fail the approval if this fails
+  }
 
   revalidatePath("/");
   revalidatePath("/scoreboard");
@@ -314,11 +323,11 @@ export async function updatePendingResultEntries(
       submitted_at: new Date().toISOString(),
     },
   );
-  
+
   // Emit real-time event for pending result update
   const { emitResultSubmitted } = await import("./pusher");
   await emitResultSubmitted(resultId, record.program_id, record.jury_id);
-  
+
   revalidatePath("/admin/pending-results");
 }
 
