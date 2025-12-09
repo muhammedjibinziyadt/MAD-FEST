@@ -204,7 +204,7 @@ function AnalyticsSection({ teams }: { teams: any[] }) {
         </div>
 
         {/* Toggles */}
-        <div className="flex p-1 bg-gray-100 rounded-xl">
+        <div className="flex p-1 bg-gray-100 rounded-3xl">
           <button
             onClick={() => setViewMode('total')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${viewMode === 'total' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
@@ -237,7 +237,7 @@ function AnalyticsSection({ teams }: { teams: any[] }) {
                 tickLine={false}
                 tick={{ fill: '#6B7280', fontSize: 11, fontWeight: 700 }}
                 dy={10}
-                tickFormatter={(value) => value.slice(0, 3).toUpperCase()}
+                tickFormatter={(value: string) => value.slice(0, 3).toUpperCase()}
               />
               <YAxis
                 axisLine={false}

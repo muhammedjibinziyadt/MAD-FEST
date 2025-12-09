@@ -12,7 +12,7 @@ export function HomeEngagementSection() {
             <div className="absolute inset-0 z-0">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#8B4513]/20 blur-[120px] rounded-full opacity-60" />
                 <div className="absolute bottom-0 right-0 w-[600px] h-[400px] bg-amber-600/10 blur-[100px] rounded-full opacity-40" />
-                <div className="absolute inset-0 bg-[url('/img/grid-pattern.svg')] opacity-[0.03]" />
+                <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
             </div>
 
             <div className="container mx-auto px-4 relative z-10 max-w-7xl">
