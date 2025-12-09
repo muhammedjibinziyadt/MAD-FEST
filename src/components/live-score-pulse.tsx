@@ -1,8 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Activity, Medal } from "lucide-react";
+import { Activity, Medal, TrendingUp, TrendingDown, Minus, ArrowUpRight, BarChart3, PieChart, LineChart } from "lucide-react";
 import type { Team } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 import {
@@ -15,67 +16,70 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { Button } from "@/components/ui/button";
 
 interface LiveScorePulseProps {
   teams: Team[];
   liveScores: Map<string, number>;
 }
 
-// Team color mappings
-const TEAM_COLORS: Record<string, { primary: string; gradient: string; light: string; stroke: string }> = {
+// Enhanced Team Colors - More Saturated & Vibrant
+const TEAM_COLORS: Record<string, { primary: string; gradient: string; light: string; stroke: string; glow: string }> = {
   SAMARQAND: {
-    primary: "#D72638",
-    gradient: "from-[#D72638] to-[#B01E2E]",
-    light: "#FEE2E2",
-    stroke: "#9F1221",
+    primary: "#E11D48",
+    gradient: "from-rose-600 to-rose-500",
+    light: "#FFE4E6",
+    stroke: "#9F1239",
+    glow: "shadow-rose-500/20",
   },
   NAHAVAND: {
-    primary: "#1E3A8A",
-    gradient: "from-[#1E3A8A] to-[#172554]",
+    primary: "#2563EB",
+    gradient: "from-blue-600 to-blue-500",
     light: "#DBEAFE",
-    stroke: "#172554",
+    stroke: "#1E40AF",
+    glow: "shadow-blue-500/20",
   },
   YAMAMA: {
     primary: "#7C3AED",
-    gradient: "from-[#7C3AED] to-[#6D28D9]",
+    gradient: "from-violet-600 to-violet-500",
     light: "#EDE9FE",
     stroke: "#5B21B6",
+    glow: "shadow-violet-500/20",
   },
   QURTUBA: {
-    primary: "#FACC15",
-    gradient: "from-[#FACC15] to-[#EAB308]",
-    light: "#FEF9C3",
-    stroke: "#CA8A04",
+    primary: "#D97706",
+    gradient: "from-amber-500 to-amber-400",
+    light: "#FEF3C7",
+    stroke: "#B45309",
+    glow: "shadow-amber-500/20",
   },
   MUQADDAS: {
     primary: "#059669",
-    gradient: "from-[#059669] to-[#047857]",
+    gradient: "from-emerald-600 to-emerald-500",
     light: "#D1FAE5",
     stroke: "#065F46",
+    glow: "shadow-emerald-500/20",
   },
   BUKHARA: {
-    primary: "#FB923C",
-    gradient: "from-[#FB923C] to-[#F97316]",
+    primary: "#EA580C",
+    gradient: "from-orange-600 to-orange-500",
     light: "#FFEDD5",
-    stroke: "#C2410C",
+    stroke: "#9A3412",
+    glow: "shadow-orange-500/20",
   },
 };
 
 function getMedalColor(index: number): string {
   switch (index) {
-    case 0:
-      return "#FFD700";
-    case 1:
-      return "#C0C0C0";
-    case 2:
-      return "#CD7F32";
-    default:
-      return "transparent";
+    case 0: return "#FFD700";
+    case 1: return "#C0C0C0";
+    case 2: return "#CD7F32";
+    default: return "transparent";
   }
 }
 
 interface TeamCardProps {
-  team: Team & { totalPoints: number; colors: { primary: string; gradient: string; light: string } };
+  team: Team & { totalPoints: number; colors: typeof TEAM_COLORS[string] };
   index: number;
   maxPoints: number;
 }
@@ -86,186 +90,174 @@ function TeamCard({ team, index, maxPoints }: TeamCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.1 }}
+      initial={{ opacity: 0, scale: 0.9 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      whileHover={{ y: -5, scale: 1.02 }}
       className="relative group"
     >
       <div
-        className={`bg-gradient-to-br ${team.colors.gradient} rounded-2xl shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl transform-gpu p-[3px] ${isTopThree ? 'ring-2 ring-offset-2 ring-offset-[#fffcf5]' : ''
-          }`}
-        style={isTopThree ? {
-          boxShadow: `0 0 0 2px ${getMedalColor(index)}40, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)`
-        } as React.CSSProperties : {}}
+        className={`relative overflow-hidden bg-white border border-gray-100 rounded-3xl p-5 transition-all duration-300 ${team.colors.glow} hover:shadow-2xl shadow-xl z-0`}
       >
-        <div className="bg-white rounded-2xl p-3 sm:p-4 md:p-5 backdrop-blur-sm relative overflow-hidden">
-          {/* Decorative gradient overlay */}
-          <div
-            className="absolute top-0 right-0 w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 opacity-5 rounded-full blur-3xl"
-            style={{ backgroundColor: team.colors.primary }}
-          />
+        {/* Dynamic Gradient Border/Glow effect */}
+        <div className={`absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b ${team.colors.gradient}`} />
 
-          <div className="relative z-10">
-            <div className="flex items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2">
-              <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
-                <div
-                  className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center rounded-xl sm:rounded-2xl font-bold text-lg sm:text-xl md:text-2xl shadow-md sm:shadow-lg transition-transform group-hover:scale-110 shrink-0"
-                  style={{
-                    backgroundColor: team.colors.light,
-                    border: `2px solid ${team.colors.primary}20`,
-                    borderRadius: '1rem'
-                  }}
-                >
-                  <span style={{ color: team.colors.primary }}>{team.name.charAt(0)}</span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                    <h3 className="font-bold text-gray-900 text-sm sm:text-base md:text-lg truncate">{team.name}</h3>
-                    {isTopThree && (
-                      <motion.div
-                        animate={{ rotate: [0, 10, -10, 0] }}
-                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                        className="shrink-0"
-                      >
-                        <Medal className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" style={{ color: getMedalColor(index) }} />
-                      </motion.div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
-                      Rank #{index + 1}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="text-right shrink-0">
-                <span className="font-bold text-xl sm:text-2xl md:text-3xl text-gray-900 block leading-none">
-                  {formatNumber(team.totalPoints)}
-                </span>
-                <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">points</p>
-              </div>
+        {/* Hover Gradient Background */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${team.colors.gradient} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300 pointer-events-none`} />
+
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-4">
+            {/* Rank Badge */}
+            <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br ${team.colors.gradient} text-white font-bold shadow-lg`}>
+              <span className="text-lg leading-none">#{index + 1}</span>
             </div>
 
-            <div className="space-y-1.5 sm:space-y-2">
-              <div className="w-full bg-gray-100 rounded-full h-2.5 sm:h-3 md:h-3.5 overflow-hidden shadow-inner">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${percentage}%` }}
-                  transition={{ duration: 0.8, delay: index * 0.1 + 0.3, ease: "easeOut" }}
-                  className="h-full rounded-full transition-all duration-500 shadow-sm relative overflow-hidden"
-                  style={{
-                    backgroundColor: team.colors.primary,
-                    borderRadius: '9999px'
-                  }}
-                >
-                  <motion.div
-                    animate={{ x: ['-100%', '100%'] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full"
-                  />
-                </motion.div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-gray-900 text-lg tracking-tight">{team.name}</h3>
+                {isTopThree && (
+                  <Medal className="w-5 h-5 drop-shadow-md animate-pulse" style={{ color: getMedalColor(index) }} />
+                )}
               </div>
-              <div className="flex justify-between items-center text-[10px] sm:text-xs">
-                <span className="text-gray-600 font-medium">Progress</span>
-                <span className="font-bold text-gray-900">{percentage.toFixed(1)}%</span>
+              {/* Mock Trend Indicator */}
+              <div className="flex items-center gap-1 text-xs font-medium text-gray-500">
+                {index === 0 ? (
+                  <div className="flex items-center text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                    <TrendingUp className="w-3 h-3 mr-1" /> Leading
+                  </div>
+                ) : index < 3 ? (
+                  <div className="flex items-center text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                    <TrendingUp className="w-3 h-3 mr-1" /> Chasing
+                  </div>
+                ) : (
+                  <div className="flex items-center text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
+                    <Minus className="w-3 h-3 mr-1" /> Stable
+                  </div>
+                )}
               </div>
             </div>
           </div>
+
+          <div className="text-right">
+            <span className="block text-3xl font-black text-gray-900 tracking-tight" style={{ fontVariantNumeric: "tabular-nums" }}>
+              {formatNumber(team.totalPoints)}
+            </span>
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Points</span>
+          </div>
         </div>
+
+        {/* Enhanced Progress Bar */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-xs font-medium text-gray-500 mb-1">
+            <span>Performance</span>
+            <span style={{ color: team.colors.primary }}>{percentage.toFixed(0)}%</span>
+          </div>
+          <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden p-[2px]">
+            <motion.div
+              initial={{ width: 0 }}
+              whileInView={{ width: `${percentage}%` }}
+              viewport={{ once: true }}
+              transition={{ duration: 1, ease: "circOut" }}
+              className={`h-full rounded-full bg-gradient-to-r ${team.colors.gradient} relative overflow-hidden`}
+            >
+              <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" />
+            </motion.div>
+          </div>
+        </div>
+
       </div>
     </motion.div>
   );
 }
 
+// Chart Components
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-xl border border-gray-100">
-        <p className="font-bold text-gray-900">{data.name}</p>
-        <p className="text-sm font-semibold" style={{ color: data.colors.primary }}>
-          {formatNumber(data.totalPoints)} points
-        </p>
+      <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white/20 ring-1 ring-black/5">
+        <p className="font-bold text-gray-900 text-lg mb-1">{data.name}</p>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: data.colors.primary }} />
+          <p className="font-mono font-bold text-gray-600">
+            {formatNumber(data.totalPoints)} <span className="text-xs font-sans font-normal text-gray-400">PTS</span>
+          </p>
+        </div>
       </div>
     );
   }
   return null;
 };
 
-interface DistributionChartProps {
-  teams: Array<Team & { totalPoints: number; colors: { primary: string; stroke: string } }>;
-}
+function AnalyticsSection({ teams }: { teams: any[] }) {
+  const [viewMode, setViewMode] = useState<'total' | 'daily' | 'category'>('total');
 
-function DesktopDistributionChart({ teams }: DistributionChartProps) {
   return (
-    <div className="hidden md:flex flex-col h-full min-h-[400px] p-6 rounded-3xl bg-white border border-gray-100 shadow-xl">
-      <div className="mb-6">
-        <h4 className="text-lg font-bold text-gray-900">Points Distribution</h4>
-        <p className="text-sm text-gray-500">Comparative analysis of team performance</p>
-      </div>
-      <div className="flex-1 w-full min-h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={teams} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-            <XAxis
-              dataKey="name"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#6B7280', fontSize: 12, fontWeight: 600 }}
-              dy={10}
-              tickFormatter={(value) => value.slice(0, 3).toUpperCase()}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#9CA3AF', fontSize: 12 }}
-              dx={-10}
-            />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)' }} />
-            <Bar dataKey="totalPoints" radius={[8, 8, 0, 0]} animationDuration={1500}>
-              {teams.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.colors.primary} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-}
+    <div className="h-full bg-white border border-gray-100 rounded-3xl p-6 shadow-xl flex flex-col">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div>
+          <h4 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-[#8B4513]" /> Analytics
+          </h4>
+          <p className="text-sm text-gray-500">Live performance breakdown</p>
+        </div>
 
-function MobileDistributionChart({ teams }: DistributionChartProps) {
-  return (
-    <div className="md:hidden flex flex-col h-[350px] p-4 rounded-3xl bg-white border border-gray-100 shadow-lg">
-      <div className="mb-4">
-        <h4 className="text-base font-bold text-gray-900">Points Distribution</h4>
-        <p className="text-xs text-gray-500">Team performance overview</p>
-      </div>
-      <div className="flex-1 w-full min-h-[250px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={teams}
-            layout="vertical"
-            margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+        {/* Toggles */}
+        <div className="flex p-1 bg-gray-100 rounded-xl">
+          <button
+            onClick={() => setViewMode('total')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${viewMode === 'total' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-            <XAxis type="number" hide />
-            <YAxis
-              dataKey="name"
-              type="category"
-              axisLine={false}
-              tickLine={false}
-              width={80}
-              tick={{ fill: '#4B5563', fontSize: 11, fontWeight: 600 }}
-            />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)' }} />
-            <Bar dataKey="totalPoints" radius={[0, 10, 10, 0]} barSize={20} animationDuration={1500}>
-              {teams.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.colors.primary} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+            Total
+          </button>
+          <button
+            onClick={() => setViewMode('daily')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${viewMode === 'daily' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Daily
+          </button>
+          <button
+            onClick={() => setViewMode('category')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${viewMode === 'category' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Cat.
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 w-full min-h-[300px] relative">
+        {viewMode === 'total' ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={teams} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#6B7280', fontSize: 11, fontWeight: 700 }}
+                dy={10}
+                tickFormatter={(value) => value.slice(0, 3).toUpperCase()}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#9CA3AF', fontSize: 11 }}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)' }} />
+              <Bar dataKey="totalPoints" radius={[6, 6, 6, 6]} barSize={32} animationDuration={1000}>
+                {teams.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.colors.primary} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+            <LineChart className="w-12 h-12 mb-2 opacity-20" />
+            <p className="text-sm font-medium">Detailed breakdown coming soon</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -279,6 +271,7 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
       gradient: "from-gray-500 to-gray-600",
       light: "#F9FAFB",
       stroke: "#4B5563",
+      glow: "shadow-gray-500/20",
     };
     return { ...team, totalPoints, colors };
   });
@@ -287,84 +280,84 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
   const maxPoints = Math.max(...sortedTeams.map((t) => t.totalPoints), 1);
 
   return (
-    <section className="space-y-6 sm:space-y-8 md:space-y-10">
+    <section className="space-y-8 relative z-10">
+      {/* Background Decor */}
+      <div className="absolute -top-20 -left-20 w-64 h-64 bg-amber-500/5 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute top-40 right-0 w-96 h-96 bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
+
       {/* Header Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-center space-y-2 sm:space-y-3 md:space-y-4 px-2"
-      >
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 md:gap-4 mb-1 sm:mb-2">
-          <div className="relative">
-            <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-2 sm:p-2.5 md:p-3 rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg">
-              <Activity className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 px-2">
+        <div className="space-y-2">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="flex items-center gap-2"
+          >
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-100 text-red-600 animate-pulse">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-600" />
+            </span>
+            <span className="text-red-600 font-bold tracking-widest text-xs uppercase">Live Updates</span>
+          </motion.div>
+          <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8B4513] to-amber-600">SCORE</span> PULSE
+          </h2>
+          <p className="text-gray-500 max-w-md text-lg">
+            Real-time tracking of the championship race. Watch the battle unfold.
+          </p>
+        </div>
+
+        <div className="hidden md:block pb-2">
+          <div className="flex -space-x-2">
+            {sortedTeams.slice(0, 3).map((t, i) => (
+              <div key={t.id} className="w-10 h-10 rounded-full border-2 border-white shadow-lg bg-gray-100 flex items-center justify-center font-bold text-xs" style={{ backgroundColor: t.colors.light, color: t.colors.primary }}>
+                {t.name[0]}
+              </div>
+            ))}
+            <div className="w-10 h-10 rounded-full border-2 border-white shadow-lg bg-gray-100 flex items-center justify-center font-bold text-xs text-gray-400">
+              +{sortedTeams.length - 3}
             </div>
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="absolute inset-0 bg-cyan-400 rounded-lg sm:rounded-xl md:rounded-2xl opacity-20 blur-xl"
-            />
-          </div>
-          <div className="text-center sm:text-left">
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-serif text-[#8B4513] mb-0.5 sm:mb-1">
-              Live Score Pulse
-            </h2>
-            <p className="text-gray-600 text-xs sm:text-sm md:text-base">Real-time team rankings & performance</p>
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
-        {/* Team Cards */}
-        <div className="lg:col-span-2 order-2 lg:order-1">
-          <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
+      {/* Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        {/* Team Cards - Left Column */}
+        <div className="lg:col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {sortedTeams.map((team, index) => (
               <TeamCard key={team.id} team={team} index={index} maxPoints={maxPoints} />
             ))}
           </div>
         </div>
 
-        {/* Distribution Charts */}
-        <div className="order-1 lg:order-2">
-          <DesktopDistributionChart teams={sortedTeams} />
-          <MobileDistributionChart teams={sortedTeams} />
+        {/* Analytics - Right Side */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex-1"
+          >
+            <AnalyticsSection teams={sortedTeams} />
+          </motion.div>
+
+          {/* Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="grid grid-cols-1 gap-3"
+          >
+            <Link href="/scoreboard" className="w-full">
+              <Button className="w-full h-14 text-lg font-bold bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-900/20 hover:shadow-zinc-900/30 transition-all rounded-2xl group">
+                Full Scoreboard <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </Button>
+            </Link>
+          </motion.div>
         </div>
       </div>
-
-      {/* Action Buttons */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 pt-4 sm:pt-6 px-4"
-      >
-        <Link
-          href="/scoreboard"
-          className="group relative bg-gradient-to-r from-[#8B4513] to-[#6B3410] hover:from-[#6B3410] hover:to-[#8B4513] transition-all py-3 sm:py-4 px-6 sm:px-10 rounded-lg sm:rounded-xl text-sm sm:text-base md:text-lg font-semibold text-white shadow-xl hover:shadow-2xl transform-gpu transition-all duration-300 hover:scale-105 overflow-hidden w-full sm:w-auto text-center"
-        >
-          <span className="relative z-10">View Full Scoreboard</span>
-          <motion.div
-            className="absolute inset-0 bg-white/20"
-            initial={{ x: '-100%' }}
-            whileHover={{ x: '100%' }}
-            transition={{ duration: 0.5 }}
-          />
-        </Link>
-        <Link
-          href="/results"
-          className="group relative bg-gradient-to-r from-[#0d7377] to-[#0a5a5d] hover:from-[#0a5a5d] hover:to-[#0d7377] transition-all py-3 sm:py-4 px-6 sm:px-10 rounded-lg sm:rounded-xl text-sm sm:text-base md:text-lg font-semibold text-white shadow-xl hover:shadow-2xl transform-gpu transition-all duration-300 hover:scale-105 overflow-hidden w-full sm:w-auto text-center"
-        >
-          <span className="relative z-10">View Results</span>
-          <motion.div
-            className="absolute inset-0 bg-white/20"
-            initial={{ x: '-100%' }}
-            whileHover={{ x: '100%' }}
-            transition={{ duration: 0.5 }}
-          />
-        </Link>
-      </motion.div>
     </section>
   );
 }
