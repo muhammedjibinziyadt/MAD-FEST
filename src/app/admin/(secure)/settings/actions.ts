@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { connectDB } from "@/lib/db";
 import { AdminSettingsModel } from "@/lib/models";
-import { getAdminCredentials } from "@/lib/auth";
+import { hashPassword, verifyPassword } from "@/lib/auth";
 import { sendCredentialUpdateEmail } from "@/lib/email-service";
 
 export async function updateAdminCredentials(
@@ -19,9 +19,17 @@ export async function updateAdminCredentials(
             return { error: "All fields are required." };
         }
 
+        await connectDB();
+        const currentSettings = await AdminSettingsModel.findOne();
+
         // Verify current password
-        const currentCredentials = await getAdminCredentials();
-        if (currentPassword !== currentCredentials.password) {
+        // If no settings exist (should be seeded), returning error is safest
+        if (!currentSettings) {
+            return { error: "Admin settings not found. Contact support." };
+        }
+
+        const isMatch = await verifyPassword(currentPassword, currentSettings.password);
+        if (!isMatch) {
             return { error: "Incorrect current password." };
         }
 
@@ -29,16 +37,17 @@ export async function updateAdminCredentials(
             return { error: "Password must be at least 6 characters long." };
         }
 
-        await connectDB();
+        // Hash the new password before saving
+        const hashedPassword = await hashPassword(password);
 
-        // Update the first document found, or create if it doesn't exist (though it should exist by now)
+        // Update the settings
         await AdminSettingsModel.findOneAndUpdate(
             {},
-            { username, password },
+            { username, password: hashedPassword },
             { upsert: true, new: true }
         );
 
-        // Send email notification
+        // Send email notification with plain password for user reference
         await sendCredentialUpdateEmail({ username, password });
 
         revalidatePath("/admin/settings");
