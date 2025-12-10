@@ -28,147 +28,108 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
   return (
     <main className="space-y-16">
       {/* Hero Section */}
-      <section className="relative overflow-hidden min-h-screen bg-[#fffcf5] p-4 sm:p-6 md:p-12 lg:p-16 flex flex-col">
-        {/* Decorative waves at bottom - full width */}
-        <div className="absolute bottom-0 left-0 right-0 w-full h-12 md:h-16 lg:h-22 z-0">
+      <section className="relative w-full min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#FFFCF5]">
+
+        {/* Decorative Sun/Starburst - Left (Half Visible) */}
+        <div className="absolute top-3/4 left-0 -translate-y-1/2 -translate-x-1/2 w-40 h-40 opacity-90 animate-[sun-rotate_60s_linear_infinite]">
           <Image
-            src="/img/hero/waves.webp"
-            alt="Decorative waves"
+            src="/img/assets/sun.webp"
+            alt="Decoration Left"
             fill
-            className="object-cover object-bottom"
-            priority
-            style={{ width: '100%' }}
+            className="object-contain"
           />
         </div>
 
-        <div className="container mx-auto max-w-7xl relative z-10 flex-1 flex flex-col lg:justify-center">
-          {/* Mobile Layout: Vertical Stack */}
-          <div className="flex flex-col lg:hidden space-y-4 sm:space-y-5 w-full pt-2">
-            {/* Top Bar - Logo and Menu (Mobile) */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="relative w-16 h-16 shrink-0">
-                <Image
-                  src="/img/hero/Fest-logo.webp"
-                  alt="Funoon Fiesta Logo"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-            </div>
+        {/* Decorative Sun/Starburst - Top Right (Half Visible) */}
+        <div className="absolute top-20 right-0 translate-x-1/2 w-48 h-48 opacity-90 animate-[sun-rotate_60s_linear_infinite]">
+          <Image
+            src="/img/assets/sun.webp"
+            alt="Decoration Right"
+            fill
+            className="object-contain"
+          />
+        </div>
 
-            {/* Illustration - Full Width (Mobile) */}
-            <div className="relative w-full h-[250px] sm:h-[320px] md:h-[380px] mx-auto -mt-2">
-              <Image
-                src="/img/hero/Left-side-image-for-hero section.webp"
-                alt="Cultural Heritage Illustration"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
+        {/* Content Container */}
+        <div className="relative z-40 flex flex-col items-center text-center px-4 max-w-5xl -mt-10">
 
-            {/* Malayalam Text - Centered (Mobile) - Bigger */}
-            <div className="flex justify-center px-4 -mt-2">
-              <div className="relative w-full max-w-lg sm:max-w-xl h-24 sm:h-32 md:h-40">
-                <Image
-                  src="/img/hero/Typegraphy.webp"
-                  alt="ശതകം സാക്ഷി"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-            </div>
+          {/* Small Star above Ship */}
+          {/* <div className="relative w-8 h-8 sm:w-12 sm:h-12 mb-4 animate-[spin_12s_linear_infinite]">
+            <Image
+              src="/img/assets/sun.webp"
+              alt="Star"
+              fill
+              className="object-contain"
+            />
+          </div> */}
 
-            {/* Description - Centered (Mobile) */}
-            <div className="text-center space-y-4 px-4">
-              <p className="text-sm sm:text-base text-gray-700 leading-relaxed max-w-lg mx-auto">
-                For a hundred years, the Malabar coast has carried the rhythm of a community shaped by knowledge, faith, and artistic expression.
-              </p>
-
-              {/* CTA Button - Centered (Mobile) - Smaller */}
-              <div className="pt-1">
-                <Link href="/results">
-                  <Button className="bg-[#FACC15] hover:bg-[#EAB308] text-black font-medium px-6 py-3 text-sm sm:text-base rounded-lg shadow-md hover:shadow-lg transition-all w-auto">
-                    Click to Dive in
-                  </Button>
-                </Link>
-              </div>
-            </div>
+          {/* Ship - Center */}
+          <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-[300px] lg:h-[300px] mb-2">
+            <Image
+              src="/img/assets/ship.webp"
+              alt="Ship"
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
 
-          {/* Desktop Layout: Side by Side */}
-          <div className="hidden lg:grid lg:grid-cols-2 gap-8 xl:gap-12 items-center w-full">
-            {/* Left Side - Illustration */}
-            <div className="relative w-full h-[500px] xl:h-[600px]">
-              <Image
-                src="/img/hero/Left-side-image-for-hero section.webp"
-                alt="Cultural Heritage Illustration"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
+          {/* Main Title - Charutha Font */}
+          <div>
+            <h1 className="text-[#8B4513] text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-2 font-['Charutha'] tracking-wide drop-shadow-sm leading-5">
+            FUNOON FIESTA '25-26
+          </h1>
 
-            {/* Right Side - Content */}
-            <div className="space-y-6 xl:space-y-8">
-              {/* Logo and Malayalam Script */}
-              <div className="flex items-center gap-4 xl:gap-6">
-                {/* Logo with text below */}
-                <div className="shrink-0 flex flex-col items-center">
-                  <div className="relative w-24 h-24 xl:w-36 xl:h-36 mb-1">
-                    <Image
-                      src="/img/hero/Fest-logo.webp"
-                      alt="Funoon Fiesta Logo"
-                      fill
-                      className="object-contain"
-                      priority
-                    />
-                  </div>
-                </div>
-                {/* Malayalam Text */}
-                <div className="flex-1 pt-1">
-                  <div className="relative w-full h-14 xl:h-28">
-                    <Image
-                      src="/img/hero/Typegraphy.webp"
-                      alt="ശതകം സാക്ഷി"
-                      fill
-                      className="object-contain object-left"
-                      priority
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Main Title */}
-              <div>
-                <h1 className="text-4xl xl:text-5xl 2xl:text-7xl font-serif text-[#8B4513] leading-15 mb-2 ">
-                  Funoon Fiesta
-                </h1>
-                <p className="text-lg xl:text-xl text-gray-600 font-medium tracking-wide">
-                  Showcasing Islamic Art & Culture
-                </p>
-                <p className="text-xl xl:text-2xl text-[#8B4513] font-light tracking-widest">
-                  2025 - 26
-                </p>
-              </div>
-
-              {/* Description */}
-              <p className="text-xm xl:text-md text-gray-700 leading-relaxed max-w-3xl">
-                For a hundred years, the Malabar coast has carried the rhythm of a community shaped by knowledge, faith, and artistic expression. Funoon Fiesta 2025-26 is the creative bridge that connects this century-long legacy to a new generation. Rooted in the centenary of Samastha Kerala Jamiyyathul Ulama, this edition proudly carries the theme "Shathakam Saakshi" – a tribute to the scholars, institutions, and countless individuals who illuminated our path.
-              </p>
-
-              {/* CTA Button */}
-              <div>
-                <Link href="/results">
-                  <Button className="bg-[#FACC15] hover:bg-[#EAB308] text-black font-semibold px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all">
-                    Click to Dive in
-                  </Button>
-                </Link>
-              </div>
-            </div>
+          {/* Subtitle - Bricolage Font */}
+          <h2 className="text-black text-xl sm:text-xl md:text-2xl font-['Bricolage'] mb-6 font-semibold tracking-tight">
+            Showcasing Islamic Art & Culture
+          </h2>
           </div>
+
+          {/* Description */}
+          <p className="text-gray-600 text-sm sm:text-base md:text-lg max-w-3xl mx-auto leading-relaxed mb-8 px-4">
+            For a hundred years, the Malabar coast has echoed with knowledge, faith, and art. Funoon
+            Fiesta 2025–26 bridges this rich legacy with a new generation, honoring Samastha’s
+            centenary under the theme “Shathakam Saakshi.”
+          </p>
+
+          {/* CTA Button */}
+          <div className="relative z-50">
+            <Link href="/results">
+              <Button className="bg-[#F2C04D] hover:bg-[#dgb13d] text-black font-medium text-lg px-6 py-6 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-3">
+                Click to Dive In
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Waves - Bottom Layered - Infinite Loop SVG */}
+        <div className="absolute bottom-0 left-0 w-full h-[150px] sm:h-[180px] md:h-[220px] z-30 pointer-events-none overflow-hidden">
+          <svg className="absolute bottom-0 left-0 w-[200%] h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 2880 320">
+            {/* Wave 3 (Back) */}
+            <path
+              fill="#0891b2"
+              fillOpacity="1"
+              d="M0,220 C480 290 960 150 1440 220 C1920 290 2400 150 2880 220 V320 H0 Z"
+              className="animate-[wave-slide_20s_linear_infinite]"
+              style={{ transformBox: 'fill-box' }}
+            />
+            {/* Wave 2 (Middle) */}
+            <path
+              fill="#0e7490"
+              fillOpacity="1"
+              d="M0,250 C400 310 1000 170 1440 250 C1840 310 2440 170 2880 250 V320 H0 Z"
+              className="animate-[wave-slide_15s_linear_infinite]"
+              style={{ animationDirection: 'reverse' }}
+            />
+            {/* Wave 1 (Front) */}
+            <path
+              fill="#155e75"
+              fillOpacity="1"
+              d="M0,280 C550 330 850 210 1440 280 C2030 330 2230 210 2880 280 V320 H0 Z"
+              className="animate-[wave-slide_12s_linear_infinite]"
+            />
+          </svg>
         </div>
       </section>
 

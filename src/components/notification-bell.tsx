@@ -97,7 +97,7 @@ export function NotificationBell({
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "relative p-3 rounded-full transition-all duration-300",
-          "bg-white/80 backdrop-blur-md shadow-lg border border-white/20",
+          "bg-[#F2C04D] backdrop-blur-md shadow-lg border border-white/20",
           "hover:bg-white hover:shadow-xl hover:border-purple-200",
           isOpen && "bg-white ring-2 ring-purple-500/20"
         )}
@@ -105,7 +105,7 @@ export function NotificationBell({
       >
         <Bell className={cn(
           "w-5 h-5 transition-colors",
-          unreadCount > 0 ? "text-purple-600" : "text-gray-600"
+          unreadCount > 0 ? "text-purple-600" : "text-gray-800"
         )} />
 
         <AnimatePresence>
