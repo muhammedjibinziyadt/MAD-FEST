@@ -31,7 +31,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
       <section className="relative w-full min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#FFFCF5]">
 
         {/* Decorative Sun/Starburst - Left (Half Visible) */}
-        <div className="absolute top-3/4 left-0 -translate-y-1/2 -translate-x-1/2 w-40 h-40 opacity-90 animate-[sun-rotate_60s_linear_infinite]">
+        <div className="absolute top-3/4 left-0 -translate-y-1/2 -translate-x-1/2 w-20 h-20 md:w-40 md:h-40 opacity-90 animate-[sun-rotate_60s_linear_infinite]">
           <Image
             src="/img/assets/sun.webp"
             alt="Decoration Left"
@@ -41,7 +41,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
         </div>
 
         {/* Decorative Sun/Starburst - Top Right (Half Visible) */}
-        <div className="absolute top-20 right-0 translate-x-1/2 w-48 h-48 opacity-90 animate-[sun-rotate_60s_linear_infinite]">
+        <div className="absolute top-20 right-0 translate-x-1/2 w-26 h-26 md:w-48 md:h-48 opacity-90 animate-[sun-rotate_60s_linear_infinite]">
           <Image
             src="/img/assets/sun.webp"
             alt="Decoration Right"
@@ -76,18 +76,18 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
 
           {/* Main Title - Charutha Font */}
           <div>
-            <h1 className="text-[#8B4513] text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-2 font-['Charutha'] tracking-wide drop-shadow-sm leading-5">
+            <h1 className="text-[#A13A24] text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-2 font-['Charutha'] tracking-wide leading-5 md:leading-7">
               FUNOON FIESTA '25-26
             </h1>
 
             {/* Subtitle - Bricolage Font */}
-            <h2 className="text-black text-xl sm:text-xl md:text-2xl font-['Bricolage'] mb-6 font-semibold tracking-tight">
+            <h2 className="text-black text-xl sm:text-xl md:text-3xl font-['Bricolage'] mb-6 font-semibold tracking-tight">
               Showcasing Islamic Art & Culture
             </h2>
           </div>
 
           {/* Description */}
-          <p className="text-gray-600 text-sm sm:text-base md:text-lg max-w-3xl mx-auto leading-relaxed mb-8 px-4">
+          <p className="text-gray-600 text-sm sm:text-base md:text-lg max-w-3xl mx-auto mb-8 px-4 leading-5 font-light">
             For a hundred years, the Malabar coast has echoed with knowledge, faith, and art. Funoon
             Fiesta 2025–26 bridges this rich legacy with a new generation, honoring Samastha’s
             centenary under the theme “Shathakam Saakshi.”
@@ -96,9 +96,9 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
           {/* CTA Button */}
           <div className="relative z-50">
             <Link href="/results">
-              <Button className="bg-[#F2C04D] hover:bg-[#dgb13d] text-black font-medium text-lg px-6 py-6 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-3">
+              <div className="bg-[#F2C04D] hover:bg-[#dgb13d] text-black font-medium text-lg px-8 py-3 rounded-3xl shadow-lg transition-transform hover:scale-105 flex items-center gap-3">
                 Click to Dive In
-              </Button>
+              </div>
             </Link>
           </div>
         </div>

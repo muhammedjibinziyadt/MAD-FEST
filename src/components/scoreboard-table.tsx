@@ -96,7 +96,7 @@ function MobileScoreCard({
     <motion.div
       initial={false}
       animate={{ backgroundColor: isExpanded ? "rgba(139, 69, 19, 0.1)" : "transparent" }}
-      className="bg-white rounded-lg shadow-md border border-gray-200 mb-4 overflow-hidden"
+      className="bg-white rounded-2xl shadow-md border border-gray-200 mb-4 overflow-hidden"
     >
       <div
         className={`flex justify-between items-center p-4 cursor-pointer ${
@@ -305,7 +305,7 @@ export function ScoreboardTable({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-red-50 rounded-xl shadow-md border border-red-200 p-4"
+        className="bg-red-50 rounded-2xl shadow-md border border-red-200 p-4"
       >
         <h3 className="text-lg font-bold text-red-900 mb-4">MINUS POINTS</h3>
         <div className="grid grid-cols-2 gap-4">

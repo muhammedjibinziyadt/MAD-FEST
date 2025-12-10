@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
@@ -10,6 +12,7 @@ import {
   Bot
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -21,6 +24,7 @@ const navItems = [
 
 export function VerticalNavSidebar() {
   const pathname = usePathname();
+  const [isHovered, setIsHovered] = useState(false);
 
   const renderLink = (item: typeof navItems[number], orientation: "vertical" | "horizontal") => {
     const Icon = item.icon;
@@ -35,7 +39,7 @@ export function VerticalNavSidebar() {
         className={cn(
           "relative flex items-center justify-center transition-all duration-300 text-center",
           orientation === "vertical"
-            ? "w-12 h-12 rounded-2xl group hover:rounded-2xl"
+            ? "w-10 h-10 md:w-12 md:h-12 rounded-2xl group hover:rounded-2xl"
             : "flex-1 flex-col py-2 rounded-2xl",
           isActive
             ? "bg-[#8B4513] text-white shadow-md shadow-[#8B4513]/20"
@@ -70,15 +74,41 @@ export function VerticalNavSidebar() {
   return (
     <>
       {/* Desktop vertical sidebar */}
-      <aside className="hidden lg:flex fixed left-4 top-1/2 -translate-y-1/2 z-50">
-        <nav className="bg-white rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/50 p-3 flex flex-col gap-2 backdrop-blur-sm">
-          {navItems.map((item) => renderLink(item, "vertical"))}
-        </nav>
+      <aside
+        className="hidden lg:flex fixed left-10 top-8 z-50 flex-col items-center"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Trigger Icon */}
+        <div className="cursor-pointer drop-shadow-lg transition-transform duration-300 hover:scale-105 relative z-20">
+          <Image
+            src="/img/hero/navicon.svg"
+            width={50}
+            height={50}
+            alt="Menu"
+            className="w-10 h-10"
+          />
+        </div>
+
+        {/* Expanded Nav List */}
+        <AnimatePresence>
+          {isHovered && (
+            <motion.nav
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-md rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.1)] border border-white/40 p-1.5 flex flex-col gap-1 overflow-hidden origin-top z-10"
+            >
+              {navItems.map((item) => renderLink(item, "vertical"))}
+            </motion.nav>
+          )}
+        </AnimatePresence>
       </aside>
 
       {/* Mobile bottom navigation */}
-      <div className="lg:hidden fixed inset-x-0 bottom-4 flex justify-center z-50 px-4">
-        <nav className="w-full max-w-md bg-white/20 backdrop-blur-md border border-gray-200/40 rounded-3xl shadow-[0_12px_30px_rgba(0,0,0,0.15)] px-2 py-2 flex gap-2">
+      <div className="lg:hidden fixed inset-x-0 bottom-6 flex justify-center z-50 px-4">
+        <nav className="w-full max-w-xs bg-white/60 backdrop-blur-md border border-gray-200/40 rounded-3xl shadow-[0_12px_30px_rgba(0,0,0,0.15)] px-2 py-2 flex gap-2">
           {navItems.map((item) => renderLink(item, "horizontal"))}
         </nav>
       </div>

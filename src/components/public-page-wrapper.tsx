@@ -21,7 +21,7 @@ export function PublicPageWrapper({ children }: PublicPageWrapperProps) {
     return (
       <div className="min-h-screen bg-[#fffcf5] relative">
         <VerticalNavSidebar />
-        <div className="fixed top-4 right-4 z-50">
+        <div className="fixed top-4 md:top-8 right-4 md:right-8 z-50">
           <NotificationProvider />
         </div>
         {children}
