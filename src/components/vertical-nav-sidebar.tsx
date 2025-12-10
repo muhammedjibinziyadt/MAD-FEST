@@ -78,7 +78,7 @@ export function VerticalNavSidebar() {
 
       {/* Mobile bottom navigation */}
       <div className="lg:hidden fixed inset-x-0 bottom-4 flex justify-center z-50 px-4">
-        <nav className="w-full max-w-md bg-white/20 backdrop-blur-xl border border-gray-200/40 rounded-3xl shadow-[0_12px_30px_rgba(0,0,0,0.15)] px-2 py-2 flex gap-2">
+        <nav className="w-full max-w-md bg-white/20 backdrop-blur-md border border-gray-200/40 rounded-3xl shadow-[0_12px_30px_rgba(0,0,0,0.15)] px-2 py-2 flex gap-2">
           {navItems.map((item) => renderLink(item, "horizontal"))}
         </nav>
       </div>
