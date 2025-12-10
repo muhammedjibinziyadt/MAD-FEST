@@ -110,16 +110,16 @@ export function TeamLeadersShowcase({ teams }: TeamLeadersShowcaseProps) {
           {/* Navigation Buttons */}
           <button
             onClick={handlePrev}
-            className="absolute left-2 sm:left-4 z-20 p-3 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:bg-white text-gray-800 transition-all hover:scale-110"
+            className="hidden sm:flex absolute left-4 z-20 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:bg-white text-gray-800 transition-all hover:scale-110 items-center justify-center"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-4 h-4" />
           </button>
 
           <button
             onClick={handleNext}
-            className="absolute right-2 sm:right-4 z-20 p-3 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:bg-white text-gray-800 transition-all hover:scale-110"
+            className="hidden sm:flex absolute right-4 z-20 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:bg-white text-gray-800 transition-all hover:scale-110 items-center justify-center"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-4 h-4" />
           </button>
 
           <AnimatePresence initial={false} custom={direction} mode="popLayout">
@@ -130,14 +130,26 @@ export function TeamLeadersShowcase({ teams }: TeamLeadersShowcaseProps) {
               initial="enter"
               animate="center"
               exit="exit"
-              className="absolute w-full max-w-sm sm:max-w-md md:max-w-lg aspect-3/4 sm:aspect-4/5 md:aspect-square flex items-center justify-center"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={1}
+              onDragEnd={(e, { offset, velocity }) => {
+                const swipe = Math.abs(offset.x) * velocity.x;
+                const swipeConfidenceThreshold = 10000;
+                if (swipe < -swipeConfidenceThreshold) {
+                  handleNext();
+                } else if (swipe > swipeConfidenceThreshold) {
+                  handlePrev();
+                }
+              }}
+              className="absolute w-full max-w-sm sm:max-w-md md:max-w-lg aspect-3/4 sm:aspect-4/5 md:aspect-square flex items-center justify-center touch-pan-y cursor-grab active:cursor-grabbing"
             >
               <div className="relative w-full h-full drop-shadow-2xl hover:scale-[1.02] transition-transform duration-500">
                 <Image
                   src={getImage(teams[currentIndex]?.name || "")}
                   alt={teams[currentIndex]?.name || "Team Captain"}
                   fill
-                  className="object-contain"
+                  className="object-contain pointer-events-none"
                   priority
                 />
               </div>
@@ -146,41 +158,41 @@ export function TeamLeadersShowcase({ teams }: TeamLeadersShowcaseProps) {
         </div>
 
         {/* Pagination Dots */}
-        {/* Pagination Dots - Dynamic Sliding Window */}
-        <div className="flex justify-center items-center gap-4 mt-8 h-8">
+        <div className="flex justify-center items-center gap-3 mt-6 h-6">
           <AnimatePresence mode="popLayout" initial={false}>
             {[
               (currentIndex - 1 + teams.length) % teams.length,
               currentIndex,
               (currentIndex + 1) % teams.length,
-            ].map((idx, position) => {
+            ].map((idx) => {
               const isCurrent = idx === currentIndex;
               return (
-                <motion.button
+                <motion.div
                   layout
                   key={`dot-${idx}`}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{
-                    scale: isCurrent ? 1 : 1,
-                    opacity: 1,
-                  }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  transition={{
-                    layout: { type: "spring", stiffness: 300, damping: 30 },
-                    opacity: { duration: 0.2 }
-                  }}
                   onClick={() => {
                     if (isCurrent) return;
-                    setDirection(position === 2 ? 1 : -1);
+                    const isNext = idx === (currentIndex + 1) % teams.length;
+                    setDirection(isNext ? 1 : -1);
                     setCurrentIndex(idx);
                   }}
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{
+                    scale: 1,
+                    opacity: 1,
+                    backgroundColor: isCurrent ? "#8B4513" : "#D1D5DB",
+                  }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                  transition={{
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 25
+                  }}
                   className={cn(
-                    "rounded-full transition-colors duration-300",
-                    isCurrent
-                      ? "w-2 h-2 bg-[#8B4513] shadow-md z-10"
-                      : "w-1 h-1 bg-gray-300 hover:bg-gray-400"
+                    "rounded-full cursor-pointer shrink-0",
+                    isCurrent ? "w-3 h-3 shadow-md z-10" : "w-1.5 h-1.5 hover:bg-gray-400"
                   )}
-                  aria-label={isCurrent ? "Current team" : `Go to team ${idx + 1}`}
                 />
               );
             })}
