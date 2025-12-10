@@ -100,7 +100,7 @@ function getGradientColors(style: PosterStyle) {
 export async function generateResultPoster(data: PosterData, style: PosterStyle = 1): Promise<string> {
   // 1. Load poster template background first to get its dimensions
   const gradientColors = getGradientColors(style);
-  const templateUrl = `/poster-template-${style}.jpeg`;
+  const templateUrl = `/poster-template-${style}.webp`;
 
   let templateImage: HTMLImageElement | null = null;
   let imageWidth = 1080; // Default fallback width
@@ -152,9 +152,9 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
   ctx.textBaseline = "middle";
 
   // Program Name - scaled font size
-  const titleY = 120 * scaleY;
+  const titleY = 400 * scaleY;
   const fontSize = 64 * scaleY;
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "#000000ff";
   ctx.font = `bold ${fontSize}px 'Arial', sans-serif`;
   // Truncate long program names if needed
   let displayProgramName = data.programName;
@@ -167,11 +167,12 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
     }
     displayProgramName = displayProgramName + "...";
   }
-  ctx.fillText(displayProgramName, imageWidth / 2, titleY);
+  const leftMargin = 340 * scaleX;
+  ctx.fillText(displayProgramName, leftMargin, titleY);
 
   // 4. Section - smaller than program name, normal style
-  const sectionY = 180 * scaleY; // Decreased gap from ProgramName
-  ctx.fillStyle = "#fbbf24"; // Yellow color for all sections
+  const sectionY = 460 * scaleY; // Decreased gap from ProgramName
+  ctx.fillStyle = "#000000ff"; // Yellow color for all sections
   const sectionFontSize = 48 * scaleY;
   ctx.font = `${sectionFontSize}px 'Arial', sans-serif`; // Normal style, smaller than program name
   // Truncate long section names if needed
@@ -185,11 +186,11 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
     }
     displaySection = displaySection + "...";
   }
-  ctx.fillText(displaySection, imageWidth / 2, sectionY);
+  ctx.fillText(displaySection, leftMargin, sectionY);
 
   // 5. Prize Sections
-  let currentY = 350 * scaleY;
-  const prizeSpacing = 200 * scaleY;
+  let currentY = 550 * scaleY;
+  const prizeSpacing = 125 * scaleY;
   const sectionWidth = 800 * scaleX;
   const sectionX = (imageWidth - sectionWidth) / 2;
 
@@ -199,31 +200,19 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
   sortedPrizes.forEach((prize, index) => {
     const positionY = currentY + index * prizeSpacing;
 
-    // Position emoji icons
-    const positionConfig = {
-      1: { emoji: "🥇" }, // Gold
-      2: { emoji: "🥈" }, // Silver
-      3: { emoji: "🥉" }, // Bronze
-    };
-
-    const config = positionConfig[prize.position as keyof typeof positionConfig];
-
-    // Student/Team Name with emoji icon on the left
+    // Student/Team Name
     const name = prize.studentName || prize.teamName || "—";
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#070101ff";
     const nameFontSize = 48 * scaleY;
     ctx.font = `bold ${nameFontSize}px 'Arial', sans-serif`;
     ctx.textAlign = "left";
 
-    // Calculate icon size and spacing (scaled)
-    const iconSize = 50 * scaleX; // Approximate size for emoji
-    const iconSpacing = 15 * scaleX; // Space between icon and name
     const nameStartX = sectionX + 40 * scaleX;
     const nameY = positionY + 50 * scaleY;
     const teamNameY = nameY + 50 * scaleY; // Team name Y position
 
-    // Truncate long names to fit (accounting for icon width)
-    const maxNameWidth = sectionWidth - 80 * scaleX - iconSize - iconSpacing;
+    // Truncate long names to fit
+    const maxNameWidth = sectionWidth - 80 * scaleX;
     let displayName = name;
     const metrics = ctx.measureText(displayName);
     if (metrics.width > maxNameWidth) {
@@ -234,32 +223,22 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
       displayName = displayName + "...";
     }
 
-    // Calculate icon Y position to be centered between student name and team name
-    // If there's a team name, center between both lines; otherwise align with student name
-    const hasTeamName = (prize.studentName && prize.teamName) || (!prize.studentName && prize.teamName);
-    const iconY = hasTeamName ? (nameY + teamNameY) / 2 : nameY;
-
-    // Draw emoji icon (centered vertically between student and team name)
-    const iconFontSize = 50 * scaleY;
-    ctx.font = `${iconFontSize}px 'Arial', sans-serif`;
-    ctx.fillText(config.emoji, nameStartX, iconY);
-
-    // Draw student/team name next to icon
+    // Draw student/team name
     ctx.font = `bold ${nameFontSize}px 'Arial', sans-serif`;
-    ctx.fillText(displayName, nameStartX + iconSize + iconSpacing, nameY);
+    ctx.fillText(displayName, nameStartX, nameY);
 
-    // Team Name (if student) - smaller font, aligned with icon on left
+    // Team Name (if student) - smaller font
     if (prize.studentName && prize.teamName) {
-      ctx.fillStyle = "#ef4444"; // Red color
+      ctx.fillStyle = "#000000ff"; // Red color
       const teamFontSize = 32 * scaleY;
       ctx.font = `${teamFontSize}px 'Arial', sans-serif`;
-      ctx.fillText(prize.teamName, nameStartX + iconSize + iconSpacing, teamNameY);
+      ctx.fillText(prize.teamName, nameStartX, teamNameY);
     } else if (!prize.studentName && prize.teamName) {
       // Show team name even when no student (group/general sections)
-      ctx.fillStyle = "#ef4444"; // Red color
+      ctx.fillStyle = "#000000ff"; // Red color
       const teamFontSize = 32 * scaleY;
       ctx.font = `${teamFontSize}px 'Arial', sans-serif`;
-      ctx.fillText(prize.teamName, nameStartX + iconSize + iconSpacing, teamNameY);
+      ctx.fillText(prize.teamName, nameStartX, teamNameY);
     }
   });
 
