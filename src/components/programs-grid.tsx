@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Search, Trophy, Medal } from "lucide-react";
 import type { Program, ResultRecord, Student, Team } from "@/lib/types";
+import { ResultProgramCard } from "./result-program-card";
 
 interface ProgramsGridProps {
   programs: Program[];
@@ -33,7 +34,7 @@ const fadeIn = (direction: string, delay: number) => ({
 
 export function ProgramsGrid({ programs, results, programMap, students, teams }: ProgramsGridProps) {
   const [search, setSearch] = useState("");
-
+  const [filter, setFilter] = useState<"all" | "stage" | "non-stage" | "group" | "general">("all");
 
   // Create Maps for efficient lookup
   const studentMap = useMemo(() => new Map(students.map((s) => [s.id, s])), [students]);
@@ -63,23 +64,40 @@ export function ProgramsGrid({ programs, results, programMap, students, teams }:
   }, [programs, results]);
 
   const filteredPrograms = useMemo(() => {
-    if (!search.trim()) {
-      return programsWithResults.map((program, index) => ({
-        id: program.id,
-        program,
-        index,
-      }));
+    let filtered = programsWithResults;
+
+    // Apply Category Filter
+    if (filter !== "all") {
+      filtered = filtered.filter((program) => {
+        switch (filter) {
+          case "stage":
+            return program.stage === true;
+          case "non-stage":
+            return program.stage === false;
+          case "group":
+            return program.section === "group";
+          case "general":
+            return program.section === "general";
+          default:
+            return true;
+        }
+      });
     }
 
-    const normalized = search.toLowerCase();
-    return programsWithResults
-      .filter((program) => program.name.toLowerCase().includes(normalized))
-      .map((program, index) => ({
-        id: program.id,
-        program,
-        index,
-      }));
-  }, [search, programsWithResults]);
+    // Apply Search
+    if (search.trim()) {
+      const normalized = search.toLowerCase();
+      filtered = filtered.filter((program) =>
+        program.name.toLowerCase().includes(normalized)
+      );
+    }
+
+    return filtered.map((program, index) => ({
+      id: program.id,
+      program,
+      index,
+    }));
+  }, [search, programsWithResults, filter]);
 
   // Get result count and medal info for each program
   const getProgramStats = (programId: string) => {
@@ -93,6 +111,14 @@ export function ProgramsGrid({ programs, results, programMap, students, teams }:
       category: program?.category || "none",
     };
   };
+
+  const filters = [
+    { id: "all", label: "All Items" },
+    { id: "stage", label: "Stage" },
+    { id: "non-stage", label: "Non-Stage" },
+    { id: "group", label: "Group" },
+    { id: "general", label: "General" },
+  ] as const;
 
   return (
     <div className="relative overflow-x-hidden min-h-screen bg-[#fffcf5]">
@@ -119,8 +145,27 @@ export function ProgramsGrid({ programs, results, programMap, students, teams }:
             variants={fadeIn("down", 0.5)}
             initial="hidden"
             animate="show"
-            className="mb-12"
+            className="mb-12 space-y-6"
           >
+            {/* Filter Buttons */}
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {filters.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setFilter(f.id)}
+                  className={`
+                    px-4 py-2 rounded-full font-medium text-sm transition-all duration-300
+                    ${filter === f.id
+                      ? "bg-[#8B4513] text-white shadow-md scale-105"
+                      : "bg-white text-gray-600 border border-gray-200 hover:bg-[#8B4513]/5 hover:border-[#8B4513]/30"
+                    }
+                  `}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
             <div className="relative max-w-2xl mx-auto">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
@@ -144,70 +189,13 @@ export function ProgramsGrid({ programs, results, programMap, students, teams }:
                 const stats = getProgramStats(program.id);
                 const result = resultMap.get(program.id);
                 return (
-                  <motion.div
+                  <ResultProgramCard
                     key={id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      duration: 0.5,
-                      delay: index * 0.1,
-                      ease: "easeOut",
-                    }}
-                    whileHover={{ scale: 1.05, y: -5 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Link href={`/results/${program.id}`}>
-                      <div className="group cursor-pointer p-6 rounded-2xl border border-gray-200 bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:border-[#8B4513] relative overflow-hidden">
-                        {/* Background gradient effect */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#8B4513]/0 to-[#0d7377]/0 group-hover:from-[#8B4513]/5 group-hover:to-[#0d7377]/5 transition-all duration-300" />
-
-                        <div className="relative z-10">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 rounded-lg bg-[#8B4513]/10">
-                                <Trophy className="w-5 h-5 text-[#8B4513]" />
-                              </div>
-                              <div>
-                                <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#8B4513] transition-colors">
-                                  {program.name}
-                                </h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 capitalize">
-                                    {stats.section}
-                                  </span>
-                                  {stats.category !== "none" && (
-                                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
-                                      Cat {stats.category}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            <Medal className="w-6 h-6 text-yellow-500/70 group-hover:text-yellow-600 transition-colors" />
-                          </div>
-
-                          <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-                            <span className="text-sm text-gray-600">View Results</span>
-                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-[#8B4513]/10 transition-colors">
-                              <svg
-                                className="w-4 h-4 text-gray-600 group-hover:text-[#8B4513] transition-colors"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 5l7 7-7 7"
-                                />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
+                    program={program}
+                    result={result}
+                    stats={stats}
+                    index={index}
+                  />
                 );
               })}
             </motion.div>
@@ -242,6 +230,7 @@ export function ProgramsGrid({ programs, results, programMap, students, teams }:
           )}
         </div>
       </div>
+
     </div>
   );
 }
