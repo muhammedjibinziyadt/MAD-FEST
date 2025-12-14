@@ -45,7 +45,7 @@ export function TeamLeaderboard({ teams }: TeamLeaderboardProps) {
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 pb-8">
             {/* Top 3 Podium */}
             {topTeams.length > 0 && !search && (
                 <motion.div

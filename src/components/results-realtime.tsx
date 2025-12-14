@@ -17,8 +17,6 @@ interface ResultsRealtimeProps {
   teams: Team[];
 }
 
-import { VerticalNavSidebar } from "@/components/vertical-nav-sidebar";
-
 export function ResultsRealtime({
   programs: initialPrograms,
   results: initialResults,
@@ -41,10 +39,9 @@ export function ResultsRealtime({
 
   return (
     <div className="min-h-screen bg-[#fffcf5]">
-      <VerticalNavSidebar />
       {/* Tab Navigation */}
-      <div className="sticky top-0 z-50 bg-[#fffcf5]/80 backdrop-blur-md border-b border-[#8B4513]/10">
-        <div className="container mx-auto px-4 pl-12 lg:pl-4">
+      <div className="relative pt-4 pb-2">
+        <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-2 md:gap-4 py-4 overflow-x-auto no-scrollbar">
             {tabs.map((tab) => (
               <button
@@ -72,7 +69,7 @@ export function ResultsRealtime({
         </div>
       </div>
 
-      <div className="pt-8 pl-4 lg:pl-0">
+      <div className="pt-8">
         {activeTab === "all" && (
           <ProgramsGrid
             programs={initialPrograms}

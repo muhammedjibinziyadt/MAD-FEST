@@ -57,13 +57,13 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-12 pt-12">
             {/* Top 3 Podium */}
             {topStudents.length > 0 && !search && (
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 items-end"
+                    className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 items-end" 
                 >
                     {/* Second Place */}
                     {topStudents[1] && (

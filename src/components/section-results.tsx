@@ -152,7 +152,7 @@ export function SectionResults({ programs, results, programMap, students, teams 
                 key={filter} // Re-animate on filter change
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm"
+                className=" rounded-3xl p-8"
             >
                 <div className="text-center mb-8">
                     <h3 className="text-2xl font-bold text-gray-800">
