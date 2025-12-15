@@ -65,7 +65,7 @@ export async function searchParticipant(
   query: string,
 ): Promise<Student[]> {
   await connectDB();
-  
+
   const searchTerm = query.trim().toLowerCase();
   if (!searchTerm) return [];
 
@@ -111,18 +111,14 @@ export async function getParticipantProfile(
 
   // Get all approved results
   const approvedResults = await ApprovedResultModel.find().lean<ResultRecord[]>();
-  
+
   // Get pending results (for status checking)
   const pendingResults = await PendingResultModel.find().lean<ResultRecord[]>();
 
   // Create a map of program_id -> result
   const resultMap = new Map<string, ResultRecord>();
   approvedResults.forEach((r) => resultMap.set(r.program_id, r));
-  pendingResults.forEach((r) => {
-    if (!resultMap.has(r.program_id)) {
-      resultMap.set(r.program_id, r);
-    }
-  });
+
 
   // Build enriched registrations
   const enrichedRegistrations = registrations.map((reg) => {
@@ -184,10 +180,10 @@ export async function getParticipantProfile(
       status,
       result: resultEntry
         ? {
-            ...resultEntry,
-            programName: program.name,
-            submittedAt: result?.submitted_at || "",
-          }
+          ...resultEntry,
+          programName: program.name,
+          submittedAt: result?.submitted_at || "",
+        }
         : undefined,
       penalty: penaltyEntry,
     };
