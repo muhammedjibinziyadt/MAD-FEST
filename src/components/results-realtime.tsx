@@ -42,13 +42,13 @@ export function ResultsRealtime({
       {/* Tab Navigation */}
       <div className="relative pt-4 pb-2">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-2 md:gap-4 py-4 overflow-x-auto no-scrollbar">
+          <div className="flex items-center justify-start md:justify-center gap-2 md:gap-4 py-4 overflow-x-auto no-scrollbar w-full whitespace-nowrap">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  relative px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex-shrink-0
+                  relative px-4 py-2 md:px-6 md:py-3 rounded-full md:rounded-2xl font-semibold transition-all duration-300 flex-shrink-0 text-sm md:text-base selection:bg-transparent
                   ${activeTab === tab.id
                     ? "text-[#8B4513] bg-[#8B4513]/10"
                     : "text-gray-500 hover:text-[#8B4513] hover:bg-[#8B4513]/5"
@@ -59,7 +59,7 @@ export function ResultsRealtime({
                 {activeTab === tab.id && (
                   <motion.div
                     layoutId="activeTab"
-                    className="absolute inset-0 rounded-2xl border-2 border-[#8B4513]/20"
+                    className="absolute inset-0 rounded-full md:rounded-2xl border-2 border-[#8B4513]/20"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}

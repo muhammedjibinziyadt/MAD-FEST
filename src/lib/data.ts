@@ -156,7 +156,7 @@ export async function getJuries(): Promise<Jury[]> {
   // Once set, avatar is never changed
   const juriesWithAvatars = await Promise.all(
     normalized.map(async (jury) => {
-      let updatedJury = { ...jury };
+      const updatedJury = { ...jury };
 
       if (!jury.avatar) {
         // Assign random avatar only if missing - this will be saved permanently

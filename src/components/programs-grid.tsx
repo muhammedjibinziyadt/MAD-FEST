@@ -148,20 +148,27 @@ export function ProgramsGrid({ programs, results, programMap, students, teams }:
             className="mb-12 space-y-6"
           >
             {/* Filter Buttons */}
-            <div className="flex flex-wrap items-center justify-center gap-2">
+            <div className="flex items-center justify-start md:justify-center gap-2 md:gap-4 py-2 overflow-x-auto no-scrollbar w-full whitespace-nowrap mb-6">
               {filters.map((f) => (
                 <button
                   key={f.id}
                   onClick={() => setFilter(f.id)}
                   className={`
-                    px-4 py-2 rounded-full font-medium text-sm transition-all duration-300
+                    relative px-4 py-2 md:px-6 md:py-3 rounded-full md:rounded-2xl font-semibold transition-all duration-300 flex-shrink-0 text-sm md:text-base selection:bg-transparent
                     ${filter === f.id
-                      ? "bg-[#8B4513] text-white shadow-md scale-105"
-                      : "bg-white text-gray-600 border border-gray-200 hover:bg-[#8B4513]/5 hover:border-[#8B4513]/30"
+                      ? "text-[#8B4513] bg-[#8B4513]/10"
+                      : "bg-white text-gray-500 border border-gray-200 hover:text-[#8B4513] hover:bg-[#8B4513]/5"
                     }
                   `}
                 >
                   {f.label}
+                  {filter === f.id && (
+                    <motion.div
+                      layoutId="activeProgramFilter"
+                      className="absolute inset-0 rounded-full md:rounded-2xl border-2 border-[#8B4513]/20"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
                 </button>
               ))}
             </div>

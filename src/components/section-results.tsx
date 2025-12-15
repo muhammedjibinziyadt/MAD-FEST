@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { Program, ResultRecord, Student, Team } from "@/lib/types";
 import { ResultProgramCard } from "./result-program-card";
 import { Filter } from "lucide-react";
@@ -127,24 +127,33 @@ export function SectionResults({ programs, results, programMap, students, teams 
     };
 
     return (
-        <div className="space-y-12">
-            {/* Filter Tabs */}
-            <div className="flex flex-wrap items-center justify-center gap-3">
-                {filters.map((f) => (
-                    <button
-                        key={f.id}
-                        onClick={() => setFilter(f.id)}
-                        className={`
-              px-6 py-2.5 rounded-full font-medium transition-all duration-300 relative
-              ${filter === f.id
-                                ? "bg-[#8B4513] text-white shadow-lg shadow-[#8B4513]/20 scale-105"
-                                : "bg-white text-gray-600 hover:bg-[#8B4513]/5 hover:text-[#8B4513]"
-                            }
-            `}
-                    >
-                        {f.label}
-                    </button>
-                ))}
+        <div className="space-y-8 md:space-y-12">
+            {/* Filter Scrollable Tabs */}
+            <div className="sticky top-0 z-20 bg-[#fffcf5]/95 backdrop-blur-sm py-2 -mx-4 px-4 md:static md:bg-transparent md:p-0">
+                <div className="flex items-center justify-start md:justify-center gap-2 md:gap-4 py-2 overflow-x-auto no-scrollbar w-full whitespace-nowrap">
+                    {filters.map((f) => (
+                        <button
+                            key={f.id}
+                            onClick={() => setFilter(f.id)}
+                            className={`
+                              relative px-4 py-2 md:px-6 md:py-3 rounded-full md:rounded-2xl font-semibold transition-all duration-300 flex-shrink-0 text-sm md:text-base selection:bg-transparent
+                              ${filter === f.id
+                                    ? "text-[#8B4513] bg-[#8B4513]/10"
+                                    : "bg-white text-gray-500 border border-gray-100 hover:text-[#8B4513] hover:bg-[#8B4513]/5"
+                                }
+                            `}
+                        >
+                            {f.label}
+                            {filter === f.id && (
+                                <motion.div
+                                    layoutId="activeFilter"
+                                    className="absolute inset-0 rounded-full md:rounded-2xl border-2 border-[#8B4513]/20"
+                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                />
+                            )}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Section Leaderboard */}
@@ -152,13 +161,13 @@ export function SectionResults({ programs, results, programMap, students, teams 
                 key={filter} // Re-animate on filter change
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className=" rounded-3xl p-8"
+                className="bg-white/50 border border-gray-200/50 rounded-3xl p-4 md:p-8"
             >
                 <div className="text-center mb-8">
-                    <h3 className="text-2xl font-bold text-gray-800">
+                    <h3 className="text-xl md:text-2xl font-bold text-gray-800">
                         {filter.charAt(0).toUpperCase() + filter.slice(1)} Leaderboard
                     </h3>
-                    <p className="text-gray-500">Top performers in {filter.replace("-", " ")} items</p>
+                    <p className="text-gray-500 text-sm md:text-base">Top performers in {filter.replace("-", " ")} items</p>
                 </div>
 
                 {leaderboardData.type === "student" ? (
@@ -173,53 +182,7 @@ export function SectionResults({ programs, results, programMap, students, teams 
                 )}
             </motion.div>
 
-            {/* Results Grid */}
-            <div className="space-y-6">
-                <h3 className="text-xl font-bold text-gray-800 ml-4 border-l-4 border-[#8B4513] pl-3">
-                    {filter.charAt(0).toUpperCase() + filter.slice(1)} Programs
-                </h3>
 
-                {filteredPrograms.length > 0 ? (
-                    <motion.div
-                        variants={container}
-                        initial="hidden"
-                        animate="show"
-                        className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-                    >
-                        {filteredPrograms.map((program, index) => {
-                            const stats = getProgramStats(program.id);
-                            const result = resultMap.get(program.id);
-                            return (
-                                <ResultProgramCard
-                                    key={program.id}
-                                    program={program}
-                                    result={result}
-                                    stats={stats}
-                                    index={index}
-                                />
-                            );
-                        })}
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-center py-16 bg-white rounded-3xl border border-gray-100 shadow-sm"
-                    >
-                        <div className="flex flex-col items-center gap-4">
-                            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-                                <Filter className="w-8 h-8 text-gray-400" />
-                            </div>
-                            <h3 className="text-xl font-semibold text-gray-700">
-                                No results found
-                            </h3>
-                            <p className="text-gray-500">
-                                No published results for {filter} items yet.
-                            </p>
-                        </div>
-                    </motion.div>
-                )}
-            </div>
         </div>
     );
 }

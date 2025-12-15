@@ -294,7 +294,7 @@ async function importStudentsAction(formData: FormData) {
     }
     
     // Generate or use provided chest number, normalized to uppercase
-    let chest_no = parsed.data.chest_no?.trim().toUpperCase() || generateNextChestNumber(team.name, existingStudents);
+    const chest_no = parsed.data.chest_no?.trim().toUpperCase() || generateNextChestNumber(team.name, existingStudents);
     
     // Check for duplicate chest number in existing database
     if (existingChestNumbers.has(chest_no)) {
