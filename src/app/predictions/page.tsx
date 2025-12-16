@@ -5,9 +5,9 @@ import { PredictionEvent } from "@/lib/types";
 import { PredictionCard } from "@/components/predictions/PredictionCard";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Trophy, Loader2, Zap, History, Calendar } from "lucide-react";
+import { Trophy, Loader2, Zap, History, Calendar, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export default function PredictionsPage() {
     const [events, setEvents] = useState<PredictionEvent[]>([]);
@@ -28,76 +28,87 @@ export default function PredictionsPage() {
     const pastEvents = events.filter(e => e.status !== 'open');
     const totalPoints = events.reduce((acc, e) => acc + e.points, 0);
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[#8B4513]" /></div>;
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+                <Loader2 className="w-10 h-10 animate-spin text-orange-600" />
+            </div>
+        );
+    }
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-7xl space-y-8">
-            {/* Hero Section */}
-            <div className="relative overflow-hidden rounded-3xl bg-[#8B4513]/10 p-8 md:p-12 text-center border border-white/10 shadow-xl backdrop-blur-sm">
-                <div className="absolute inset-0 bg-grid-white/5 mask-image-gradient" />
-                <div className="relative z-10">
-                    <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-[#8B4513] to-[#6B3410] bg-clip-text text-transparent">
-                        Predict & Win
-                    </h1>
-                    <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-                        Put your instincts to the test! Guess the winners of upcoming programs and climb the global leaderboard.
-                    </p>
+        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-44 md:pb-8">
+            <div className="container mx-auto px-4 py-6 max-w-5xl space-y-6">
 
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                        <Link href="/predictions/leaderboard">
-                            <Button size="lg" className="bg-[#6B3410] text-white border-0 hover:opacity-90 shadow-lg hover:shadow-[#8B4513]/25 transition-all rounded-full px-8">
-                                <Trophy className="w-5 h-5 mr-2" /> View Leaderboard
-                            </Button>
-                        </Link>
-                    </div>
+                {/* Compact Hero Section */}
+                <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 md:p-8 shadow-sm">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="space-y-2 text-left md:max-w-xl">
+                            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                                Predict & Win
+                            </h1>
+                            <p className="text-zinc-500 dark:text-zinc-400 text-sm md:text-base leading-relaxed">
+                                Put your instincts to the test! Guess the winners and climb the global leaderboard.
+                            </p>
+                            <div className="pt-2">
+                                <Link href="/predictions/leaderboard">
+                                    <Button variant="outline" size="sm" className="rounded-full text-orange-600 border-orange-200 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-400 dark:hover:bg-orange-900/20">
+                                        <Trophy className="w-4 h-4 mr-2" /> View Leaderboard
+                                    </Button>
+                                </Link>
+                            </div>
+                        </div>
 
-                    {/* Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl mx-auto mt-10">
-                        <div className="bg-background/40 backdrop-blur rounded-2xl p-3 border border-white/5">
-                            <div className="flex items-center justify-center gap-2 text-[#8B4513] font-bold text-2xl">
-                                <Zap className="w-5 h-5" /> {openEvents.length}
+                        {/* Compact Stats Row */}
+                        <div className="flex items-center gap-4 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+                            <div className="flex flex-col items-center justify-center bg-orange-50 dark:bg-orange-900/10 px-4 py-3 rounded-2xl min-w-[100px]">
+                                <Zap className="w-5 h-5 text-orange-600 mb-1" />
+                                <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{openEvents.length}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">Live</span>
                             </div>
-                            <div className="text-xs text-muted-foreground">Live Events</div>
-                        </div>
-                        <div className="bg-background/40 backdrop-blur rounded-2xl p-3 border border-white/5">
-                            <div className="flex items-center justify-center gap-2 text-[#8B4513]/80 font-bold text-2xl">
-                                <History className="w-5 h-5" /> {pastEvents.length}
+                            <div className="flex flex-col items-center justify-center bg-zinc-100 dark:bg-zinc-800 px-4 py-3 rounded-2xl min-w-[100px]">
+                                <History className="w-5 h-5 text-zinc-600 dark:text-zinc-400 mb-1" />
+                                <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{pastEvents.length}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">Past</span>
                             </div>
-                            <div className="text-xs text-muted-foreground">Past Results</div>
-                        </div>
-                        <div className="bg-background/40 backdrop-blur rounded-2xl p-3 border border-white/5 col-span-2 md:col-span-1">
-                            <div className="flex items-center justify-center gap-2 text-[#6B3410] font-bold text-2xl">
-                                <Trophy className="w-5 h-5" /> {totalPoints}
+                            <div className="flex flex-col items-center justify-center bg-amber-50 dark:bg-amber-900/10 px-4 py-3 rounded-2xl min-w-[100px]">
+                                <Trophy className="w-5 h-5 text-amber-600 mb-1" />
+                                <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{totalPoints}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">Pool</span>
                             </div>
-                            <div className="text-xs text-muted-foreground">Total Points Pool</div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Content Tabs */}
-            <div className="flex flex-col items-center space-y-6">
-                <div className="inline-flex bg-muted p-1 rounded-full">
-                    <button
-                        onClick={() => setTab('live')}
-                        className={`px-8 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${tab === 'live'
-                                ? 'bg-background text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                    >
-                        <Zap className="w-4 h-4" /> Live Predictions
-                    </button>
-                    <button
-                        onClick={() => setTab('history')}
-                        className={`px-8 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${tab === 'history'
-                                ? 'bg-background text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                    >
-                        <History className="w-4 h-4" /> Past Events
-                    </button>
+                {/* Desktop Tabs (Inline) */}
+                <div className="hidden md:flex justify-center sticky top-4 z-40">
+                    <div className="flex items-center bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg p-1.5 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-700">
+                        <button
+                            onClick={() => setTab('live')}
+                            className={cn(
+                                "px-6 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2",
+                                tab === 'live'
+                                    ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm"
+                                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                            )}
+                        >
+                            <Zap className="w-4 h-4" /> Live Predictions
+                        </button>
+                        <button
+                            onClick={() => setTab('history')}
+                            className={cn(
+                                "px-6 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2",
+                                tab === 'history'
+                                    ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm"
+                                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                            )}
+                        >
+                            <History className="w-4 h-4" /> Past Events
+                        </button>
+                    </div>
                 </div>
 
+                {/* Content Area */}
                 <div className="w-full">
                     <AnimatePresence mode="wait">
                         {tab === 'live' ? (
@@ -110,13 +121,15 @@ export default function PredictionsPage() {
                                 className="w-full"
                             >
                                 {openEvents.length === 0 ? (
-                                    <div className="text-center py-24 bg-muted/20 rounded-3xl border border-dashed flex flex-col items-center">
-                                        <Calendar className="w-12 h-12 text-muted-foreground/30 mb-4" />
-                                        <h3 className="text-lg font-semibold">No live predictions</h3>
-                                        <p className="text-muted-foreground">Check back later for new events!</p>
+                                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                                        <div className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-full mb-4">
+                                            <Calendar className="w-8 h-8 text-zinc-400" />
+                                        </div>
+                                        <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">No live predictions</h3>
+                                        <p className="text-zinc-500 text-sm mt-1">Check back later for new events!</p>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                                         {openEvents.map((evt, i) => (
                                             <motion.div
                                                 key={evt.id}
@@ -140,9 +153,9 @@ export default function PredictionsPage() {
                                 className="w-full"
                             >
                                 {pastEvents.length === 0 ? (
-                                    <div className="text-center py-20 text-muted-foreground">No past events yet.</div>
+                                    <div className="text-center py-20 text-zinc-500">No past events yet.</div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-90">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 opacity-90">
                                         {pastEvents.map((evt, i) => (
                                             <motion.div
                                                 key={evt.id}
@@ -158,6 +171,34 @@ export default function PredictionsPage() {
                             </motion.div>
                         )}
                     </AnimatePresence>
+                </div>
+            </div>
+
+            {/* Floating Mobile Tabs (Bottom Pill) */}
+            <div className="fixed bottom-24 inset-x-0 flex justify-center md:hidden z-40 pointer-events-none">
+                <div className="flex items-center bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-700/50 p-1 rounded-full shadow-lg pointer-events-auto scale-90 sm:scale-100">
+                    <button
+                        onClick={() => setTab('live')}
+                        className={cn(
+                            "px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2",
+                            tab === 'live'
+                                ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-md"
+                                : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                        )}
+                    >
+                        <Zap className="w-4 h-4" /> Live
+                    </button>
+                    <button
+                        onClick={() => setTab('history')}
+                        className={cn(
+                            "px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2",
+                            tab === 'history'
+                                ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-md"
+                                : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                        )}
+                    >
+                        <History className="w-4 h-4" /> Past
+                    </button>
                 </div>
             </div>
         </div>
