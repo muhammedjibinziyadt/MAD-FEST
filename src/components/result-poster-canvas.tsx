@@ -189,8 +189,8 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
   ctx.fillText(displaySection, leftMargin, sectionY);
 
   // 5. Prize Sections
-  const currentY = 550 * scaleY;
-  const prizeSpacing = 125 * scaleY;
+  const currentY = 558 * scaleY;
+  const prizeSpacing = 120 * scaleY;
   const sectionWidth = 800 * scaleX;
   const sectionX = (imageWidth - sectionWidth) / 2;
 
