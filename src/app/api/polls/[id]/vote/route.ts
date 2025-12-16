@@ -3,6 +3,8 @@ import { connectDB } from "@/lib/db";
 import { PollModel, VoteModel } from "@/lib/models";
 import { emitPollUpdated } from "@/lib/pusher";
 import { Poll } from "@/lib/types";
+import { cookies } from "next/headers";
+import crypto from "crypto";
 
 export async function POST(
     request: Request,
@@ -13,17 +15,36 @@ export async function POST(
     try {
         const { optionId } = await request.json();
 
-        // Simple voter identification logic
-        const ip = request.headers.get("x-forwarded-for") || "unknown";
-        const userAgent = request.headers.get("user-agent") || "unknown";
-        // In a real app, hash this properly.
-        const voterHash = Buffer.from(`${ip}-${userAgent}`).toString('base64');
+        // 1. Robust IP Extraction
+        const forwarded = request.headers.get("x-forwarded-for");
+        const ip = forwarded ? forwarded.split(',')[0].trim() : "unknown";
 
-        // Check if already voted
-        const existingVote = await VoteModel.findOne({ pollId: id, voterHash });
-        if (existingVote) {
+        // 2. Browser Fingerprinting Elements
+        const userAgent = request.headers.get("user-agent") || "unknown";
+        const acceptLanguage = request.headers.get("accept-language") || "unknown";
+
+        // 3. Cookie-based Device ID (Persistent Tracker)
+        const cookieStore = await cookies();
+        let deviceId = cookieStore.get("poll_device_id")?.value;
+
+        // If no device cookie, generate one (but we can't fully rely on it as it can be cleared)
+        // However, it stops casual users who don't know how to clear cookies.
+        if (!deviceId) {
+            deviceId = crypto.randomUUID();
+        }
+
+        // 4. Create a strong unique hash for the voter
+        // We combine IP + UA + Language to create a fingerprint
+        const fingerprintString = `${ip}-${userAgent}-${acceptLanguage}`;
+        const voterHash = crypto.createHash('sha256').update(fingerprintString).digest('hex');
+
+        // SECURITY CHECK
+        // This catches users who use Incognito (No Cookie) but are on the same network/device
+        const voteByHash = await VoteModel.findOne({ pollId: id, voterHash });
+
+        if (voteByHash) {
             return NextResponse.json(
-                { error: "You have already voted in this poll" },
+                { error: "You have already voted in this poll (Device Detected)" },
                 { status: 403 }
             );
         }
@@ -60,8 +81,28 @@ export async function POST(
         // Trigger Pusher update
         await emitPollUpdated(id);
 
-        return NextResponse.json({ message: "Vote submitted" });
-    } catch (error) {
+        // Set the robust device cookie
+        const response = NextResponse.json({ message: "Vote submitted" });
+        response.cookies.set({
+            name: "poll_device_id",
+            value: deviceId,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            path: "/",
+            maxAge: 60 * 60 * 24 * 365, // 1 year
+        });
+
+        return response;
+
+    } catch (error: any) {
+        // Handle unique constraint violation gracefully (Race condition double vote)
+        if (error.code === 11000) {
+            return NextResponse.json(
+                { error: "You have already voted in this poll" },
+                { status: 403 }
+            );
+        }
         console.error("Vote error:", error);
         return NextResponse.json({ error: "Failed to submit vote" }, { status: 500 });
     }
