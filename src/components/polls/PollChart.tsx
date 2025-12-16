@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { PollOption } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface PollChartProps {
     options: PollOption[];
@@ -9,33 +10,42 @@ interface PollChartProps {
 }
 
 export function PollChart({ options, totalVotes }: PollChartProps) {
-    const maxVotes = Math.max(...options.map(o => o.votes));
+    // Sort options by votes if desired, but usually polls keep original order or user perception matters? 
+    // Keeping original order for consistency unless requested otherwise.
 
     return (
         <div className="space-y-4 w-full">
             {options.map((option) => {
                 const percentage = totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0;
+                const isWinner = totalVotes > 0 && option.votes === Math.max(...options.map(o => o.votes));
 
                 return (
-                    <div key={option.id} className="relative w-full h-14 rounded-full overflow-hidden bg-zinc-100 dark:bg-zinc-800 isolate">
-                        {/* The Fill Layer */}
-                        <motion.div
-                            className="absolute top-0 left-0 bottom-0 bg-black dark:bg-white z-0"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${percentage}%` }}
-                            transition={{ duration: 0.8, ease: "easeOut" }}
-                        />
-
-                        {/* Content Layer with Color Mixing */}
-                        {/* We use mix-blend-mode: difference with WHITE text.
-                            On Black BG (Fill): White - Black = White (Visible)
-                            On White BG (Empty): White - White = Black (Visible)
-                        */}
-                        <div className="absolute inset-0 flex items-center justify-between px-6 z-10 text-white dark:text-black mix-blend-difference pointer-events-none">
-                            <span className="font-bold text-lg leading-none">{option.text}</span>
-                            <span className="font-mono font-bold text-lg leading-none">
+                    <div key={option.id} className="w-full group">
+                        <div className="flex justify-between items-end mb-1.5 px-1">
+                            <span className={cn(
+                                "text-sm font-medium transition-colors",
+                                isWinner ? "text-orange-700 dark:text-orange-400 font-bold" : "text-zinc-600 dark:text-zinc-300"
+                            )}>
+                                {option.text}
+                            </span>
+                            <span className={cn(
+                                "text-xs font-mono font-bold",
+                                isWinner ? "text-orange-700 dark:text-orange-400" : "text-zinc-400"
+                            )}>
                                 {Math.round(percentage)}%
                             </span>
+                        </div>
+
+                        <div className="h-2.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                            <motion.div
+                                className={cn(
+                                    "h-full rounded-full",
+                                    isWinner ? "bg-orange-500" : "bg-zinc-300 dark:bg-zinc-600"
+                                )}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${percentage}%` }}
+                                transition={{ duration: 1, ease: "easeOut" }}
+                            />
                         </div>
                     </div>
                 );

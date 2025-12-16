@@ -7,7 +7,7 @@ import { PollChart } from "./PollChart";
 import { pusherClient } from "@/lib/pusher-client";
 import { CHANNELS, EVENTS } from "@/lib/pusher";
 import { toast } from "react-toastify";
-import { Loader2, ChevronDown } from "lucide-react";
+import { Loader2, ChevronDown, CheckCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -26,8 +26,7 @@ export function PollCard({ poll: initialPoll }: PollCardProps) {
         const votedPolls = JSON.parse(localStorage.getItem("votedPolls") || "[]");
         if (votedPolls.includes(poll.id)) {
             setIsVoted(true);
-            // If already voted, maybe we want it expanded by default? 
-            // Or stick to "closed by default" as per user request.
+            setExpanded(true); // Auto-expand if voted to show results
         }
 
         // Subscribe to Pusher
@@ -79,11 +78,13 @@ export function PollCard({ poll: initialPoll }: PollCardProps) {
             const votedPolls = JSON.parse(localStorage.getItem("votedPolls") || "[]");
             localStorage.setItem("votedPolls", JSON.stringify([...votedPolls, poll.id]));
             toast.success("Vote submitted!");
-            fetchPollData();
+            await fetchPollData(); // Wait for data update
+            setExpanded(true); // Ensure expanded to show chart
         } catch (error: any) {
             toast.error(error.message);
             if (error.message.includes("already voted")) {
                 setIsVoted(true);
+                setExpanded(true);
             }
         } finally {
             setLoading(false);
@@ -94,22 +95,44 @@ export function PollCard({ poll: initialPoll }: PollCardProps) {
 
     return (
         <Card
-            className="w-full max-w-md mx-auto hover:shadow-xl transition-all duration-300 rounded-3xl overflow-hidden border-0 shadow-lg bg-transparent"
+            className="group w-full mx-auto hover:shadow-xl transition-all duration-300 rounded-[2rem] overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm"
         >
             {/* Header / Trigger */}
             <div
                 onClick={() => setExpanded(!expanded)}
                 className={cn(
-                    "bg-[#8B4513] p-8 text-center cursor-pointer relative transition-all duration-300",
-                    expanded ? "rounded-t-3xl" : "rounded-3xl hover:scale-[1.02]"
+                    "p-6 cursor-pointer relative transition-all duration-300",
+                    expanded ? "bg-zinc-50 dark:bg-zinc-800/50" : "bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
                 )}
             >
-                <h3 className="text-xl font-bold text-white leading-tight select-none">{poll.question}</h3>
-                <div className="flex items-center justify-center gap-2 mt-2">
-                    <p className="text-white/70 text-xs font-medium tracking-wider uppercase">
-                        {totalVotes} Votes
-                    </p>
-                    <ChevronDown className={cn("w-4 h-4 text-white/70 transition-transform duration-300", expanded && "rotate-180")} />
+                <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                            <span className={cn(
+                                "flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-full",
+                                poll.active
+                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                    : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                            )}>
+                                <span className={cn("w-1.5 h-1.5 rounded-full", poll.active ? "bg-emerald-500 animate-pulse" : "bg-zinc-400")} />
+                                {poll.active ? "Live" : "Closed"}
+                            </span>
+                            <span className="text-zinc-400 text-xs font-medium">{totalVotes} votes</span>
+                        </div>
+
+                        <h3 className="text-lg md:text-xl font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
+                            {poll.question}
+                        </h3>
+                    </div>
+
+                    <div className={cn(
+                        "flex items-center justify-center w-10 h-10 rounded-full border transition-all duration-300",
+                        expanded
+                            ? "bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 dark:border-white rotate-180"
+                            : "bg-transparent text-zinc-400 border-zinc-200 dark:border-zinc-700 group-hover:border-zinc-300 dark:group-hover:border-zinc-600"
+                    )}>
+                        <ChevronDown className="w-5 h-5" />
+                    </div>
                 </div>
             </div>
 
@@ -120,30 +143,47 @@ export function PollCard({ poll: initialPoll }: PollCardProps) {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden bg-[#8B4513]/10 rounded-b-3xl"
+                        transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }} // Smooth cubic-bezier
+                        className="overflow-hidden"
                     >
-                        <CardContent className="p-6 space-y-4 bg-[#8B4513]/4 min-h-[200px] flex flex-col justify-center">
+                        <CardContent className="p-6 pt-2 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800">
                             {isVoted ? (
-                                <PollChart options={poll.options} totalVotes={totalVotes} />
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.1 }}
+                                    className="pt-2"
+                                >
+                                    <div className="flex items-center gap-2 mb-4 text-emerald-600 dark:text-emerald-400 font-medium text-sm bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl w-fit">
+                                        <CheckCheck className="w-4 h-4" />
+                                        <span>You voted in this poll</span>
+                                    </div>
+                                    <PollChart options={poll.options} totalVotes={totalVotes} />
+                                </motion.div>
                             ) : (
-                                <div className="grid gap-4">
+                                <div className="grid gap-3 pt-2">
                                     {poll.options.map((option) => (
                                         <button
                                             key={option.id}
-                                            className="w-full relative group overflow-hidden rounded-full bg-white dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 p-4 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:border-zinc-300 dark:hover:border-zinc-500 shadow-sm"
+                                            className="group/btn relative w-full overflow-hidden rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 p-4 transition-all duration-200 hover:border-orange-500/50 dark:hover:border-orange-500/50 hover:shadow-md active:scale-[0.99] text-left"
                                             onClick={(e) => {
-                                                e.stopPropagation(); // Prevent closing card when voting
+                                                e.stopPropagation();
                                                 handleVote(option.id);
                                             }}
                                             disabled={loading}
                                         >
-                                            <span className="block text-center font-semibold text-zinc-700 dark:text-zinc-200 text-lg">
-                                                {option.text}
-                                            </span>
+                                            <div className="flex items-center justify-between relative z-10">
+                                                <span className="font-semibold text-zinc-700 dark:text-zinc-200 text-base md:text-lg group-hover/btn:text-orange-700 dark:group-hover/btn:text-orange-400 transition-colors">
+                                                    {option.text}
+                                                </span>
+                                            </div>
+
+                                            {/* Hover effect background */}
+                                            <div className="absolute inset-0 bg-orange-50 dark:bg-orange-900/20 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-200" />
+
                                             {loading && (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-black/50 backdrop-blur-[1px]">
-                                                    <Loader2 className="w-6 h-6 animate-spin text-zinc-900 dark:text-white" />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-zinc-900/60 backdrop-blur-[2px] z-20">
+                                                    <Loader2 className="w-5 h-5 animate-spin text-zinc-900 dark:text-white" />
                                                 </div>
                                             )}
                                         </button>

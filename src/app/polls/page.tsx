@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { Poll } from "@/lib/types";
 import { PollCard } from "@/components/polls/PollCard";
 import { motion } from "framer-motion";
-import { Loader2, Activity, BarChart2, CheckCircle2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Loader2, Activity, BarChart2, CheckCircle2, Filter } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function PollsPage() {
     const [polls, setPolls] = useState<Poll[]>([]);
@@ -36,87 +36,115 @@ export default function PollsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+                <Loader2 className="w-10 h-10 animate-spin text-orange-600" />
             </div>
         );
     }
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-7xl space-y-8">
-            {/* Hero Section */}
-            <div className="relative overflow-hidden rounded-3xl bg-[#8B4513]/10 p-8 md:p-12 text-center border border-white/10 shadow-xl backdrop-blur-sm">
-                <div className="absolute inset-0 bg-grid-white/5 mask-image-gradient" />
-                <h1 className="relative text-4xl md:text-6xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-[#8B4513] to-[#6B3410] bg-clip-text text-transparent">
-                    Live Polls
-                </h1>
-                <p className="relative text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-                    Voice your opinion! Participate in real-time polls and see what the community thinks about the latest events.
-                </p>
+        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-44 md:pb-8">
+            <div className="container mx-auto px-4 py-6 max-w-5xl space-y-6">
 
-                {/* Quick Stats */}
-                <div className="relative grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto mt-8">
-                    <Card className="bg-background/50 backdrop-blur border-none shadow-sm">
-                        <CardContent className="p-4 flex flex-col items-center">
-                            <BarChart2 className="w-6 h-6 text-primary mb-2" />
-                            <div className="text-2xl font-bold">{polls.length}</div>
-                            <div className="text-xs text-muted-foreground">Total Polls</div>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-background/50 backdrop-blur border-none shadow-sm">
-                        <CardContent className="p-4 flex flex-col items-center">
-                            <Activity className="w-6 h-6 text-emerald-500 mb-2" />
-                            <div className="text-2xl font-bold">{activePolls.length}</div>
-                            <div className="text-xs text-muted-foreground">Active Now</div>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-background/50 backdrop-blur border-none shadow-sm col-span-2 md:col-span-1">
-                        <CardContent className="p-4 flex flex-col items-center">
-                            <CheckCircle2 className="w-6 h-6 text-blue-500 mb-2" />
-                            <div className="text-2xl font-bold">{totalVotes}</div>
-                            <div className="text-xs text-muted-foreground">Community Votes</div>
-                        </CardContent>
-                    </Card>
+                {/* Compact Hero Section */}
+                <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 md:p-8 shadow-sm">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="space-y-2 text-left md:max-w-xl">
+                            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                                Live Polls
+                            </h1>
+                            <p className="text-zinc-500 dark:text-zinc-400 text-sm md:text-base leading-relaxed">
+                                Join the conversation. Vote in real-time and shape the community decisions.
+                            </p>
+                        </div>
+
+                        {/* Compact Stats Row */}
+                        <div className="flex items-center gap-4 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+                            <div className="flex flex-col items-center justify-center bg-orange-50 dark:bg-orange-900/10 px-4 py-3 rounded-2xl min-w-[100px]">
+                                <BarChart2 className="w-5 h-5 text-orange-600 mb-1" />
+                                <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{polls.length}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">Total</span>
+                            </div>
+                            <div className="flex flex-col items-center justify-center bg-emerald-50 dark:bg-emerald-900/10 px-4 py-3 rounded-2xl min-w-[100px]">
+                                <Activity className="w-5 h-5 text-emerald-600 mb-1" />
+                                <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{activePolls.length}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">Active</span>
+                            </div>
+                            <div className="flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-900/10 px-4 py-3 rounded-2xl min-w-[100px]">
+                                <CheckCircle2 className="w-5 h-5 text-blue-600 mb-1" />
+                                <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{totalVotes}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">Votes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Desktop Filters (Inline) */}
+                <div className="hidden md:flex justify-center sticky top-4 z-40">
+                    <div className="flex items-center bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg p-1.5 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-700">
+                        {(['all', 'active', 'closed'] as const).map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f)}
+                                className={cn(
+                                    "px-6 py-2 rounded-xl text-sm font-semibold transition-all duration-200 capitalize",
+                                    filter === f
+                                        ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm"
+                                        : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                                )}
+                            >
+                                {f}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Polls Grid */}
+                <div className="space-y-4">
+                    {filteredPolls.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                            <div className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-full mb-4">
+                                <Filter className="w-6 h-6 text-zinc-400" />
+                            </div>
+                            <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">No polls found</h3>
+                            <p className="text-zinc-500 text-sm mt-1">Try changing your filters</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {filteredPolls.map((poll, index) => (
+                                <motion.div
+                                    key={poll.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                >
+                                    <PollCard poll={poll} />
+                                </motion.div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex justify-center">
-                <div className="inline-flex bg-muted p-1 rounded-xl">
-                    {['all', 'active', 'closed'].map((f) => (
+            {/* Sticky Bottom Filters (Mobile Only) */}
+            <div className="fixed bottom-24 inset-x-0 flex justify-center md:hidden z-40 pointer-events-none">
+                <div className="flex items-center bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-700/50 p-1 rounded-full shadow-lg pointer-events-auto scale-90 sm:scale-100">
+                    {(['all', 'active', 'closed'] as const).map((f) => (
                         <button
                             key={f}
-                            onClick={() => setFilter(f as any)}
-                            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${filter === f
-                                    ? 'bg-background text-foreground shadow-sm scale-105'
-                                    : 'text-muted-foreground hover:text-foreground'
-                                }`}
+                            onClick={() => setFilter(f)}
+                            className={cn(
+                                "px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 capitalize min-w-[80px]",
+                                filter === f
+                                    ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-md"
+                                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                            )}
                         >
-                            {f.charAt(0).toUpperCase() + f.slice(1)}
+                            {f}
                         </button>
                     ))}
                 </div>
             </div>
-
-            {/* Polls Grid */}
-            {filteredPolls.length === 0 ? (
-                <div className="text-center py-20 bg-muted/20 rounded-2xl border border-dashed">
-                    <p className="text-muted-foreground text-lg">No polls found in this category.</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredPolls.map((poll, index) => (
-                        <motion.div
-                            key={poll.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                        >
-                            <PollCard poll={poll} />
-                        </motion.div>
-                    ))}
-                </div>
-            )}
         </div>
     );
 }
