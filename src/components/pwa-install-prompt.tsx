@@ -105,10 +105,10 @@ export function PWAInstallPrompt() {
           exit={{ y: 100, opacity: 0 }}
           className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-sm"
         >
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-white/10 rounded-xl p-4 shadow-2xl backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-white/10 rounded-3xl p-4 shadow-2xl backdrop-blur-sm">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0">
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-fuchsia-500 to-rose-500 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-fuchsia-500 to-rose-500 flex items-center justify-center">
                   <Download className="h-5 w-5 text-white" />
                 </div>
               </div>

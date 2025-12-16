@@ -69,7 +69,7 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
             {!search && topStudents.length > 0 && (
                 <div className="relative mt-8 mb-12 px-4">
                     {/* Podium Container */}
-                    <div className="flex items-end justify-center gap-2 md:gap-8 min-h-[220px] md:min-h-[280px]">
+                    <div className="flex items-start justify-center gap-2 md:gap-8 pt-14 pb-8">
 
                         {/* 2nd Place */}
                         {topStudents[1] && (
@@ -77,9 +77,9 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.2 }}
-                                className="flex flex-col items-center w-1/3 max-w-[140px]"
+                                className="flex flex-col items-center w-1/3 max-w-[140px] mt-8 md:mt-12"
                             >
-                                <div className="relative mb-2 md:mb-4">
+                                <div className="relative mb-6 md:mb-8">
                                     <div className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-gray-300 shadow-xl overflow-hidden relative z-10 bg-white">
                                         {topStudents[1].avatar ? (
                                             <Image
@@ -99,8 +99,8 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
                                     </div>
                                 </div>
                                 <div className="text-center w-full">
-                                    <h3 className="font-bold text-gray-800 text-sm md:text-lg truncate px-1">{topStudents[1].name}</h3>
-                                    <p className="text-xs text-gray-500 mb-1 truncate">{topStudents[1].teamName}</p>
+                                    <h3 className="font-bold text-gray-800 text-sm md:text-lg px-1 text-center leading-tight mb-1">{topStudents[1].name}</h3>
+                                    <p className="text-xs text-gray-500 mb-1 text-center leading-tight">{topStudents[1].teamName}</p>
                                     <div className="inline-block bg-white border border-gray-200 shadow-sm rounded-lg px-2 md:px-3 py-1">
                                         <span className="font-bold text-[#8B4513] text-sm md:text-base">{topStudents[1].total_points}</span>
                                         <span className="text-[10px] text-gray-400 ml-1">PTS</span>
@@ -115,9 +115,9 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
-                                className="flex flex-col items-center w-1/3 max-w-[160px] -mt-10 md:-mt-16 z-20"
+                                className="flex flex-col items-center w-1/3 max-w-[160px] z-20"
                             >
-                                <div className="relative mb-2 md:mb-4">
+                                <div className="relative mb-6 md:mb-8">
                                     <div className="absolute -top-10 md:-top-12 left-1/2 -translate-x-1/2 animate-bounce">
                                         <Crown className="w-8 h-8 md:w-10 md:h-10 text-yellow-500 fill-yellow-500 drop-shadow-lg" />
                                     </div>
@@ -140,8 +140,8 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
                                     </div>
                                 </div>
                                 <div className="text-center w-full">
-                                    <h3 className="font-bold text-gray-900 text-base md:text-xl truncate px-1">{topStudents[0].name}</h3>
-                                    <p className="text-xs text-gray-500 mb-1 truncate">{topStudents[0].teamName}</p>
+                                    <h3 className="font-bold text-gray-900 text-sm md:text-xl px-1 text-center leading-tight mb-1">{topStudents[0].name}</h3>
+                                    <p className="text-xs text-gray-500 mb-1 text-center leading-tight">{topStudents[0].teamName}</p>
                                     <div className="inline-block bg-yellow-50 border border-yellow-200 shadow-sm rounded-lg px-3 md:px-4 py-1">
                                         <span className="font-black text-yellow-700 text-base md:text-lg">{topStudents[0].total_points}</span>
                                         <span className="text-[10px] text-yellow-600/70 ml-1">PTS</span>
@@ -156,9 +156,9 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.3 }}
-                                className="flex flex-col items-center w-1/3 max-w-[140px]"
+                                className="flex flex-col items-center w-1/3 max-w-[140px] mt-8 md:mt-12"
                             >
-                                <div className="relative mb-2 md:mb-4">
+                                <div className="relative mb-6 md:mb-8">
                                     <div className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-orange-300 shadow-xl overflow-hidden relative z-10 bg-white">
                                         {topStudents[2].avatar ? (
                                             <Image
@@ -178,8 +178,8 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
                                     </div>
                                 </div>
                                 <div className="text-center w-full">
-                                    <h3 className="font-bold text-gray-800 text-sm md:text-lg truncate px-1">{topStudents[2].name}</h3>
-                                    <p className="text-xs text-gray-500 mb-1 truncate">{topStudents[2].teamName}</p>
+                                    <h3 className="font-bold text-gray-800 text-sm md:text-lg px-1 text-center leading-tight mb-1">{topStudents[2].name}</h3>
+                                    <p className="text-xs text-gray-500 mb-1 text-center leading-tight">{topStudents[2].teamName}</p>
                                     <div className="inline-block bg-white border border-gray-200 shadow-sm rounded-lg px-2 md:px-3 py-1">
                                         <span className="font-bold text-[#8B4513] text-sm md:text-base">{topStudents[2].total_points}</span>
                                         <span className="text-[10px] text-gray-400 ml-1">PTS</span>
@@ -235,12 +235,12 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
 
                                     {/* Details */}
                                     <div className="flex-grow min-w-0">
-                                        <h4 className="font-bold text-gray-900 text-sm md:text-base truncate group-hover:text-[#8B4513] transition-colors">
+                                        <h4 className="font-bold text-gray-900 text-sm md:text-base group-hover:text-[#8B4513] transition-colors leading-tight">
                                             {student.name}
                                         </h4>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-xs text-gray-400 font-mono bg-gray-50 px-1.5 rounded">{student.chest_no}</span>
-                                            <span className="text-[10px] md:text-xs text-gray-500 truncate border-l border-gray-200 pl-2">
+                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                            <span className="text-xs text-gray-400 font-mono bg-gray-50 px-1.5 rounded whitespace-nowrap">{student.chest_no}</span>
+                                            <span className="text-[10px] md:text-xs text-gray-500 border-l border-gray-200 pl-2 leading-tight">
                                                 {student.teamName}
                                             </span>
                                         </div>
