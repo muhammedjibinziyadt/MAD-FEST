@@ -26,12 +26,17 @@ export function CreatePost({ userImage, userName }: CreatePostProps) {
     const [content, setContent] = useState("");
     const [recorderResetKey, setRecorderResetKey] = useState(0);
 
+    const [isPollMode, setIsPollMode] = useState(false);
+    const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+
     useEffect(() => {
         if (state?.success) {
             formRef.current?.reset();
             setSelectedImage(null);
             setAudioBlob(null);
             setContent("");
+            setIsPollMode(false);
+            setPollOptions(["", ""]);
             setRecorderResetKey(prev => prev + 1);
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
@@ -57,12 +62,14 @@ export function CreatePost({ userImage, userName }: CreatePostProps) {
             const url = URL.createObjectURL(file);
             setSelectedImage(url);
             setAudioBlob(null);
+            setIsPollMode(false);
         }
     };
 
     const handleAudioComplete = (blob: Blob) => {
         setAudioBlob(blob);
         setSelectedImage(null);
+        setIsPollMode(false);
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
@@ -71,24 +78,88 @@ export function CreatePost({ userImage, userName }: CreatePostProps) {
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
+    const addPollOption = () => {
+        if (pollOptions.length < 12) {
+            setPollOptions([...pollOptions, ""]);
+        }
+    };
+
+    const removePollOption = (index: number) => {
+        if (pollOptions.length > 2) {
+            setPollOptions(pollOptions.filter((_, i) => i !== index));
+        }
+    };
+
+    const updatePollOption = (index: number, value: string) => {
+        const newOptions = [...pollOptions];
+        newOptions[index] = value;
+        setPollOptions(newOptions);
+    };
+
+    const togglePollMode = () => {
+        if (!isPollMode) {
+            setSelectedImage(null);
+            setAudioBlob(null);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+        setIsPollMode(!isPollMode);
+    };
+
     return (
         <div className="bg-zinc-900 rounded-3xl p-5 border border-white/5 shadow-xl mb-6">
             <form ref={formRef} action={formAction}>
                 <div className="flex gap-4 mb-4">
-                    <Avatar className="h-10 w-10 border border-white/10">
+                    <Avatar className="h-10 w-10 border border-white/10 shrink-0">
                         <AvatarImage src={userImage} className="object-cover" />
                         <AvatarFallback className="text-xs">{userName?.slice(0, 2).toUpperCase() || "ME"}</AvatarFallback>
                     </Avatar>
-                    <input
-                        type="text"
-                        name="content"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        placeholder={selectedImage ? "Add a caption..." : audioBlob ? "Describe this audio..." : "Drop your vibe here..."}
-                        className="flex-1 bg-transparent border-none text-white placeholder:text-white/30 text-base focus:ring-0 focus:outline-none py-2"
-                        autoComplete="off"
-                        required={!selectedImage && !audioBlob}
-                    />
+                    <div className="flex-1 space-y-3">
+                        <input
+                            type="text"
+                            name="content"
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            placeholder={isPollMode ? "Ask a question..." : selectedImage ? "Add a caption..." : audioBlob ? "Describe this audio..." : "Drop your vibe here..."}
+                            className="w-full bg-transparent border-none text-white placeholder:text-white/30 text-base focus:ring-0 focus:outline-none py-2"
+                            autoComplete="off"
+                            required={!selectedImage && !audioBlob}
+                        />
+
+                        {isPollMode && (
+                            <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                                {pollOptions.map((option, idx) => (
+                                    <div key={idx} className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={option}
+                                            onChange={(e) => updatePollOption(idx, e.target.value)}
+                                            placeholder={`Option ${idx + 1}`}
+                                            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20"
+                                            required={isPollMode}
+                                        />
+                                        {pollOptions.length > 2 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removePollOption(idx)}
+                                                className="p-2 text-white/40 hover:text-red-400"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                                {pollOptions.length < 12 && (
+                                    <button
+                                        type="button"
+                                        onClick={addPollOption}
+                                        className="text-xs text-fuchsia-400 hover:text-fuchsia-300 font-medium px-1"
+                                    >
+                                        + Add Option
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Previews */}
@@ -107,9 +178,7 @@ export function CreatePost({ userImage, userName }: CreatePostProps) {
                         </button>
                     </div>
                 )}
-                {/* Audio preview is handled by AudioRecorder component usually, but if we need custom preview we can add here. 
-                     For now assuming AudioRecorder shows its own state nicely. 
-                  */}
+
 
                 <div className="flex justify-between items-center pt-2 border-t border-white/5">
                     <div className="flex items-center gap-2">
@@ -121,7 +190,8 @@ export function CreatePost({ userImage, userName }: CreatePostProps) {
                             className="hidden"
                             onChange={handleImageSelect}
                         />
-                        {!audioBlob && (
+
+                        {!audioBlob && !isPollMode && (
                             <Button
                                 type="button"
                                 variant="ghost"
@@ -134,9 +204,8 @@ export function CreatePost({ userImage, userName }: CreatePostProps) {
                             </Button>
                         )}
 
-                        {!selectedImage && (
+                        {!selectedImage && !isPollMode && (
                             <div className="scale-90 origin-left">
-                                {/* Scale down specific recorder to fit */}
                                 <AudioRecorder
                                     key={recorderResetKey}
                                     onRecordingComplete={handleAudioComplete}
@@ -145,17 +214,34 @@ export function CreatePost({ userImage, userName }: CreatePostProps) {
                                 />
                             </div>
                         )}
+
+                        {!selectedImage && !audioBlob && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm" // Use small button or icon
+                                className={`h-9 w-9 rounded-full transition-colors ${isPollMode ? 'text-green-400 bg-green-500/10' : 'text-green-500/50 hover:bg-green-500/10'}`}
+                                onClick={togglePollMode}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M22 6h-6l-3-3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4" /></svg> {/* Simple Poll Icon */}
+                            </Button>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {/* Location icon for visual as per ref */}
-                        {/* <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-red-400 bg-red-500/10 hover:bg-red-500/20"><MapPin className="w-4 h-4" /></Button> */}
-
-                        <SubmitButton isValid={content.trim().length > 0 || !!selectedImage || !!audioBlob} />
+                        <SubmitButton isValid={
+                            (content.trim().length > 0 && !isPollMode) ||
+                            (!!selectedImage) ||
+                            (!!audioBlob) ||
+                            (isPollMode && content.trim().length > 0 && pollOptions.every(o => o.trim().length > 0))
+                        } />
                     </div>
                 </div>
 
-                <input type="hidden" name="type" value={selectedImage ? "image" : audioBlob ? "audio" : "text"} />
+                <input type="hidden" name="type" value={isPollMode ? "poll" : selectedImage ? "image" : audioBlob ? "audio" : "text"} />
+                {isPollMode && (
+                    <input type="hidden" name="pollOptions" value={JSON.stringify(pollOptions.map(t => ({ id: crypto.randomUUID(), text: t, votes: [] })))} />
+                )}
             </form>
             {state?.error && (
                 <p className="text-red-400 text-xs mt-3">{state.error}</p>

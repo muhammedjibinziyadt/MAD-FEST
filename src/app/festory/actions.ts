@@ -166,13 +166,15 @@ export async function createFestoryPost(prevState: any, formData: FormData) {
         if (!session) return { error: "Unauthorized" };
 
         const content = formData.get("content") as string;
-        const type = formData.get("type") as "text" | "image" | "audio";
+        const type = formData.get("type") as "text" | "image" | "audio" | "poll";
         const file = formData.get("file") as File | null;
+        const pollOptions = formData.get("pollOptions") as string | null;
 
         // Validation
         if (!content && type === "text") return { error: "Content is required" };
-        if (type !== "text" && !file) return { error: "File is required for image/audio posts" };
-        if (type !== "text" && file && file.size > 3 * 1024 * 1024) return { error: "File size too large (max 3MB)" };
+        if (type !== "text" && type !== "poll" && !file) return { error: "File is required for image/audio posts" };
+        if (type !== "text" && type !== "poll" && file && file.size > 3 * 1024 * 1024) return { error: "File size too large (max 3MB)" };
+        if (type === "poll" && !pollOptions) return { error: "Poll options are required" };
 
         await connectDB();
         const { FestoryUserModel, FestoryPostModel } = await import("@/lib/models");
@@ -184,7 +186,7 @@ export async function createFestoryPost(prevState: any, formData: FormData) {
         if (!user || user.isBanned) return { error: "You are banned from posting." };
 
         let mediaUrl = "";
-        if (file && type !== "text") {
+        if (file && type !== "text" && type !== "poll") {
             try {
                 mediaUrl = await uploadFile(file, type);
             } catch (err) {
@@ -202,6 +204,7 @@ export async function createFestoryPost(prevState: any, formData: FormData) {
             content: content || "",
             mediaUrl: mediaUrl,
             likes: [],
+            pollOptions: type === "poll" ? JSON.parse(pollOptions!) : undefined,
             commentsCount: 0,
         });
 
@@ -216,6 +219,7 @@ export async function createFestoryPost(prevState: any, formData: FormData) {
             content: newPost.content,
             mediaUrl: newPost.mediaUrl,
             likes: [],
+            pollOptions: newPost.pollOptions,
             commentsCount: 0,
             createdAt: new Date().toISOString(),
         };
@@ -227,6 +231,57 @@ export async function createFestoryPost(prevState: any, formData: FormData) {
         console.error("Post Error:", error);
 
         return { error: "Failed to create post" };
+    }
+}
+
+export async function voteFestoryPoll(postId: string, optionId: string) {
+    try {
+        const session = await getFestorySession();
+        if (!session) return { error: "Unauthorized" };
+
+        await connectDB();
+        const { FestoryPostModel } = await import("@/lib/models");
+        const { emitFestoryPostUpdated } = await import("@/lib/pusher");
+
+        const post = await FestoryPostModel.findOne({ id: postId });
+        if (!post) return { error: "Post not found" };
+        if (post.type !== "poll" || !post.pollOptions) return { error: "Not a poll" };
+
+        const option = post.pollOptions.find((o: any) => o.id === optionId);
+        if (!option) return { error: "Option not found" };
+
+        // Toggle vote (WhatsApp style: user can select multiple options)
+        const voterIndex = option.votes.indexOf(session.id);
+        if (voterIndex > -1) {
+            option.votes.splice(voterIndex, 1);
+        } else {
+            option.votes.push(session.id);
+        }
+
+        // We need to mark the array as modified because we mutated a subdocument array property
+        post.markModified('pollOptions');
+        await post.save();
+
+        const plainPost = {
+            id: post.id,
+            userId: post.userId,
+            userName: post.userName,
+            userTeamId: post.userTeamId,
+            type: post.type,
+            content: post.content,
+            mediaUrl: post.mediaUrl,
+            likes: post.likes || [],
+            pollOptions: post.pollOptions,
+            commentsCount: post.commentsCount || 0,
+            createdAt: new Date(post.createdAt).toISOString()
+        };
+
+        await emitFestoryPostUpdated(plainPost);
+
+        return { success: true };
+    } catch (e) {
+        console.error(e);
+        return { error: "Failed to vote" };
     }
 }
 

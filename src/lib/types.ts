@@ -225,10 +225,15 @@ export interface FestoryPost {
   userName: string;
   userImage?: string;
   userTeamId: string;
-  type: "text" | "image" | "audio";
+  type: "text" | "image" | "audio" | "poll";
   content: string;
   mediaUrl?: string;
   likes: string[]; // Array of User IDs
+  pollOptions?: {
+    id: string;
+    text: string;
+    votes: string[]; // Array of User IDs who voted for this option
+  }[];
   commentsCount: number;
   createdAt: string;
 }

@@ -468,8 +468,54 @@ export function FeedItem({ post, currentUserId, onDelete }: FeedItemProps) {
                     <img src={post.mediaUrl} alt="Post content" className="w-full h-auto" loading="lazy" />
                 </div>
             )}
+
             {post.type === 'audio' && post.mediaUrl && (
                 <AudioPlayer src={post.mediaUrl} />
+            )}
+            {post.type === 'poll' && post.pollOptions && (
+                <div className="space-y-2 mb-4">
+                    {post.pollOptions.map((option) => {
+                        const totalVotes = post.pollOptions!.reduce((acc, curr) => acc + curr.votes.length, 0);
+                        const percentage = totalVotes > 0 ? (option.votes.length / totalVotes) * 100 : 0;
+                        const isVoted = option.votes.includes(currentUserId);
+
+                        return (
+                            <div key={option.id} className="relative">
+                                {/* Vote Bar Background */}
+                                <div className="absolute inset-0 bg-white/5 rounded-xl overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${percentage}%` }}
+                                        className={`h-full opacity-20 ${isVoted ? 'bg-fuchsia-500' : 'bg-white'}`}
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={async () => {
+                                        // Optimistic Update can be handled here if needed, but for simplicity relying on server response via key update or revalidation
+                                        // Actually for best UX we should verify locally
+                                        const { voteFestoryPoll } = await import("@/app/festory/actions");
+                                        await voteFestoryPoll(post.id, option.id);
+                                    }}
+                                    className={`relative w-full text-left px-4 py-3 rounded-xl border transition-all flex justify-between items-center group ${isVoted
+                                        ? "border-fuchsia-500/50 text-fuchsia-100"
+                                        : "border-white/10 text-white hover:bg-white/5"
+                                        }`}
+                                >
+                                    <span className="font-medium z-10 truncate pr-2">{option.text}</span>
+                                    {totalVotes > 0 && (
+                                        <span className="text-xs font-bold opacity-60 shrink-0 z-10">
+                                            {Math.round(percentage)}%
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
+                        );
+                    })}
+                    <div className="text-xs text-white/40 font-medium px-1 pt-1">
+                        {post.pollOptions.reduce((acc, curr) => acc + curr.votes.length, 0)} votes
+                    </div>
+                </div>
             )}
 
             {/* Footer / Interactions */}

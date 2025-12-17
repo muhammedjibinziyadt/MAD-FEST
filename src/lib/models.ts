@@ -386,10 +386,17 @@ const FestoryPostSchema = new Schema<FestoryPost>(
     userId: { type: String, required: true },
     userName: { type: String, required: true },
     userTeamId: { type: String, required: true },
-    type: { type: String, enum: ["text", "image", "audio"], required: true },
+    type: { type: String, enum: ["text", "image", "audio", "poll"], required: true },
     content: { type: String, default: "" },
     mediaUrl: { type: String },
     likes: { type: [String], default: [] },
+    pollOptions: [
+      {
+        id: { type: String, required: true },
+        text: { type: String, required: true },
+        votes: { type: [String], default: [] },
+      },
+    ],
     commentsCount: { type: Number, default: 0 },
   },
   { timestamps: true },
