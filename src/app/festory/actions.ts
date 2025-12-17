@@ -154,6 +154,11 @@ export async function getFestoryPosts() {
             content: post.content,
             mediaUrl: post.mediaUrl,
             likes: Array.isArray(post.likes) ? post.likes : [], // Ensure array
+            pollOptions: Array.isArray(post.pollOptions) ? post.pollOptions.map((opt: any) => ({
+                id: opt.id,
+                text: opt.text,
+                votes: Array.isArray(opt.votes) ? opt.votes : []
+            })) : undefined,
             commentsCount: post.commentsCount || 0,
             createdAt: new Date(post.createdAt).toISOString()
         };
@@ -250,11 +255,20 @@ export async function voteFestoryPoll(postId: string, optionId: string) {
         const option = post.pollOptions.find((o: any) => o.id === optionId);
         if (!option) return { error: "Option not found" };
 
-        // Toggle vote (WhatsApp style: user can select multiple options)
+        // Single Choice Logic: Remove user from all other options first
+        post.pollOptions.forEach((o: any) => {
+            if (o.id !== optionId) {
+                const idx = o.votes.indexOf(session.id);
+                if (idx > -1) o.votes.splice(idx, 1);
+            }
+        });
+
         const voterIndex = option.votes.indexOf(session.id);
         if (voterIndex > -1) {
+            // Unvote if already voted for this option
             option.votes.splice(voterIndex, 1);
         } else {
+            // Vote
             option.votes.push(session.id);
         }
 

@@ -133,6 +133,14 @@ export function CreatePost({ userImage, userName }: CreatePostProps) {
                                             type="text"
                                             value={option}
                                             onChange={(e) => updatePollOption(idx, e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    if (idx === pollOptions.length - 1) {
+                                                        addPollOption();
+                                                    }
+                                                }
+                                            }}
                                             placeholder={`Option ${idx + 1}`}
                                             className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20"
                                             required={isPollMode}
