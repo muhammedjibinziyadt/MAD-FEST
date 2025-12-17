@@ -159,7 +159,7 @@ function UsersManager() {
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <Badge variant="outline" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 uppercase">
+                                            <Badge className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 uppercase">
                                                 {user.teamId}
                                             </Badge>
                                         </td>
@@ -263,7 +263,7 @@ function PostsManager() {
                                             <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                                         </div>
                                     </div>
-                                    <Badge variant="outline" className="text-[10px] h-5 border-white/10 text-white/50">{post.type}</Badge>
+                                    <Badge className="text-[10px] h-5 border-white/10 text-white/50">{post.type}</Badge>
                                 </CardHeader>
 
                                 <CardContent className="p-4 flex-1">
