@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { CheckCircle2, Eye, Pencil, Search, Trash2, Calendar, User, Award } from "lucide-react";
+import { CheckCircle2, Eye, Pencil, Search, Trash2, Calendar, User, Award, Table, FileText } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -74,14 +74,14 @@ export const ResultManager = React.memo(function ResultManager({
       const program = programMap.get(result.program_id);
       const jury = juryMap.get(result.jury_id);
       const query = debouncedSearchQuery.trim().toLowerCase();
-      
+
       const matchesSearch =
         program?.name.toLowerCase().includes(query) ||
         jury?.name.toLowerCase().includes(query) ||
         result.id.toLowerCase().includes(query);
       const matchesProgram = programFilter ? result.program_id === programFilter : true;
       const matchesJury = juryFilter ? result.jury_id === juryFilter : true;
-      
+
       return matchesSearch && matchesProgram && matchesJury;
     });
   }, [results, debouncedSearchQuery, programFilter, juryFilter, programMap, juryMap]);
@@ -147,6 +147,57 @@ export const ResultManager = React.memo(function ResultManager({
     return entryTotal - penaltyTotal;
   }
 
+  const getPositionName = useCallback((result: ResultRecord, position: number) => {
+    const entry = result.entries.find((e) => e.position === position);
+    if (!entry) return "—";
+    return getWinnerName(entry);
+  }, [getWinnerName]);
+
+  const handleExport = useCallback((type: "csv" | "pdf") => {
+    const data = sortedResults.map((result) => {
+      const programName = programMap.get(result.program_id)?.name ?? "Unknown Program";
+      const first = getPositionName(result, 1);
+      const second = getPositionName(result, 2);
+      const third = getPositionName(result, 3);
+      return [programName, first, second, third];
+    });
+
+    if (type === "pdf") {
+      import("jspdf").then((jsPDFModule) => {
+        import("jspdf-autotable").then((autoTableModule) => {
+          const jsPDF = jsPDFModule.default;
+          const autoTable = autoTableModule.default;
+          const doc = new jsPDF();
+
+          doc.setFontSize(18);
+          doc.text("Approved Results", 14, 22);
+
+          autoTable(doc, {
+            head: [["Program Name", "First Place", "Second Place", "Third Place"]],
+            body: data,
+            startY: 30,
+            styles: { fontSize: 10, cellPadding: 3 },
+            headStyles: { fillColor: [8, 47, 73] }, // Slate 900
+          });
+
+          doc.save("approved-results.pdf");
+        });
+      });
+    } else {
+      const headers = ["Program Name", "First Place", "Second Place", "Third Place"];
+      const csvContent =
+        "data:text/csv;charset=utf-8," +
+        [headers, ...data].map((e) => e.map(item => `"${item}"`).join(",")).join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "approved-results.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }, [sortedResults, programMap, getPositionName]);
+
   return (
     <div className="space-y-6 rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-[0_20px_60px_rgba(8,47,73,0.35)]">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -159,11 +210,31 @@ export const ResultManager = React.memo(function ResultManager({
             Search, filter, and manage result entries.
           </p>
         </div>
+        {!isPending && (
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleExport("csv")}
+              className="gap-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/20"
+            >
+              <Table className="h-4 w-4" /> CSV
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleExport("pdf")}
+              className="gap-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20"
+            >
+              <FileText className="h-4 w-4" /> PDF
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
         <div className="relative z-20 md:col-span-2 flex items-center rounded-2xl border border-white/10 bg-white/5 px-4 transition-all duration-200 hover:border-white/20 focus-within:border-fuchsia-400/50 focus-within:ring-2 focus-within:ring-fuchsia-400/30 focus-within:bg-white/10">
-          <Search className="mr-2 h-4 w-4 text-white/50 flex-shrink-0" />
+          <Search className="mr-2 h-4 w-4 text-white/50 shrink-0" />
           <Input
             type="text"
             placeholder="Search by program, jury, or ID..."
@@ -201,11 +272,10 @@ export const ResultManager = React.memo(function ResultManager({
               key={option.value}
               type="button"
               onClick={() => setSort(option.value as SortOption)}
-              className={`rounded-full px-4 py-1 text-xs font-semibold transition ${
-                sort === option.value
-                  ? "bg-emerald-500/20 text-emerald-300"
-                  : "border border-white/10 text-white/60 hover:text-white"
-              }`}
+              className={`rounded-full px-4 py-1 text-xs font-semibold transition ${sort === option.value
+                ? "bg-emerald-500/20 text-emerald-300"
+                : "border border-white/10 text-white/60 hover:text-white"
+                }`}
             >
               {option.label}
             </button>
@@ -245,7 +315,7 @@ export const ResultManager = React.memo(function ResultManager({
           return (
             <div
               key={result.id}
-              className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/70 via-slate-900/40 to-slate-800/40 px-4 py-4 shadow-[0_15px_60px_rgba(15,23,42,0.45)] transition hover:border-fuchsia-400/40"
+              className="rounded-2xl border border-white/10 bg-linear-to-br from-slate-900/70 via-slate-900/40 to-slate-800/40 px-4 py-4 shadow-[0_15px_60px_rgba(15,23,42,0.45)] transition hover:border-fuchsia-400/40"
             >
               <div className="flex flex-col gap-4 xl:flex-row xl:items-center">
                 <div className="w-full xl:flex-1">
@@ -383,11 +453,10 @@ export const ResultManager = React.memo(function ResultManager({
                     key={pageNum}
                     type="button"
                     onClick={() => setPage(pageNum)}
-                    className={`w-8 h-8 rounded-lg text-sm transition ${
-                      page === pageNum
-                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                        : "border border-white/10 text-white/60 hover:text-white hover:border-white/20"
-                    }`}
+                    className={`w-8 h-8 rounded-lg text-sm transition ${page === pageNum
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      : "border border-white/10 text-white/60 hover:text-white hover:border-white/20"
+                      }`}
                   >
                     {pageNum}
                   </button>

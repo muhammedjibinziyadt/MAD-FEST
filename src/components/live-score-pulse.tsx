@@ -102,15 +102,15 @@ function TeamCard({ team, index, rank, maxPoints }: TeamCardProps) {
         className={`relative overflow-hidden bg-white border border-gray-100 rounded-3xl p-5 transition-all duration-300 ${team.colors.glow} hover:shadow-2xl shadow-xl z-0`}
       >
         {/* Dynamic Gradient Border/Glow effect */}
-        <div className={`absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b ${team.colors.gradient}`} />
+        <div className={`absolute top-0 left-0 w-1.5 h-full bg-linear-to-b ${team.colors.gradient}`} />
 
         {/* Hover Gradient Background */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${team.colors.gradient} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300 pointer-events-none`} />
+        <div className={`absolute inset-0 bg-linear-to-br ${team.colors.gradient} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300 pointer-events-none`} />
 
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-4">
             {/* Rank Badge */}
-            <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br ${team.colors.gradient} text-white font-bold shadow-lg`}>
+            <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-linear-to-br ${team.colors.gradient} text-white font-bold shadow-lg`}>
               <span className="text-lg leading-none">#{rank}</span>
             </div>
 
@@ -160,7 +160,7 @@ function TeamCard({ team, index, rank, maxPoints }: TeamCardProps) {
               whileInView={{ width: `${percentage}%` }}
               viewport={{ once: true }}
               transition={{ duration: 1, ease: "circOut" }}
-              className={`h-full rounded-full bg-gradient-to-r ${team.colors.gradient} relative overflow-hidden`}
+              className={`h-full rounded-full bg-linear-to-r ${team.colors.gradient} relative overflow-hidden`}
             >
               <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" />
             </motion.div>
@@ -310,7 +310,7 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
             <span className="text-red-600 font-bold tracking-widest text-xs uppercase">Live Updates</span>
           </motion.div>
           <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8B4513] to-amber-600">SCORE</span> PULSE
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-[#8B4513] to-amber-600">SCORE</span> PULSE
           </h2>
           <p className="text-gray-500 max-w-md text-lg">
             Real-time tracking of the championship race. Watch the battle unfold.

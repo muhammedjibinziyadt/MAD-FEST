@@ -233,11 +233,11 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
                 <p className="text-gray-700 text-base sm:text-lg leading-relaxed max-w-2xl">
                   Contact us for support, inquiries, or assistance with the platform.
                   Our team is here to help ensure a smooth and enjoyable experience.
-                  <Link href="/admin/login" className="">
+                  {/* <Link href="/admin/login" className="">
                     <Button variant="secondary" className="text-sm text-black font-normal ml-2">
                       Admin Login
                     </Button>
-                  </Link>
+                  </Link> */}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">

@@ -5,7 +5,7 @@ import { PredictionEvent } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
-import { Clock, Trophy, CheckCircle2, Lock } from "lucide-react";
+import { Clock, Trophy, CheckCircle2, Lock, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
