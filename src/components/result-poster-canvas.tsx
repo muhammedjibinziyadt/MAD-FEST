@@ -43,10 +43,13 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 /**
  * Get gradient colors for different poster styles
  */
-function getGradientColors(style: PosterStyle) {
+/**
+ * Get theme colors for different poster styles
+ */
+function getPosterTheme(style: PosterStyle) {
   switch (style) {
     case 1:
-      // Default purple gradient
+      // Default purple gradient theme
       return {
         stops: [
           { offset: 0, color: "#1e1b4b" }, // Deep purple
@@ -54,10 +57,15 @@ function getGradientColors(style: PosterStyle) {
           { offset: 0.7, color: "#581c87" }, // Purple
           { offset: 1, color: "#4c1d95" }, // Dark purple
         ],
-        sectionColor: "#fbbf24", // Gold
+        textColors: {
+          program: "#000000", // Dark purple
+          section: "#000000", // Purple
+          name: "#000000", // Deep purple
+          team: "#000000", // Violet
+        },
       };
     case 2:
-      // Blue gradient
+      // Blue gradient theme
       return {
         stops: [
           { offset: 0, color: "#0f172a" }, // Slate
@@ -65,10 +73,15 @@ function getGradientColors(style: PosterStyle) {
           { offset: 0.7, color: "#3b82f6" }, // Light blue
           { offset: 1, color: "#1e40af" }, // Dark blue
         ],
-        sectionColor: "#60a5fa", // Light blue
+        textColors: {
+          program: "#fffff", // Dark blue
+          section: "#e7a039", // Blue
+          name: "#ffffff", // Slate
+          team: "#ffffff", // Darker blue
+        },
       };
     case 3:
-      // Emerald/Teal gradient
+      // Emerald/Teal gradient theme
       return {
         stops: [
           { offset: 0, color: "#064e3b" }, // Dark emerald
@@ -76,7 +89,12 @@ function getGradientColors(style: PosterStyle) {
           { offset: 0.7, color: "#059669" }, // Light emerald
           { offset: 1, color: "#047857" }, // Dark emerald
         ],
-        sectionColor: "#34d399", // Emerald
+        textColors: {
+          program: "#bd6229", // Dark emerald
+          section: "#000000", // Emerald
+          name: "#000000", // Very dark emerald
+          team: "#000000", // Dark emerald
+        },
       };
     default:
       return {
@@ -86,7 +104,12 @@ function getGradientColors(style: PosterStyle) {
           { offset: 0.7, color: "#581c87" },
           { offset: 1, color: "#4c1d95" },
         ],
-        sectionColor: "#fbbf24",
+        textColors: {
+          program: "#bd6229",
+          section: "#6d28d9",
+          name: "#1e1b4b",
+          team: "#5b21b6",
+        },
       };
   }
 }
@@ -99,7 +122,7 @@ function getGradientColors(style: PosterStyle) {
  */
 export async function generateResultPoster(data: PosterData, style: PosterStyle = 1): Promise<string> {
   // 1. Load poster template background first to get its dimensions
-  const gradientColors = getGradientColors(style);
+  const theme = getPosterTheme(style);
   const templateUrl = `/poster-template-${style}.webp`;
 
   let templateImage: HTMLImageElement | null = null;
@@ -135,7 +158,7 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
   } else {
     // Fallback to gradient background if image fails to load
     const gradient = ctx.createLinearGradient(0, 0, imageWidth, imageHeight);
-    gradientColors.stops.forEach((stop) => {
+    theme.stops.forEach((stop) => {
       gradient.addColorStop(stop.offset, stop.color);
     });
     ctx.fillStyle = gradient;
@@ -153,9 +176,9 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
 
   // Program Name - scaled font size
   const titleY = 400 * scaleY;
-  const fontSize = 64 * scaleY;
-  ctx.fillStyle = "#000000ff";
-  ctx.font = `bold ${fontSize}px 'Arial', sans-serif`;
+  const fontSize = 74 * scaleY;
+  ctx.fillStyle = theme.textColors.program;
+  ctx.font = `${fontSize}px 'Charutha', sans-serif`;
   // Truncate long program names if needed
   let displayProgramName = data.programName;
   const maxTitleWidth = 940 * scaleX;
@@ -167,12 +190,12 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
     }
     displayProgramName = displayProgramName + "...";
   }
-  const leftMargin = 340 * scaleX;
+  const leftMargin = 380 * scaleX;
   ctx.fillText(displayProgramName, leftMargin, titleY);
 
   // 4. Section - smaller than program name, normal style
   const sectionY = 460 * scaleY; // Decreased gap from ProgramName
-  ctx.fillStyle = "#000000ff"; // Yellow color for all sections
+  ctx.fillStyle = theme.textColors.section;
   const sectionFontSize = 48 * scaleY;
   ctx.font = `${sectionFontSize}px 'Arial', sans-serif`; // Normal style, smaller than program name
   // Truncate long section names if needed
@@ -202,7 +225,7 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
 
     // Student/Team Name
     const name = prize.studentName || prize.teamName || "—";
-    ctx.fillStyle = "#070101ff";
+    ctx.fillStyle = theme.textColors.name;
     const nameFontSize = 48 * scaleY;
     ctx.font = `bold ${nameFontSize}px 'Arial', sans-serif`;
     ctx.textAlign = "left";
@@ -229,13 +252,13 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
 
     // Team Name (if student) - smaller font
     if (prize.studentName && prize.teamName) {
-      ctx.fillStyle = "#000000ff"; // Red color
+      ctx.fillStyle = theme.textColors.team;
       const teamFontSize = 32 * scaleY;
       ctx.font = `${teamFontSize}px 'Arial', sans-serif`;
       ctx.fillText(prize.teamName, nameStartX, teamNameY);
     } else if (!prize.studentName && prize.teamName) {
       // Show team name even when no student (group/general sections)
-      ctx.fillStyle = "#000000ff"; // Red color
+      ctx.fillStyle = theme.textColors.team;
       const teamFontSize = 32 * scaleY;
       ctx.font = `${teamFontSize}px 'Arial', sans-serif`;
       ctx.fillText(prize.teamName, nameStartX, teamNameY);
