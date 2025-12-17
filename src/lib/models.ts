@@ -17,7 +17,35 @@ import type {
   Prediction,
   Vote,
   UserScore,
+  FestoryPost,
+  FestoryUser,
+  FestoryComment,
 } from "./types";
+
+// Force new schema in dev
+if (process.env.NODE_ENV !== "production") {
+  delete models.Team;
+  delete models.Student;
+  delete models.Program;
+  delete models.Jury;
+  delete models.AssignedProgram;
+  delete models.PendingResult;
+  delete models.ApprovedResult;
+  delete models.LiveScore;
+  delete models.ProgramRegistration;
+  delete models.RegistrationSchedule;
+  delete models.ReplacementRequest;
+  delete models.Notification;
+  delete models.AdminSettings;
+  delete models.Poll;
+  delete models.Vote;
+  delete models.PredictionEvent;
+  delete models.Prediction;
+  delete models.UserScore;
+  delete models.FestoryPost;
+  delete models.FestoryComment;
+  delete models.FestoryUser;
+}
 
 const TeamSchema = new Schema<Team>(
   {
@@ -42,6 +70,7 @@ const StudentSchema = new Schema<Student>(
     chest_no: { type: String, required: true },
     avatar: { type: String },
     total_points: { type: Number, default: 0 },
+    phone_number: { type: String },
   },
   { timestamps: true },
 );
@@ -348,4 +377,62 @@ export const PredictionModel =
 export const UserScoreModel =
   (models.UserScore as Model<UserScore>) ??
   model<UserScore>("UserScore", UserScoreSchema);
+
+
+
+const FestoryPostSchema = new Schema<FestoryPost>(
+  {
+    id: { type: String, required: true, unique: true },
+    userId: { type: String, required: true },
+    userName: { type: String, required: true },
+    userTeamId: { type: String, required: true },
+    type: { type: String, enum: ["text", "image", "audio"], required: true },
+    content: { type: String, default: "" },
+    mediaUrl: { type: String },
+    likes: { type: [String], default: [] },
+    commentsCount: { type: Number, default: 0 },
+  },
+  { timestamps: true },
+);
+
+const FestoryCommentSchema = new Schema<FestoryComment>(
+  {
+    id: { type: String, required: true, unique: true },
+    postId: { type: String, required: true },
+    userId: { type: String, required: true },
+    userName: { type: String, required: true },
+    userImage: { type: String },
+    content: { type: String, required: true },
+    parentId: { type: String },
+  },
+  { timestamps: true },
+);
+
+const FestoryUserSchema = new Schema<FestoryUser>(
+  {
+    id: { type: String, required: true, unique: true },
+    studentId: { type: String }, // Removed required & unique
+    googleId: { type: String },
+    email: { type: String },
+    name: { type: String, required: true },
+    teamId: { type: String, required: true },
+    phoneNumber: { type: String, required: true },
+    isBanned: { type: Boolean, default: false },
+    image: { type: String },
+    profileImageUpdateCount: { type: Number, default: 0 },
+  },
+  { timestamps: true },
+);
+
+export const FestoryPostModel =
+  (models.FestoryPost as Model<FestoryPost>) ??
+  model<FestoryPost>("FestoryPost", FestoryPostSchema);
+
+export const FestoryCommentModel =
+  (models.FestoryComment as Model<FestoryComment>) ??
+  model<FestoryComment>("FestoryComment", FestoryCommentSchema);
+
+export const FestoryUserModel =
+  (models.FestoryUser as Model<FestoryUser>) ??
+  model<FestoryUser>("FestoryUser", FestoryUserSchema);
 

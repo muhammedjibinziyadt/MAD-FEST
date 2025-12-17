@@ -18,6 +18,7 @@ export const CHANNELS = {
   SCOREBOARD: "scoreboard",
   POLLS: "polls",
   PREDICTIONS: "predictions",
+  FESTORY: "festory",
 } as const;
 
 // Event names
@@ -38,7 +39,49 @@ export const EVENTS = {
   PREDICTION_OPENED: "prediction-opened",
   PREDICTION_CLOSED: "prediction-closed",
   LEADERBOARD_UPDATED: "leaderboard-updated",
+  FESTORY_POST_CREATED: "festory-post-created",
+  FESTORY_AUDIO_BOMB: "festory-audio-bomb",
+  FESTORY_ANNOUNCEMENT: "festory-announcement",
+  FESTORY_POST_DELETED: "festory-post-deleted",
+  FESTORY_POST_UPDATED: "festory-post-updated",
 } as const;
+
+export async function emitFestoryPostUpdated(post: any) {
+  await pusherServer.trigger(CHANNELS.FESTORY, EVENTS.FESTORY_POST_UPDATED, {
+    post,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export async function emitFestoryPostCreated(post: any) {
+  await pusherServer.trigger(CHANNELS.FESTORY, EVENTS.FESTORY_POST_CREATED, {
+    post,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export async function emitFestoryAudioBomb(sound: string, user: string) {
+  await pusherServer.trigger(CHANNELS.FESTORY, EVENTS.FESTORY_AUDIO_BOMB, {
+    sound,
+    user,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export async function emitFestoryAnnouncement(audioUrl: string, user: string) {
+  await pusherServer.trigger(CHANNELS.FESTORY, EVENTS.FESTORY_ANNOUNCEMENT, {
+    audioUrl,
+    user,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export async function emitFestoryPostDeleted(postId: string) {
+  await pusherServer.trigger(CHANNELS.FESTORY, EVENTS.FESTORY_POST_DELETED, {
+    postId,
+    timestamp: new Date().toISOString(),
+  });
+}
 
 // Helper functions to emit events
 export async function emitResultApproved(resultId: string, programId: string) {

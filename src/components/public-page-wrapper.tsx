@@ -15,7 +15,8 @@ export function PublicPageWrapper({ children }: PublicPageWrapperProps) {
   // Check if we're on a public page (not admin, jury, or team portal)
   const isPublicPage = !pathname.startsWith("/admin") &&
     !pathname.startsWith("/jury") &&
-    !pathname.startsWith("/team");
+    !pathname.startsWith("/team") &&
+    !pathname.startsWith("/festory");
 
   if (isPublicPage) {
     return (
