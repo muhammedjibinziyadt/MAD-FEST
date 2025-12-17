@@ -22,6 +22,7 @@ const AudioPlayer = ({ src }: { src: string }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [duration, setDuration] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
 
     const togglePlay = () => {
         if (audioRef.current) {
@@ -35,34 +36,40 @@ const AudioPlayer = ({ src }: { src: string }) => {
     };
 
     const handleTimeUpdate = () => {
-        if (audioRef.current) {
+        if (audioRef.current && !isDragging) {
             setCurrentTime(audioRef.current.currentTime);
         }
     };
 
     const handleLoadedMetadata = () => {
         if (audioRef.current) {
-            setDuration(audioRef.current.duration);
+            const d = audioRef.current.duration;
+            if (!isNaN(d) && isFinite(d)) {
+                setDuration(d);
+            }
         }
     };
 
-    const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const time = parseFloat(e.target.value);
+        setCurrentTime(time);
+        // Live Seek (Drag and Play)
         if (audioRef.current) {
             audioRef.current.currentTime = time;
-            setCurrentTime(time);
         }
     };
 
+    const handleSeekStart = () => setIsDragging(true);
+    const handleSeekEnd = () => setIsDragging(false);
+
     const formatTime = (time: number) => {
-        if (!time) return "0:00";
+        if (!time || isNaN(time)) return "0:00";
         const minutes = Math.floor(time / 60);
         const seconds = Math.floor(time % 60);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     };
 
-    // Calculate progress percentage for visual elements
-    const progress = duration ? (currentTime / duration) * 100 : 0;
+    const progress = (duration && duration > 0) ? (currentTime / duration) * 100 : 0;
 
     return (
         <div className="w-full bg-zinc-800/50 rounded-2xl p-3 mb-4 border border-white/5 flex items-center gap-3">
@@ -75,29 +82,32 @@ const AudioPlayer = ({ src }: { src: string }) => {
 
             <div className="flex-1 min-w-0">
                 <div className="relative h-5 flex items-center group">
-                    {/* Invisible Input for Interaction */}
                     <input
                         type="range"
                         min="0"
                         max={duration || 100}
+                        step="0.1"
                         value={currentTime}
-                        onChange={handleSeek}
-                        className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+                        onChange={handleSeekChange}
+                        onMouseDown={handleSeekStart}
+                        onMouseUp={handleSeekEnd}
+                        onTouchStart={handleSeekStart}
+                        onTouchEnd={handleSeekEnd}
+                        className="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer"
                     />
 
-                    {/* Visual Track (Background) */}
-                    <div className="absolute left-0 right-0 h-1 bg-white/10 rounded-full overflow-hidden">
-                        {/* Visual Progress (Colored Bar) */}
+                    {/* Track */}
+                    <div className="absolute left-0 right-0 h-1 bg-white/10 rounded-full overflow-hidden z-10">
                         <div
-                            className="h-full bg-fuchsia-500 transition-all duration-100 ease-out"
+                            className="h-full bg-fuchsia-500 transition-all duration-75 ease-out"
                             style={{ width: `${progress}%` }}
                         />
                     </div>
 
-                    {/* Visual Thumb (Circle) */}
+                    {/* Thumb */}
                     <div
-                        className="absolute h-3 w-3 bg-fuchsia-500 rounded-full shadow-lg pointer-events-none transition-all duration-100 ease-out group-hover:scale-125"
-                        style={{ left: `${progress}%`, marginLeft: `-${(progress / 100) * 12}px` }}
+                        className="absolute h-3 w-3 bg-fuchsia-500 rounded-full shadow-lg pointer-events-none z-10 transition-transform duration-100 group-hover:scale-125"
+                        style={{ left: `${progress}%`, transform: `translateX(-50%)` }}
                     />
                 </div>
 
@@ -110,9 +120,11 @@ const AudioPlayer = ({ src }: { src: string }) => {
             <audio
                 ref={audioRef}
                 src={src}
+                preload="metadata"
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onEnded={() => setIsPlaying(false)}
+                onError={(e) => console.error("Audio playback error", e)}
             />
         </div>
     );

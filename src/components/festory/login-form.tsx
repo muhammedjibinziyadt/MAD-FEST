@@ -1,26 +1,46 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Music2, Smartphone } from "lucide-react";
 import { loginWithGoogle, LoginState } from "@/app/festory/actions";
 import { Input } from "@/components/ui/input";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Script from "next/script";
 
 export function FestoryLoginForm() {
+    const [mode, setMode] = useState<"login" | "signup">("login");
     const [name, setName] = useState("");
     const [teamName, setTeamName] = useState("");
     const [phone, setPhone] = useState("");
     const [error, setError] = useState("");
 
+    // Refs to hold current values for the callback without re-initializing the button
+    const formStateRef = useRef({ name, teamName, phone, mode });
+
+    // Update refs whenever state changes
+    useEffect(() => {
+        formStateRef.current = { name, teamName, phone, mode };
+    }, [name, teamName, phone, mode]);
+
     const handleGoogleCallback = async (response: any) => {
-        if (!name || !teamName || !phone) {
-            setError("Please fill in all fields (Name, Team, Phone).");
-            return;
+        const { name, teamName, phone, mode } = formStateRef.current;
+
+        if (mode === "signup") {
+            if (!name || !teamName || !phone) {
+                setError("Please fill in all fields (Name, Team, Phone).");
+                return;
+            }
         }
 
         try {
-            const res = await loginWithGoogle(response.credential, phone, teamName, name);
+            // If login mode, pass undefined for fields (except credential)
+            const res = await loginWithGoogle(
+                response.credential,
+                mode === "signup" ? phone : undefined,
+                mode === "signup" ? teamName : undefined,
+                mode === "signup" ? name : undefined
+            );
+
             if (res.error) {
                 setError(res.error);
             }
@@ -30,25 +50,10 @@ export function FestoryLoginForm() {
     };
 
     useEffect(() => {
-        // Initialize Google Button
-        // @ts-ignore
-        if (window.google) {
+        // Initialize Google Button ONLY ONCE
+        const initializeGoogle = () => {
             // @ts-ignore
-            window.google.accounts.id.initialize({
-                client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
-                callback: handleGoogleCallback
-            });
-            // @ts-ignore
-            window.google.accounts.id.renderButton(
-                document.getElementById("googleBtn"),
-                { theme: "outline", size: "large", width: "100%" }
-            );
-        }
-    }, [name, teamName, phone]);
-
-    return (
-        <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
-            <Script src="https://accounts.google.com/gsi/client" strategy="lazyOnload" onLoad={() => {
+            if (window.google) {
                 // @ts-ignore
                 window.google.accounts.id.initialize({
                     client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
@@ -59,10 +64,35 @@ export function FestoryLoginForm() {
                     document.getElementById("googleBtn"),
                     { theme: "filled_black", size: "large", width: "100%", shape: "pill" }
                 );
-            }} />
+            }
+        };
 
-            {/* Animated Background */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-purple-900/40 via-black to-black z-0 pointer-events-none" />
+        // Check if script is already loaded
+        if (typeof window !== 'undefined' && (window as any).google) {
+            initializeGoogle();
+        }
+
+        // We can expose this function globally for the Script onLoad if needed, 
+        // but the Script onLoad below handles the initial load case.
+        (window as any).onGoogleLibraryLoad = initializeGoogle;
+
+    }, []); // Empty dependency array = Runs once on mount
+
+    return (
+        <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
+            <Script
+                src="https://accounts.google.com/gsi/client"
+                strategy="lazyOnload"
+                onLoad={() => {
+                    if ((window as any).onGoogleLibraryLoad) {
+                        (window as any).onGoogleLibraryLoad();
+                    }
+                }}
+            />
+
+            {/* w-full fixed to prevent potential layout shift from scrollbars */}
+            <div className="fixed inset-0 w-full h-full bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-purple-900/40 via-black to-black z-0 pointer-events-none" />
+
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none opacity-30">
                 <div className="absolute -top-[20%] -left-[20%] w-[50%] h-[50%] bg-fuchsia-600/20 blur-[120px] rounded-full animate-blob" />
                 <div className="absolute bottom-[0%] -right-[10%] w-[40%] h-[40%] bg-blue-600/20 blur-[100px] rounded-full animate-blob animation-delay-2000" />
@@ -107,60 +137,88 @@ export function FestoryLoginForm() {
                     transition={{ delay: 0.5 }}
                     className="bg-zinc-900/50 backdrop-blur-xl border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl"
                 >
+                    {/* Toggle Switch */}
+                    <div className="flex p-1 bg-white/5 rounded-xl mb-6 border border-white/5">
+                        <button
+                            onClick={() => setMode("login")}
+                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === "login" ? "bg-zinc-800 text-white shadow-lg shadow-black/20" : "text-white/50 hover:text-white/70"}`}
+                        >
+                            Sign In
+                        </button>
+                        <button
+                            onClick={() => setMode("signup")}
+                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === "signup" ? "bg-zinc-800 text-white shadow-lg shadow-black/20" : "text-white/50 hover:text-white/70"}`}
+                        >
+                            Create Account
+                        </button>
+                    </div>
+
                     <div className="space-y-4">
-                        {/* Name Input */}
-                        <div>
-                            <label className="block text-sm font-medium text-white/70 mb-1.5 ml-1">
-                                Full Name
-                            </label>
-                            <Input
-                                name="name"
-                                type="text"
-                                required
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Enter your full name"
-                                className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:bg-white/10 transition-all rounded-xl"
-                            />
-                        </div>
+                        <AnimatePresence mode="wait">
+                            {mode === "signup" && (
+                                <motion.div
+                                    key="signup-fields"
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="space-y-4 overflow-hidden"
+                                >
+                                    {/* Name Input */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-white/70 mb-1.5 ml-1">
+                                            Full Name
+                                        </label>
+                                        <Input
+                                            name="name"
+                                            type="text"
+                                            required
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            placeholder="Enter your full name"
+                                            className="h-12 bg-white/5 border-white/10 text-base md:text-sm text-white placeholder:text-white/20 focus:bg-white/10 transition-all rounded-2xl"
+                                        />
+                                    </div>
 
-                        {/* Team Input */}
-                        <div>
-                            <label className="block text-sm font-medium text-white/70 mb-1.5 ml-1">
-                                Team Name
-                            </label>
-                            <Input
-                                name="team"
-                                type="text"
-                                required
-                                value={teamName}
-                                onChange={(e) => setTeamName(e.target.value)}
-                                placeholder="Enter team name"
-                                className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:bg-white/10 transition-all rounded-xl"
-                            />
-                        </div>
+                                    {/* Team Input */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-white/70 mb-1.5 ml-1">
+                                            Team Name
+                                        </label>
+                                        <Input
+                                            name="team"
+                                            type="text"
+                                            required
+                                            value={teamName}
+                                            onChange={(e) => setTeamName(e.target.value)}
+                                            placeholder="Enter team name"
+                                            className="h-12 bg-white/5 border-white/10 text-base md:text-sm text-white placeholder:text-white/20 focus:bg-white/10 transition-all rounded-2xl"
+                                        />
+                                    </div>
 
-                        {/* Phone Input */}
-                        <div>
-                            <label className="block text-sm font-medium text-white/70 mb-1.5 ml-1">
-                                Phone Number
-                            </label>
-                            <div className="relative">
-                                <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                                <Input
-                                    name="phone"
-                                    type="tel"
-                                    required
-                                    value={phone}
-                                    onChange={(e) => {
-                                        setPhone(e.target.value);
-                                        setError("");
-                                    }}
-                                    placeholder="Enter phone number"
-                                    className="pl-10 h-12 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:bg-white/10 transition-all rounded-xl"
-                                />
-                            </div>
-                        </div>
+                                    {/* Phone Input */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-white/70 mb-1.5 ml-1">
+                                            Phone Number
+                                        </label>
+                                        <div className="relative">
+                                            <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                                            <Input
+                                                name="phone"
+                                                type="tel"
+                                                required
+                                                value={phone}
+                                                onChange={(e) => {
+                                                    setPhone(e.target.value);
+                                                    setError("");
+                                                }}
+                                                placeholder="Enter phone number"
+                                                className="pl-10 h-12 bg-white/5 border-white/10 text-base md:text-sm text-white placeholder:text-white/20 focus:bg-white/10 transition-all rounded-2xl"
+                                            />
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         {error && (
                             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
@@ -168,13 +226,11 @@ export function FestoryLoginForm() {
                             </div>
                         )}
 
-                        <div className="pt-2">
-                            <div id="googleBtn" className="w-full min-h-[44px]"></div>
-                            {(!name || !teamName || !phone) && (
-                                <div className="text-center text-xs text-red-400 mt-2">
-                                    Fill all fields to enable login
-                                </div>
-                            )}
+                        <div className="pt-2 min-h-[50px]">
+                            <div className="text-center text-xs text-white/40 mb-3 font-medium">
+                                {mode === "login" ? "Continue securely with" : "Register instantly with"}
+                            </div>
+                            <div id="googleBtn" className="w-full"></div>
                         </div>
                     </div>
                 </motion.div>

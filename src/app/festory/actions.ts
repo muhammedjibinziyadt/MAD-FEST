@@ -18,7 +18,7 @@ import { GOOGLE_CLIENT_ID } from "@/lib/config";
 
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-export async function loginWithGoogle(credential: string, phone: string, teamId: string, customName?: string): Promise<LoginState> {
+export async function loginWithGoogle(credential: string, phone?: string, teamId?: string, customName?: string): Promise<LoginState> {
     try {
         const ticket = await client.verifyIdToken({
             idToken: credential,
@@ -30,41 +30,48 @@ export async function loginWithGoogle(credential: string, phone: string, teamId:
             return { error: "Google verification failed" };
         }
 
-        if (!phone) {
-            return { error: "Phone number is required" };
-        }
-
         await connectDB();
         const { FestoryUserModel } = await import("@/lib/models");
 
-        // Check if duplicate phone
-        const existingPhone = await FestoryUserModel.findOne({ phoneNumber: phone });
-        if (existingPhone && existingPhone.email !== payload.email) {
-            return { error: "This phone number is already registered." };
-        }
-
         let festoryUser = await FestoryUserModel.findOne({ email: payload.email });
 
-        if (!festoryUser) {
-            festoryUser = await FestoryUserModel.create({
-                id: crypto.randomUUID(),
-                name: customName || payload.name || payload.email.split("@")[0],
-                email: payload.email,
-                googleId: payload.sub,
-                phoneNumber: phone,
-                teamId: teamId || "General",
-                image: payload.picture,
-                isBanned: false,
-            });
-        } else {
-            // Update fields
-            if (!festoryUser.googleId) festoryUser.googleId = payload.sub;
-            if (phone) festoryUser.phoneNumber = phone;
-            if (teamId) festoryUser.teamId = teamId;
-            if (customName) festoryUser.name = customName;
-            if (!festoryUser.image && payload.picture) festoryUser.image = payload.picture;
+        // LOGIN MODE (No Phone provided)
+        if (!phone) {
+            if (!festoryUser) {
+                return { error: "Account not found. Please Sign Up." };
+            }
+            // User exists, proceed to login (skip updates)
+        }
+        // SIGN UP / UPDATE MODE (Phone provided)
+        else {
+            // Check if duplicate phone (only if it's a different user)
+            const existingPhone = await FestoryUserModel.findOne({ phoneNumber: phone });
+            if (existingPhone && existingPhone.email !== payload.email) {
+                return { error: "This phone number is already registered." };
+            }
 
-            await festoryUser.save();
+            if (!festoryUser) {
+                // Create New User
+                festoryUser = await FestoryUserModel.create({
+                    id: crypto.randomUUID(),
+                    name: customName || payload.name || payload.email.split("@")[0],
+                    email: payload.email,
+                    googleId: payload.sub,
+                    phoneNumber: phone,
+                    teamId: teamId || "General",
+                    image: payload.picture,
+                    isBanned: false,
+                });
+            } else {
+                // Update Existing User
+                if (!festoryUser.googleId) festoryUser.googleId = payload.sub;
+                festoryUser.phoneNumber = phone;
+                if (teamId) festoryUser.teamId = teamId;
+                if (customName) festoryUser.name = customName;
+                if (!festoryUser.image && payload.picture) festoryUser.image = payload.picture;
+
+                await festoryUser.save();
+            }
         }
 
         if (festoryUser.isBanned) {
