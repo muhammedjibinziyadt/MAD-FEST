@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FestoryPost, FestoryComment } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trash2, Heart, MessageCircle, Share2, MoreVertical, Edit2, X, Loader2, Send, Play, Pause } from "lucide-react";
+import { Trash2, Heart, MessageCircle, Share2, MoreVertical, Edit2, X, Loader2, Send, Play, Pause, Mic } from "lucide-react";
 import { motion } from "framer-motion";
 import { toggleFestoryLike, addFestoryComment, getFestoryComments, updateFestoryPost } from "@/app/festory/actions";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -19,6 +19,7 @@ interface FeedItemProps {
 
 const AudioPlayer = ({ src }: { src: string }) => {
     const audioRef = useRef<HTMLAudioElement>(null);
+    const progressBarRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [duration, setDuration] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
@@ -44,76 +45,104 @@ const AudioPlayer = ({ src }: { src: string }) => {
     const handleLoadedMetadata = () => {
         if (audioRef.current) {
             const d = audioRef.current.duration;
-            if (!isNaN(d) && isFinite(d)) {
+            if (d !== Infinity && !isNaN(d)) {
                 setDuration(d);
             }
         }
     };
 
-    const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const time = parseFloat(e.target.value);
-        setCurrentTime(time);
-        // Live Seek (Drag and Play)
+    // Custom Pointer Scrubbing Logic
+    const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!progressBarRef.current) return;
+        setIsDragging(true);
+        e.currentTarget.setPointerCapture(e.pointerId);
+        updateProgress(e);
+    };
+
+    const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!isDragging || !progressBarRef.current) return;
+        updateProgress(e);
+    };
+
+    const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!isDragging || !progressBarRef.current) return;
+        setIsDragging(false);
+        e.currentTarget.releasePointerCapture(e.pointerId);
+
+        // Commit seek
+        const rect = progressBarRef.current.getBoundingClientRect();
+        const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        const percentage = x / rect.width;
+        const newTime = percentage * duration;
+
         if (audioRef.current) {
-            audioRef.current.currentTime = time;
+            audioRef.current.currentTime = newTime;
+            setCurrentTime(newTime);
         }
     };
 
-    const handleSeekStart = () => setIsDragging(true);
-    const handleSeekEnd = () => setIsDragging(false);
+    const updateProgress = (e: React.PointerEvent<HTMLDivElement>) => {
+        const rect = progressBarRef.current!.getBoundingClientRect();
+        const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        const percentage = x / rect.width;
+        const newTime = percentage * duration;
+        setCurrentTime(newTime);
+    };
 
     const formatTime = (time: number) => {
-        if (!time || isNaN(time)) return "0:00";
+        if (!time || isNaN(time) || !isFinite(time)) return "0:00";
         const minutes = Math.floor(time / 60);
         const seconds = Math.floor(time % 60);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     };
 
-    const progress = (duration && duration > 0) ? (currentTime / duration) * 100 : 0;
+    const progressPercent = (duration && duration > 0) ? (currentTime / duration) * 100 : 0;
 
     return (
-        <div className="w-full bg-zinc-800/50 rounded-2xl p-3 mb-4 border border-white/5 flex items-center gap-3">
+        <div className="w-full bg-zinc-800/80 rounded-2xl p-3 mb-4 border border-white/5 flex items-center gap-4 select-none group">
             <button
                 onClick={togglePlay}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-fuchsia-600/20 text-fuchsia-500 shrink-0 hover:bg-fuchsia-600/30 transition-colors"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-black shrink-0 hover:bg-zinc-200 transition-colors shadow-lg active:scale-95"
             >
                 {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
             </button>
 
-            <div className="flex-1 min-w-0">
-                <div className="relative h-5 flex items-center group">
-                    <input
-                        type="range"
-                        min="0"
-                        max={duration || 100}
-                        step="0.1"
-                        value={currentTime}
-                        onChange={handleSeekChange}
-                        onMouseDown={handleSeekStart}
-                        onMouseUp={handleSeekEnd}
-                        onTouchStart={handleSeekStart}
-                        onTouchEnd={handleSeekEnd}
-                        className="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer"
+            <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5 pt-1">
+                {/* Custom Seek Bar */}
+                <div
+                    className="relative h-6 w-full flex items-center cursor-pointer touch-none"
+                    ref={progressBarRef}
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                >
+                    {/* Track Background */}
+                    <div className="absolute left-0 right-0 h-1 bg-white/20 rounded-full" />
+
+                    {/* Filled Progress */}
+                    <div
+                        className="absolute left-0 h-1 bg-fuchsia-500 rounded-full"
+                        style={{ width: `${progressPercent}%` }}
                     />
 
-                    {/* Track */}
-                    <div className="absolute left-0 right-0 h-1 bg-white/10 rounded-full overflow-hidden z-10">
-                        <div
-                            className="h-full bg-fuchsia-500 transition-all duration-75 ease-out"
-                            style={{ width: `${progress}%` }}
-                        />
-                    </div>
-
-                    {/* Thumb */}
+                    {/* Thumb (Always visible like WhatsApp or on Hover) */}
                     <div
-                        className="absolute h-3 w-3 bg-fuchsia-500 rounded-full shadow-lg pointer-events-none z-10 transition-transform duration-100 group-hover:scale-125"
-                        style={{ left: `${progress}%`, transform: `translateX(-50%)` }}
+                        className={`absolute h-3.5 w-3.5 bg-fuchsia-500 rounded-full shadow-md border-2 border-zinc-900 transition-transform ${isDragging ? 'scale-125' : 'scale-100'}`}
+                        style={{
+                            left: `${progressPercent}%`,
+                            transform: `translateX(-50%) scale(${isDragging ? 1.2 : 1})`
+                        }}
                     />
                 </div>
 
-                <div className="flex justify-between text-[10px] text-white/40 font-medium mt-1 px-0.5">
+                <div className="flex justify-between text-[11px] text-white/50 font-medium px-0.5">
                     <span>{formatTime(currentTime)}</span>
-                    <span>{formatTime(duration)}</span>
+                    <div className="flex items-center gap-3">
+                        <span>{duration ? formatTime(duration) : "--:--"}</span>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Mic className="w-3 h-3 text-white/30" />
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -123,7 +152,10 @@ const AudioPlayer = ({ src }: { src: string }) => {
                 preload="metadata"
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
-                onEnded={() => setIsPlaying(false)}
+                onEnded={() => {
+                    setIsPlaying(false);
+                    setCurrentTime(0);
+                }}
                 onError={(e) => console.error("Audio playback error", e)}
             />
         </div>

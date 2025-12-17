@@ -23,7 +23,7 @@ export default async function FestoryFeedPage(props: Props) {
     const scrollToPostId = typeof searchParams.post === 'string' ? searchParams.post : undefined;
 
     return (
-        <div className="min-h-screen bg-black text-white px-0 md:px-4">
+        <div className="min-h-screen bg-black text-white px-0 md:px-4 pt-2 md:pt-6">
             <div className="max-w-md mx-auto min-h-screen flex flex-col relative">
                 <GlobalAudio />
                 {/* Header */}
