@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   Layers,
   Menu,
+  MessageCircle,
   PenSquare,
   Settings,
   type LucideIcon,
@@ -52,6 +53,7 @@ const ICONS = {
   settings: Settings,
   polls: BarChart,
   predictions: Trophy,
+
 } satisfies Record<string, LucideIcon>;
 
 type IconName = keyof typeof ICONS;
