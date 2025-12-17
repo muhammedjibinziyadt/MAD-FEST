@@ -17,15 +17,22 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
     const teamMap = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
     const sortedStudents = useMemo(() => {
-        return [...students]
+        const sorted = [...students]
             .filter((s) => s.total_points > 0)
-            .sort((a, b) => b.total_points - a.total_points)
-            .map((student, index) => ({
+            .sort((a, b) => b.total_points - a.total_points);
+
+        let currentRank = 1;
+        return sorted.map((student, index) => {
+            if (index > 0 && student.total_points < sorted[index - 1].total_points) {
+                currentRank++;
+            }
+            return {
                 ...student,
-                rank: index + 1,
+                rank: currentRank,
                 teamName: teamMap.get(student.team_id)?.name || "Unknown Team",
                 teamColor: teamMap.get(student.team_id)?.color || "#808080",
-            }));
+            };
+        });
     }, [students, teamMap]);
 
     const filteredStudents = useMemo(() => {
@@ -40,7 +47,64 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
     }, [search, sortedStudents]);
 
     const topStudents = sortedStudents.slice(0, 3);
-    const restStudents = filteredStudents.filter(s => s.rank > 3 || search); // If search is active, show all matches in list
+    const restStudents = filteredStudents.filter((s, index) => index >= 3 || search); // Fix filtering for display
+
+    // Helper to determine podium label
+    const getPodiumLabel = (rank: number) => {
+        if (rank === 1) return "CHAMPION";
+        if (rank === 2) return "2ND PLACE";
+        if (rank === 3) return "3RD PLACE";
+        return `${rank}TH PLACE`;
+    };
+
+    const getPodiumStyles = (rank: number) => {
+        switch (rank) {
+            case 1:
+                return {
+                    border: "border-yellow-400",
+                    ring: "ring-4 ring-yellow-400/20",
+                    badge: "bg-yellow-500",
+                    text: "text-yellow-700",
+                    bg: "bg-yellow-50",
+                    borderSmall: "border-yellow-200",
+                    iconColor: "text-yellow-500",
+                    crown: true
+                };
+            case 2:
+                return {
+                    border: "border-gray-300",
+                    ring: "ring-4 ring-gray-100",
+                    badge: "bg-gray-600",
+                    text: "text-gray-700",
+                    bg: "bg-gray-50",
+                    borderSmall: "border-gray-200",
+                    iconColor: "text-gray-400",
+                    crown: false
+                };
+            case 3:
+                return {
+                    border: "border-orange-300",
+                    ring: "ring-4 ring-orange-100",
+                    badge: "bg-orange-400",
+                    text: "text-orange-700",
+                    bg: "bg-orange-50",
+                    borderSmall: "border-orange-200",
+                    iconColor: "text-orange-400",
+                    crown: false
+                };
+            default:
+                return {
+                    border: "border-blue-300",
+                    ring: "",
+                    badge: "bg-blue-400",
+                    text: "text-gray-700",
+                    bg: "bg-white",
+                    borderSmall: "border-gray-200",
+                    iconColor: "text-blue-400",
+                    crown: false
+                };
+        }
+    };
 
     return (
         <div className="space-y-8 md:space-y-12 pt-4 md:pt-8 w-full">
@@ -71,7 +135,7 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
                     {/* Podium Container */}
                     <div className="flex items-start justify-center gap-2 md:gap-8 pt-14 pb-8">
 
-                        {/* 2nd Place */}
+                        {/* 2nd Slot (Left) */}
                         {topStudents[1] && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
@@ -80,7 +144,12 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
                                 className="flex flex-col items-center w-1/3 max-w-[140px] mt-8 md:mt-12"
                             >
                                 <div className="relative mb-6 md:mb-8">
-                                    <div className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-gray-300 shadow-xl overflow-hidden relative z-10 bg-white">
+                                    {getPodiumStyles(topStudents[1].rank).crown && (
+                                        <div className="absolute -top-10 md:-top-12 left-1/2 -translate-x-1/2 animate-bounce">
+                                            <Crown className="w-8 h-8 md:w-10 md:h-10 text-yellow-500 fill-yellow-500 drop-shadow-lg" />
+                                        </div>
+                                    )}
+                                    <div className={`w-20 h-20 md:w-28 md:h-28 rounded-full border-4 shadow-xl overflow-hidden relative z-10 bg-white ${getPodiumStyles(topStudents[1].rank).border} ${getPodiumStyles(topStudents[1].rank).ring}`}>
                                         {topStudents[1].avatar ? (
                                             <Image
                                                 src={topStudents[1].avatar}
@@ -94,22 +163,23 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
                                             </div>
                                         )}
                                     </div>
-                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gray-600 text-white text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 rounded-full shadow-lg z-20 whitespace-nowrap">
-                                        2ND PLACE
+                                    <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 text-white text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 rounded-full shadow-lg z-20 whitespace-nowrap flex items-center gap-1 ${getPodiumStyles(topStudents[1].rank).badge}`}>
+                                        {getPodiumStyles(topStudents[1].rank).crown && <Trophy className="w-3 h-3" />}
+                                        {getPodiumLabel(topStudents[1].rank)}
                                     </div>
                                 </div>
                                 <div className="text-center w-full">
                                     <h3 className="font-bold text-gray-800 text-sm md:text-lg px-1 text-center leading-tight mb-1">{topStudents[1].name}</h3>
                                     <p className="text-xs text-gray-500 mb-1 text-center leading-tight">{topStudents[1].teamName}</p>
-                                    <div className="inline-block bg-white border border-gray-200 shadow-sm rounded-lg px-2 md:px-3 py-1">
-                                        <span className="font-bold text-[#8B4513] text-sm md:text-base">{topStudents[1].total_points}</span>
+                                    <div className={`inline-block border shadow-sm rounded-lg px-2 md:px-3 py-1 ${getPodiumStyles(topStudents[1].rank).bg} ${getPodiumStyles(topStudents[1].rank).borderSmall}`}>
+                                        <span className={`font-bold text-sm md:text-base ${getPodiumStyles(topStudents[1].rank).text}`}>{topStudents[1].total_points}</span>
                                         <span className="text-[10px] text-gray-400 ml-1">PTS</span>
                                     </div>
                                 </div>
                             </motion.div>
                         )}
 
-                        {/* 1st Place - Center & Higher */}
+                        {/* 1st Slot (Center) */}
                         {topStudents[0] && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
@@ -118,10 +188,12 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
                                 className="flex flex-col items-center w-1/3 max-w-[160px] z-20"
                             >
                                 <div className="relative mb-6 md:mb-8">
-                                    <div className="absolute -top-10 md:-top-12 left-1/2 -translate-x-1/2 animate-bounce">
-                                        <Crown className="w-8 h-8 md:w-10 md:h-10 text-yellow-500 fill-yellow-500 drop-shadow-lg" />
-                                    </div>
-                                    <div className="w-24 h-24 md:w-36 md:h-36 rounded-full border-4 border-yellow-400 shadow-2xl overflow-hidden relative z-10 ring-4 ring-yellow-400/20 bg-white">
+                                    {getPodiumStyles(topStudents[0].rank).crown && (
+                                        <div className="absolute -top-10 md:-top-12 left-1/2 -translate-x-1/2 animate-bounce">
+                                            <Crown className="w-8 h-8 md:w-10 md:h-10 text-yellow-500 fill-yellow-500 drop-shadow-lg" />
+                                        </div>
+                                    )}
+                                    <div className={`w-24 h-24 md:w-36 md:h-36 rounded-full border-4 shadow-2xl overflow-hidden relative z-10 bg-white ${getPodiumStyles(topStudents[0].rank).border} ${getPodiumStyles(topStudents[0].rank).ring}`}>
                                         {topStudents[0].avatar ? (
                                             <Image
                                                 src={topStudents[0].avatar}
@@ -135,22 +207,23 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
                                             </div>
                                         )}
                                     </div>
-                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-white text-[10px] md:text-xs font-bold px-3 md:px-4 py-1 rounded-full shadow-lg z-20 whitespace-nowrap flex items-center gap-1">
-                                        <Trophy className="w-3 h-3" /> CHAMPION
+                                    <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 text-white text-[10px] md:text-xs font-bold px-3 md:px-4 py-1 rounded-full shadow-lg z-20 whitespace-nowrap flex items-center gap-1 ${getPodiumStyles(topStudents[0].rank).badge}`}>
+                                        {getPodiumStyles(topStudents[0].rank).crown && <Trophy className="w-3 h-3" />}
+                                        {getPodiumLabel(topStudents[0].rank)}
                                     </div>
                                 </div>
                                 <div className="text-center w-full">
                                     <h3 className="font-bold text-gray-900 text-sm md:text-xl px-1 text-center leading-tight mb-1">{topStudents[0].name}</h3>
                                     <p className="text-xs text-gray-500 mb-1 text-center leading-tight">{topStudents[0].teamName}</p>
-                                    <div className="inline-block bg-yellow-50 border border-yellow-200 shadow-sm rounded-lg px-3 md:px-4 py-1">
-                                        <span className="font-black text-yellow-700 text-base md:text-lg">{topStudents[0].total_points}</span>
-                                        <span className="text-[10px] text-yellow-600/70 ml-1">PTS</span>
+                                    <div className={`inline-block border shadow-sm rounded-lg px-3 md:px-4 py-1 ${getPodiumStyles(topStudents[0].rank).bg} ${getPodiumStyles(topStudents[0].rank).borderSmall}`}>
+                                        <span className={`font-black text-base md:text-lg ${getPodiumStyles(topStudents[0].rank).text}`}>{topStudents[0].total_points}</span>
+                                        <span className="text-[10px] text-gray-500/70 ml-1">PTS</span>
                                     </div>
                                 </div>
                             </motion.div>
                         )}
 
-                        {/* 3rd Place */}
+                        {/* 3rd Slot (Right) */}
                         {topStudents[2] && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
@@ -159,7 +232,12 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
                                 className="flex flex-col items-center w-1/3 max-w-[140px] mt-8 md:mt-12"
                             >
                                 <div className="relative mb-6 md:mb-8">
-                                    <div className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-orange-300 shadow-xl overflow-hidden relative z-10 bg-white">
+                                    {getPodiumStyles(topStudents[2].rank).crown && (
+                                        <div className="absolute -top-10 md:-top-12 left-1/2 -translate-x-1/2 animate-bounce">
+                                            <Crown className="w-8 h-8 md:w-10 md:h-10 text-yellow-500 fill-yellow-500 drop-shadow-lg" />
+                                        </div>
+                                    )}
+                                    <div className={`w-20 h-20 md:w-28 md:h-28 rounded-full border-4 shadow-xl overflow-hidden relative z-10 bg-white ${getPodiumStyles(topStudents[2].rank).border} ${getPodiumStyles(topStudents[2].rank).ring}`}>
                                         {topStudents[2].avatar ? (
                                             <Image
                                                 src={topStudents[2].avatar}
@@ -173,15 +251,16 @@ export function StudentLeaderboard({ students, teams }: StudentLeaderboardProps)
                                             </div>
                                         )}
                                     </div>
-                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-orange-400 text-white text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 rounded-full shadow-lg z-20 whitespace-nowrap">
-                                        3RD PLACE
+                                    <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 text-white text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 rounded-full shadow-lg z-20 whitespace-nowrap flex items-center gap-1 ${getPodiumStyles(topStudents[2].rank).badge}`}>
+                                        {getPodiumStyles(topStudents[2].rank).crown && <Trophy className="w-3 h-3" />}
+                                        {getPodiumLabel(topStudents[2].rank)}
                                     </div>
                                 </div>
                                 <div className="text-center w-full">
                                     <h3 className="font-bold text-gray-800 text-sm md:text-lg px-1 text-center leading-tight mb-1">{topStudents[2].name}</h3>
                                     <p className="text-xs text-gray-500 mb-1 text-center leading-tight">{topStudents[2].teamName}</p>
-                                    <div className="inline-block bg-white border border-gray-200 shadow-sm rounded-lg px-2 md:px-3 py-1">
-                                        <span className="font-bold text-[#8B4513] text-sm md:text-base">{topStudents[2].total_points}</span>
+                                    <div className={`inline-block border shadow-sm rounded-lg px-2 md:px-3 py-1 ${getPodiumStyles(topStudents[2].rank).bg} ${getPodiumStyles(topStudents[2].rank).borderSmall}`}>
+                                        <span className={`font-bold text-sm md:text-base ${getPodiumStyles(topStudents[2].rank).text}`}>{topStudents[2].total_points}</span>
                                         <span className="text-[10px] text-gray-400 ml-1">PTS</span>
                                     </div>
                                 </div>

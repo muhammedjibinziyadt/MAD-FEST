@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Medal, ChevronRight, TrendingUp, ChevronDown, MinusCircle } from "lucide-react";
 import type { Team, Program, ResultRecord, ResultEntry, Student } from "@/lib/types";
@@ -258,7 +258,16 @@ export function ScoreboardTable({
     return { gold, silver, bronze, total: gold + silver + bronze };
   };
 
-  const sortedTeamsByRank = [...teams].sort((a, b) => getTotalPointsForTeam(b.id) - getTotalPointsForTeam(a.id));
+  const rankedTeams = useMemo(() => {
+    const sorted = [...teams].sort((a, b) => getTotalPointsForTeam(b.id) - getTotalPointsForTeam(a.id));
+    let currentRank = 1;
+    return sorted.map((team, index) => {
+      if (index > 0 && getTotalPointsForTeam(team.id) < getTotalPointsForTeam(sorted[index - 1].id)) {
+        currentRank++;
+      }
+      return { ...team, rank: currentRank };
+    });
+  }, [teams, liveScores]); // Recalculate if scores change
 
   const renderMobileView = () => (
     <div className="space-y-8 pb-10">
@@ -266,7 +275,7 @@ export function ScoreboardTable({
       <div className="space-y-4">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider pl-1">Live Standings</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {sortedTeamsByRank.map((team, index) => (
+          {rankedTeams.map((team) => (
             <TeamCard
               key={team.id}
               team={team}
@@ -275,7 +284,7 @@ export function ScoreboardTable({
               penaltyPoints={getTotalPenaltyPoints(team.id)}
               isActive={activeTeam === team.id}
               onClick={() => setActiveTeam(activeTeam === team.id ? null : team.id)}
-              rank={index + 1}
+              rank={team.rank}
             />
           ))}
         </div>

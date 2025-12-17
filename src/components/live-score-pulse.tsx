@@ -69,11 +69,11 @@ const TEAM_COLORS: Record<string, { primary: string; gradient: string; light: st
   },
 };
 
-function getMedalColor(index: number): string {
-  switch (index) {
-    case 0: return "#FFD700";
-    case 1: return "#C0C0C0";
-    case 2: return "#CD7F32";
+function getMedalColor(rank: number): string {
+  switch (rank) {
+    case 1: return "#FFD700";
+    case 2: return "#C0C0C0";
+    case 3: return "#CD7F32";
     default: return "transparent";
   }
 }
@@ -81,12 +81,13 @@ function getMedalColor(index: number): string {
 interface TeamCardProps {
   team: Team & { totalPoints: number; colors: typeof TEAM_COLORS[string] };
   index: number;
+  rank: number;
   maxPoints: number;
 }
 
-function TeamCard({ team, index, maxPoints }: TeamCardProps) {
+function TeamCard({ team, index, rank, maxPoints }: TeamCardProps) {
   const percentage = maxPoints > 0 ? (team.totalPoints / maxPoints) * 100 : 0;
-  const isTopThree = index < 3;
+  const isTopThree = rank <= 3;
 
   return (
     <motion.div
@@ -110,23 +111,23 @@ function TeamCard({ team, index, maxPoints }: TeamCardProps) {
           <div className="flex items-center gap-4">
             {/* Rank Badge */}
             <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br ${team.colors.gradient} text-white font-bold shadow-lg`}>
-              <span className="text-lg leading-none">#{index + 1}</span>
+              <span className="text-lg leading-none">#{rank}</span>
             </div>
 
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-gray-900 text-lg tracking-tight">{team.name}</h3>
                 {isTopThree && (
-                  <Medal className="w-5 h-5 drop-shadow-md animate-pulse" style={{ color: getMedalColor(index) }} />
+                  <Medal className="w-5 h-5 drop-shadow-md animate-pulse" style={{ color: getMedalColor(rank) }} />
                 )}
               </div>
               {/* Mock Trend Indicator */}
               <div className="flex items-center gap-1 text-xs font-medium text-gray-500">
-                {index === 0 ? (
+                {rank === 1 ? (
                   <div className="flex items-center text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
                     <TrendingUp className="w-3 h-3 mr-1" /> Leading
                   </div>
-                ) : index < 3 ? (
+                ) : rank <= 3 ? (
                   <div className="flex items-center text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
                     <TrendingUp className="w-3 h-3 mr-1" /> Chasing
                   </div>
@@ -277,7 +278,16 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
   });
 
   const sortedTeams = [...teamsWithScores].sort((a, b) => b.totalPoints - a.totalPoints);
-  const maxPoints = Math.max(...sortedTeams.map((t) => t.totalPoints), 1);
+
+  let currentRank = 1;
+  const rankedTeams = sortedTeams.map((team, index) => {
+    if (index > 0 && team.totalPoints < sortedTeams[index - 1].totalPoints) {
+      currentRank++;
+    }
+    return { ...team, rank: currentRank };
+  });
+
+  const maxPoints = Math.max(...rankedTeams.map((t) => t.totalPoints), 1);
 
   return (
     <section className="space-y-8 relative z-10">
@@ -309,13 +319,13 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
 
         <div className="hidden md:block pb-2">
           <div className="flex -space-x-2">
-            {sortedTeams.slice(0, 3).map((t, i) => (
+            {rankedTeams.slice(0, 3).map((t, i) => (
               <div key={t.id} className="w-10 h-10 rounded-full border-2 border-white shadow-lg bg-gray-100 flex items-center justify-center font-bold text-xs" style={{ backgroundColor: t.colors.light, color: t.colors.primary }}>
                 {t.name[0]}
               </div>
             ))}
             <div className="w-10 h-10 rounded-full border-2 border-white shadow-lg bg-gray-100 flex items-center justify-center font-bold text-xs text-gray-400">
-              +{sortedTeams.length - 3}
+              +{rankedTeams.length - 3}
             </div>
           </div>
         </div>
@@ -326,8 +336,8 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
         {/* Team Cards - Left Column */}
         <div className="lg:col-span-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {sortedTeams.map((team, index) => (
-              <TeamCard key={team.id} team={team} index={index} maxPoints={maxPoints} />
+            {rankedTeams.map((team, index) => (
+              <TeamCard key={team.id} team={team} index={index} rank={team.rank} maxPoints={maxPoints} />
             ))}
           </div>
         </div>
