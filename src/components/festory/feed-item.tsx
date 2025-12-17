@@ -27,20 +27,34 @@ const AudioPlayer = ({ src }: { src: string }) => {
 
     const togglePlay = () => {
         if (audioRef.current) {
-            if (isPlaying) {
-                audioRef.current.pause();
+            if (audioRef.current.paused) {
+                audioRef.current.play().catch(console.error);
             } else {
-                audioRef.current.play();
+                audioRef.current.pause();
             }
-            setIsPlaying(!isPlaying);
         }
     };
+
+    // State Sync Handlers
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
 
     const handleTimeUpdate = () => {
         if (audioRef.current && !isDragging) {
             setCurrentTime(audioRef.current.currentTime);
         }
     };
+
+    // Initialize state if metadata is already loaded (e.g. from cache)
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (audio) {
+            if (audio.readyState >= 1) {
+                const d = audio.duration;
+                if (d !== Infinity && !isNaN(d)) setDuration(d);
+            }
+        }
+    }, [src]);
 
     const handleLoadedMetadata = () => {
         if (audioRef.current) {
@@ -51,7 +65,7 @@ const AudioPlayer = ({ src }: { src: string }) => {
         }
     };
 
-    // Custom Pointer Scrubbing Logic
+    // Robust Pointer Handlers
     const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         if (!progressBarRef.current) return;
         setIsDragging(true);
@@ -67,26 +81,31 @@ const AudioPlayer = ({ src }: { src: string }) => {
     const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
         if (!isDragging || !progressBarRef.current) return;
         setIsDragging(false);
-        e.currentTarget.releasePointerCapture(e.pointerId);
+        try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (e) { }
 
-        // Commit seek
+        const validDuration = (duration && isFinite(duration)) ? duration : 0;
         const rect = progressBarRef.current.getBoundingClientRect();
         const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
         const percentage = x / rect.width;
-        const newTime = percentage * duration;
+        const newTime = percentage * validDuration;
 
-        if (audioRef.current) {
+        if (audioRef.current && validDuration > 0) {
             audioRef.current.currentTime = newTime;
             setCurrentTime(newTime);
         }
+    };
+
+    const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
+        setIsDragging(false);
+        try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (e) { }
     };
 
     const updateProgress = (e: React.PointerEvent<HTMLDivElement>) => {
         const rect = progressBarRef.current!.getBoundingClientRect();
         const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
         const percentage = x / rect.width;
-        const newTime = percentage * duration;
-        setCurrentTime(newTime);
+        const validDuration = (duration && isFinite(duration)) ? duration : 0;
+        setCurrentTime(percentage * validDuration);
     };
 
     const formatTime = (time: number) => {
@@ -108,24 +127,20 @@ const AudioPlayer = ({ src }: { src: string }) => {
             </button>
 
             <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5 pt-1">
-                {/* Custom Seek Bar */}
                 <div
                     className="relative h-6 w-full flex items-center cursor-pointer touch-none"
                     ref={progressBarRef}
                     onPointerDown={handlePointerDown}
                     onPointerMove={handlePointerMove}
                     onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerCancel}
+                    onPointerLeave={handlePointerCancel}
                 >
-                    {/* Track Background */}
                     <div className="absolute left-0 right-0 h-1 bg-white/20 rounded-full" />
-
-                    {/* Filled Progress */}
                     <div
                         className="absolute left-0 h-1 bg-fuchsia-500 rounded-full"
                         style={{ width: `${progressPercent}%` }}
                     />
-
-                    {/* Thumb (Always visible like WhatsApp or on Hover) */}
                     <div
                         className={`absolute h-3.5 w-3.5 bg-fuchsia-500 rounded-full shadow-md border-2 border-zinc-900 transition-transform ${isDragging ? 'scale-125' : 'scale-100'}`}
                         style={{
@@ -150,17 +165,18 @@ const AudioPlayer = ({ src }: { src: string }) => {
                 ref={audioRef}
                 src={src}
                 preload="metadata"
+                onPlay={onPlay}
+                onPause={onPause}
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
-                onEnded={() => {
-                    setIsPlaying(false);
-                    setCurrentTime(0);
-                }}
+                onEnded={() => { setCurrentTime(0); }}
                 onError={(e) => console.error("Audio playback error", e)}
             />
         </div>
     );
 };
+
+
 
 export function FeedItem({ post, currentUserId, onDelete }: FeedItemProps) {
     const [menuOpen, setMenuOpen] = useState(false);
