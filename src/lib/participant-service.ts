@@ -222,12 +222,15 @@ export async function getParticipantProfile(
     },
   };
 
-  return {
-    student: JSON.parse(JSON.stringify(student)),
-    team: JSON.parse(JSON.stringify(team)),
+  const rawProfile = {
+    student: student,
+    team: team,
     registrations: enrichedRegistrations,
     totalPoints: student.total_points,
     stats,
   };
+
+  // Serialize the entire profile to plain objects (strips Mongoose _id Buffer, __v, etc.)
+  return JSON.parse(JSON.stringify(rawProfile)) as ParticipantProfile;
 }
 

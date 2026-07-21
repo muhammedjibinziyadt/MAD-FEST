@@ -2,12 +2,12 @@
 
 import { useActionState, useState, useEffect } from "react";
 import { updateAdminCredentials } from "./actions";
-import { getDatabaseStats, restoreDatabase } from "./backup-actions";
+import { getDatabaseStats, restoreDatabase, clearDatabaseData } from "./backup-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Upload, Database, AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { Download, Upload, Database, AlertTriangle, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 
 const initialState: { error?: string; success?: string } = {
@@ -19,6 +19,29 @@ function BackupRestoreSection() {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [restoring, setRestoring] = useState(false);
+    const [clearing, setClearing] = useState(false);
+
+    const handleClearData = async () => {
+        if (!confirm("CRITICAL WARNING: Are you sure you want to PERMANENTLY DELETE ALL database data (Teams, Students, Programs, Jury, Results)? This action cannot be undone.")) {
+            return;
+        }
+
+        try {
+            setClearing(true);
+            const result = await clearDatabaseData();
+            if (result.success) {
+                toast.success(result.message);
+                fetchStats();
+            } else {
+                toast.error(result.message);
+            }
+        } catch (error) {
+            console.error("Clear failed:", error);
+            toast.error("Failed to clear database");
+        } finally {
+            setClearing(false);
+        }
+    };
 
     const fetchStats = async () => {
         try {
@@ -155,6 +178,26 @@ function BackupRestoreSection() {
                                 {restoring ? "Restoring..." : "Import & Restore"}
                             </Button>
                         </div>
+                    </div>
+
+                    <div className="flex-1 space-y-2">
+                        <h4 className="text-sm font-medium text-white/80">Wipe All Data</h4>
+                        <p className="text-xs text-white/50">
+                            Clear all dummy/mock or existing records to start fresh.
+                        </p>
+                        <Button
+                            onClick={handleClearData}
+                            variant="destructive"
+                            className="w-full gap-2 bg-rose-600 hover:bg-rose-700 text-white"
+                            disabled={clearing}
+                        >
+                            {clearing ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Trash2 className="h-4 w-4" />
+                            )}
+                            {clearing ? "Wiping Data..." : "Wipe All Database Data"}
+                        </Button>
                     </div>
                 </div>
 

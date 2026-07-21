@@ -85,3 +85,34 @@ export async function restoreDatabase(data: any) {
         return { success: false, message: error.message || "Restore failed" };
     }
 }
+
+export async function clearDatabaseData() {
+    if (!(await isAdminAuthenticated())) {
+        throw new Error("Unauthorized");
+    }
+
+    await connectDB();
+
+    try {
+        await Promise.all([
+            TeamModel.deleteMany({}),
+            StudentModel.deleteMany({}),
+            ProgramModel.deleteMany({}),
+            JuryModel.deleteMany({}),
+            AssignedProgramModel.deleteMany({}),
+            ProgramRegistrationModel.deleteMany({}),
+            RegistrationScheduleModel.deleteMany({}),
+            PendingResultModel.deleteMany({}),
+            ApprovedResultModel.deleteMany({}),
+            LiveScoreModel.deleteMany({}),
+            ReplacementRequestModel.deleteMany({}),
+            NotificationModel.deleteMany({}),
+        ]);
+
+        revalidatePath("/");
+        return { success: true, message: "All database records deleted successfully" };
+    } catch (error: any) {
+        console.error("Database clear failed:", error);
+        return { success: false, message: error.message || "Database clear failed" };
+    }
+}

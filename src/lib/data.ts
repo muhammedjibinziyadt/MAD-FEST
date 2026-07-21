@@ -27,27 +27,14 @@ let seedPromise: Promise<void> | null = null;
 
 async function seedCollection(
   count: number,
-  insertFn: () => Promise<void>, // Typed clearly
+  insertFn: () => Promise<void>,
 ): Promise<void> {
   if (count === 0) {
     await insertFn();
   }
 }
 
-async function updateTeamNames() {
-  await connectDB();
-  // Update existing teams with new names and colors from defaultTeams
-  // NOTE: This does NOT update passwords to avoid overwriting user-changed passwords with defaults
-  for (const team of defaultTeams) {
-    await TeamModel.updateOne(
-      { id: team.id },
-      { $set: { name: team.name, color: team.color } },
-      { upsert: false }
-    );
-  }
-}
-
-async function seedDatabase() {
+export async function seedDatabase() {
   await connectDB();
 
   const [teamCount, studentCount, programCount, juryCount, liveScoreCount, assignmentCount] =
@@ -60,11 +47,7 @@ async function seedDatabase() {
       AssignedProgramModel.countDocuments(),
     ]);
 
-  // Always update team names to ensure they match the current defaults
-  await updateTeamNames();
-
   await seedCollection(teamCount, async () => {
-    // Hash passwords before seeding
     const teamsToInsert = await Promise.all(
       defaultTeams.map(async (t) => ({
         ...t,
@@ -92,7 +75,6 @@ async function seedDatabase() {
   });
 
   await seedCollection(juryCount, async () => {
-    // Hash passwords before seeding
     const juriesToInsert = await Promise.all(
       defaultJury.map(async (j) => ({
         ...j,
@@ -108,10 +90,7 @@ async function seedDatabase() {
 }
 
 async function ensureSeedData() {
-  if (!seedPromise) {
-    seedPromise = seedDatabase();
-  }
-  await seedPromise;
+  await connectDB();
 }
 
 function normalize<T>(docs: T[]): T[] {
@@ -546,185 +525,8 @@ export async function resetLiveScores() {
   ]);
 }
 
-const defaultTeams: Team[] = [
-  {
-    id: "team-cosmos",
-    name: "SAMARQAND",
-    leader: "Mira Lopes",
-    leader_photo: "https://images.unsplash.com/photo-1544723795-3fb6469f5b39",
-    color: "#D72638",
-    description: "Fine arts and installations with a cosmic narrative.",
-    contact: "cosmos@artsfest.edu",
-    total_points: 0,
-    portal_password: "cosmos@123",
-  },
-  {
-    id: "team-dynamo",
-    name: "NAHAVAND",
-    leader: "Ritvik Sen",
-    leader_photo: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518",
-    color: "#1E3A8A",
-    description: "Theatre and stagecraft enthusiasts.",
-    contact: "dynamo@artsfest.edu",
-    total_points: 0,
-    portal_password: "dynamo@123",
-  },
-  {
-    id: "team-blaze",
-    name: "YAMAMA",
-    leader: "Kabir Varma",
-    leader_photo: "https://images.unsplash.com/photo-1504593811423-6dd665756598",
-    color: "#7C3AED",
-    description: "Dance collective known for explosive choreography.",
-    contact: "blaze@artsfest.edu",
-    total_points: 0,
-    portal_password: "blaze@123",
-  },
-  {
-    id: "team-ember",
-    name: "QURTUBA",
-    leader: "Salma Aziz & Ahmed Hassan",
-    leader_photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e",
-    color: "#FACC15",
-    description: "Literary arts champions with spoken word mastery.",
-    contact: "ember@artsfest.edu",
-    total_points: 0,
-    portal_password: "ember@123",
-  },
-  {
-    id: "team-aurora",
-    name: "MUQADDAS",
-    leader: "Anaya Joseph",
-    leader_photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-    color: "#059669",
-    description: "Music & rhythm powerhouse representing the senior batch.",
-    contact: "aurora@artsfest.edu",
-    total_points: 0,
-    portal_password: "aurora@123",
-  },
-  {
-    id: "team-flux",
-    name: "BUKHARA",
-    leader: "Levi D'Souza",
-    leader_photo: "https://images.unsplash.com/photo-1546456073-92b9f0a8d1d6",
-    color: "#FB923C",
-    description: "Media & film crew pushing experimental visuals.",
-    contact: "flux@artsfest.edu",
-    total_points: 0,
-    portal_password: "flux@123",
-  },
-];
-
-const defaultStudents: Student[] = [
-  {
-    id: "stu-aurora-1",
-    name: "Neha Dominic",
-    team_id: "team-aurora",
-    chest_no: "A101",
-    avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
-    total_points: 0,
-  },
-  {
-    id: "stu-aurora-2",
-    name: "Arjun Prakash",
-    team_id: "team-aurora",
-    chest_no: "A102",
-    avatar: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df",
-    total_points: 0,
-  },
-  {
-    id: "stu-blaze-1",
-    name: "Sana Mathew",
-    team_id: "team-blaze",
-    chest_no: "B201",
-    avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
-    total_points: 0,
-  },
-  {
-    id: "stu-cosmos-1",
-    name: "Joel Francis",
-    team_id: "team-cosmos",
-    chest_no: "C301",
-    avatar: "https://images.unsplash.com/photo-1504593811423-6dd665756598",
-    total_points: 0,
-  },
-  {
-    id: "stu-dynamo-1",
-    name: "Veda Krish",
-    team_id: "team-dynamo",
-    chest_no: "D401",
-    avatar: "https://images.unsplash.com/photo-1544723795-3fb6469f5b39",
-    total_points: 0,
-  },
-  {
-    id: "stu-ember-1",
-    name: "Kiran Nair",
-    team_id: "team-ember",
-    chest_no: "E501",
-    avatar: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518",
-    total_points: 0,
-  },
-  {
-    id: "stu-flux-1",
-    name: "Maya Iqbal",
-    team_id: "team-flux",
-    chest_no: "F601",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-    total_points: 0,
-  },
-];
-
-const defaultPrograms: Program[] = [
-  {
-    id: "prog-solo-vocals",
-    name: "Solo Vocals",
-    section: "single",
-    stage: true,
-    category: "A",
-    candidateLimit: 2,
-  },
-  {
-    id: "prog-duet-dance",
-    name: "Duet Dance",
-    section: "group",
-    stage: true,
-    category: "none",
-    candidateLimit: 3,
-  },
-  {
-    id: "prog-live-paint",
-    name: "Live Canvas Painting",
-    section: "single",
-    stage: false,
-    category: "B",
-    candidateLimit: 1,
-  },
-  {
-    id: "prog-shortfilm",
-    name: "Short Film",
-    section: "group",
-    stage: false,
-    category: "none",
-    candidateLimit: 4,
-  },
-  {
-    id: "prog-quiz",
-    name: "General Quiz",
-    section: "general",
-    stage: true,
-    category: "none",
-    candidateLimit: 5,
-  },
-];
-
-const defaultAssignments: AssignedProgram[] = [
-  { program_id: "prog-solo-vocals", jury_id: "jury-anika", status: "pending" },
-  { program_id: "prog-duet-dance", jury_id: "jury-dev", status: "pending" },
-  { program_id: "prog-live-paint", jury_id: "jury-sahana", status: "pending" },
-];
-
-const defaultJury: Jury[] = [
-  { id: "jury-anika", name: "Anika Raman", password: "anika@jury", avatar: "/img/jury.webp" },
-  { id: "jury-dev", name: "Dev Jain", password: "dev@jury", avatar: "/img/jury1.webp" },
-  { id: "jury-sahana", name: "Sahana Biju", password: "sahana@jury", avatar: "/img/jury2.webp" },
-];
+const defaultTeams: Team[] = [];
+const defaultStudents: Student[] = [];
+const defaultPrograms: Program[] = [];
+const defaultAssignments: AssignedProgram[] = [];
+const defaultJury: Jury[] = [];

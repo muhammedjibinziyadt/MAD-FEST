@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 
 const MONGODB_URI =
-  process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/fest_app";
+  process.env.MONGODB_URI ??
+  "mongodb+srv://jdsaadmin:jdsaadmin9544@madfest.khdsxcz.mongodb.net/madfest?retryWrites=true&w=majority&appName=madfest";
 
 if (!MONGODB_URI) {
   throw new Error("Missing MONGODB_URI environment variable");
@@ -30,7 +31,7 @@ export async function connectDB() {
   if (!cached?.promise) {
     cached!.promise = mongoose
       .connect(MONGODB_URI, {
-        dbName: process.env.MONGODB_DB ?? "fest_app",
+        dbName: process.env.MONGODB_DB ?? "madfest",
       })
       .then((mongooseInstance) => mongooseInstance)
       .catch((error) => {
