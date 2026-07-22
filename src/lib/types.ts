@@ -1,5 +1,5 @@
 export type SectionType = "single" | "group" | "general";
-export type CategoryType = "A" | "B" | "C" | "none";
+export type CategoryType = "KIDDIES" | "SUB-JUNIOR" | "JUNIOR" | "SENIOR" | "SUPER-SENIOR" | "GENERAL" | "none";
 export type GradeType = "A" | "B" | "C" | "none";
 
 export interface Team {

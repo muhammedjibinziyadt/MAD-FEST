@@ -450,12 +450,15 @@ const CATEGORY_SCORES: Record<
   Exclude<CategoryType, "none">,
   Record<1 | 2 | 3, number>
 > = {
-  A: { 1: 10, 2: 7, 3: 5 },
-  B: { 1: 7, 2: 5, 3: 3 },
-  C: { 1: 5, 2: 3, 3: 1 },
+  "KIDDIES": { 1: 10, 2: 7, 3: 5 },
+  "SUB-JUNIOR": { 1: 7, 2: 5, 3: 3 },
+  "JUNIOR": { 1: 5, 2: 3, 3: 1 },
+  "SENIOR": { 1: 5, 2: 3, 3: 1 },
+  "SUPER-SENIOR": { 1: 5, 2: 3, 3: 1 },
+  "GENERAL": { 1: 5, 2: 3, 3: 1 },
 };
 
-const GRADE_BONUS: Record<Exclude<CategoryType, "none">, number> = {
+const GRADE_BONUS: Record<Exclude<import("./types").GradeType, "none">, number> = {
   A: 5,
   B: 3,
   C: 1,
@@ -477,7 +480,7 @@ export function calculateScore(
   section: SectionType,
   category: CategoryType,
   position: 1 | 2 | 3,
-  grade: CategoryType = "none",
+  grade: import("./types").GradeType = "none",
 ): number {
   if (section === "single") {
     const base = category !== "none" ? CATEGORY_SCORES[category][position] : 0;

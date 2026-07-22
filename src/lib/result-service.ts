@@ -58,7 +58,7 @@ async function buildEntries(
         grade,
         score: calculateScore(
           program.section as "single",
-          program.category as "A" | "B" | "C" | "none",
+          program.category as "KIDDIES" | "SUB-JUNIOR" | "JUNIOR" | "SENIOR" | "SUPER-SENIOR" | "GENERAL" | "none",
           winner.position,
           grade,
         ),

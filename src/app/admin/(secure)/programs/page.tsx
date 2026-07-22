@@ -25,7 +25,7 @@ const programSchema = z.object({
   name: z.string().min(2, "Program name is required"),
   section: z.enum(["single", "group", "general"]),
   stage: z.enum(["true", "false"]),
-  category: z.enum(["A", "B", "C", "none"]),
+  category: z.enum(["KIDDIES", "SUB-JUNIOR", "JUNIOR", "SENIOR", "SUPER-SENIOR", "GENERAL", "none"]),
   candidateLimit: z
     .coerce.number()
     .min(1, "candidateLimit must be at least 1")
@@ -44,7 +44,7 @@ const csvRowSchema = z.object({
     })
     .transform((value) => value === "true")
     .pipe(z.boolean()),
-  category: z.enum(["A", "B", "C", "none"]),
+  category: z.enum(["KIDDIES", "SUB-JUNIOR", "JUNIOR", "SENIOR", "SUPER-SENIOR", "GENERAL", "none"]),
   candidate_limit: z
     .coerce.number()
     .min(1, "candidate_limit must be at least 1")
@@ -374,11 +374,14 @@ export default async function ProgramsPage() {
           />
           <SearchSelect
             name="category"
-            defaultValue="A"
+            defaultValue="KIDDIES"
             options={[
-              { value: "A", label: "Category A" },
-              { value: "B", label: "Category B" },
-              { value: "C", label: "Category C" },
+              { value: "KIDDIES", label: "KIDDIES" },
+              { value: "SUB-JUNIOR", label: "SUB-JUNIOR" },
+              { value: "JUNIOR", label: "JUNIOR" },
+              { value: "SENIOR", label: "SENIOR" },
+              { value: "SUPER-SENIOR", label: "SUPER-SENIOR" },
+              { value: "GENERAL", label: "GENERAL" },
               { value: "none", label: "None" },
             ]}
             placeholder="Select category"

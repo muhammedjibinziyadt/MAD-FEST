@@ -525,10 +525,10 @@ export function AddResultForm({
         }
       >
         <div className="space-y-4 text-sm">
-          <p>Single events (Category A/B/C) add grade bonus on top of podium points.</p>
+          <p>Single events add grade bonus on top of podium points.</p>
           <div className="grid gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
             <p className="font-semibold">Single · Podium</p>
-            <p>A: 10 / 7 / 5 · B: 7 / 5 / 3 · C: 5 / 3 / 1</p>
+            <p className="text-xs text-white/70">KIDDIES: 10/7/5 · SUB-JUNIOR: 7/5/3 · JUNIOR: 5/3/1 · SENIOR: 5/3/1 · SUPER-SENIOR: 5/3/1 · GENERAL: 5/3/1</p>
             <p className="font-semibold">Grade Bonus</p>
             <p>A +5 · B +3 · C +1</p>
           </div>

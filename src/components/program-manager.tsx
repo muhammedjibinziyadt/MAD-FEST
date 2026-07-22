@@ -33,9 +33,12 @@ const sectionOptions = [
 
 const categoryOptions = [
   { label: "All Categories", value: "" },
-  { label: "Category A", value: "A" },
-  { label: "Category B", value: "B" },
-  { label: "Category C", value: "C" },
+  { label: "KIDDIES", value: "KIDDIES" },
+  { label: "SUB-JUNIOR", value: "SUB-JUNIOR" },
+  { label: "JUNIOR", value: "JUNIOR" },
+  { label: "SENIOR", value: "SENIOR" },
+  { label: "SUPER-SENIOR", value: "SUPER-SENIOR" },
+  { label: "GENERAL", value: "GENERAL" },
   { label: "None", value: "none" },
 ];
 
@@ -421,9 +424,12 @@ export const ProgramManager = React.memo(function ProgramManager({
                     name="category"
                     defaultValue={program.category}
                     options={[
-                      { value: "A", label: "Category A" },
-                      { value: "B", label: "Category B" },
-                      { value: "C", label: "Category C" },
+                      { value: "KIDDIES", label: "KIDDIES" },
+                      { value: "SUB-JUNIOR", label: "SUB-JUNIOR" },
+                      { value: "JUNIOR", label: "JUNIOR" },
+                      { value: "SENIOR", label: "SENIOR" },
+                      { value: "SUPER-SENIOR", label: "SUPER-SENIOR" },
+                      { value: "GENERAL", label: "GENERAL" },
                       { value: "none", label: "None" },
                     ]}
                     placeholder="Select category"

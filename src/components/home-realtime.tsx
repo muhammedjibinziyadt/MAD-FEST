@@ -66,8 +66,8 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
           {/* Ship - Center */}
           <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-[300px] lg:h-[300px] mb-2">
             <Image
-              src="/img/assets/ship.webp"
-              alt="Ship"
+              src="/img/assets/logo-new.png"
+              alt="Logo"
               fill
               className="object-contain"
               priority
@@ -77,7 +77,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
           {/* Main Title - Charutha Font */}
           <div>
             <h1 className="text-[#A13A24] text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-2 font-['Charutha'] tracking-wide leading-5 md:leading-7">
-              FUNOON FIESTA '25-26
+              Ishal Rabeeh '26
             </h1>
 
             {/* Subtitle - Bricolage Font */}
@@ -88,24 +88,25 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
 
           {/* Description */}
           <p className="text-gray-600 text-sm sm:text-base md:text-lg max-w-3xl mx-auto mb-8 px-4 leading-5 font-light">
-            For a hundred years, the Malabar coast has echoed with knowledge, faith, and art. Funoon
-            Fiesta 2025–26 bridges this rich legacy with a new generation, honoring Samastha’s
-            centenary under the theme “Shathakam Saakshi.”
+            കലയുടെ ചിറകിൽ വിശ്വാസത്തിന്റെ വെളിച്ചം.
+            ഓരോ പ്രതിഭയ്ക്കും വേദിയൊരുക്കുന്ന ഇശൽ റബീഅ് 26 ലേക്ക് സ്വാഗതം.
           </p>
 
           {/* CTA Buttons */}
           <div className="relative z-50 flex flex-col sm:flex-row gap-4 items-center">
             <Link href="/results">
               <div className="bg-[#F2C04D] hover:bg-[#dbb13d] text-black font-medium text-lg px-8 py-3 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-3 active:scale-95">
-                Click to Dive In
+                Boys
                 <ArrowRight className="w-5 h-5" />
               </div>
             </Link>
-            <Link href="/festory">
-              <div className="bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white font-medium text-lg px-8 py-3 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-3 active:scale-95 border border-white/20">
-                Festory Live <Music2 className="w-5 h-5" />
+            <Link href="/results">
+              <div className="bg-[#F2C04D] hover:bg-[#dbb13d] text-black font-medium text-lg px-8 py-3 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-3 active:scale-95">
+                Girls
+                <ArrowRight className="w-5 h-5" />
               </div>
             </Link>
+
           </div>
         </div>
 
@@ -114,7 +115,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
           <svg className="absolute bottom-0 left-0 w-[200%] h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 2880 320">
             {/* Wave 3 (Back) - Period 720px (4 cycles) */}
             <path
-              fill="#0891b2"
+              fill="#FEF08A"
               fillOpacity="1"
               d="M0,230 
                  C240,180 480,280 720,230 
@@ -127,7 +128,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
             />
             {/* Wave 2 (Middle) - Period 480px (6 cycles) */}
             <path
-              fill="#0e7490"
+              fill="#F59E0B"
               fillOpacity="1"
               d="M0,260 
                  C160,220 320,300 480,260 
@@ -142,7 +143,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
             />
             {/* Wave 1 (Front) - Period 720px (4 cycles), Offset Phase */}
             <path
-              fill="#155e75"
+              fill="#F2C04D"
               fillOpacity="1"
               d="M0,290 
                  C240,340 480,240 720,290 
@@ -160,7 +161,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
           <svg className="absolute bottom-0 left-0 w-[2880px] h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 2880 320">
             {/* Wave 3 (Back) */}
             <path
-              fill="#0891b2"
+              fill="#FEF08A"
               fillOpacity="1"
               d="M0,230 C240,180 480,280 720,230 C960,180 1200,280 1440,230 C1680,180 1920,280 2160,230 C2400,180 2640,280 2880,230 V320 H0 Z"
               className="animate-[wave-slide_20s_linear_infinite]"
@@ -168,7 +169,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
             />
             {/* Wave 2 (Middle) */}
             <path
-              fill="#0e7490"
+              fill="#F59E0B"
               fillOpacity="1"
               d="M0,260 C160,220 320,300 480,260 C640,220 800,300 960,260 C1120,220 1280,300 1440,260 C1600,220 1760,300 1920,260 C2080,220 2240,300 2400,260 C2560,220 2720,300 2880,260 V320 H0 Z"
               className="animate-[wave-slide_15s_linear_infinite]"
@@ -176,7 +177,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
             />
             {/* Wave 1 (Front) */}
             <path
-              fill="#155e75"
+              fill="#F2C04D"
               fillOpacity="1"
               d="M0,290 C240,340 480,240 720,290 C960,340 1200,240 1440,290 C1680,340 1920,240 2160,290 C2400,340 2640,240 2880,290 V320 H0 Z"
               className="animate-[wave-slide_12s_linear_infinite]"
