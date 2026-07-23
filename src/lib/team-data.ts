@@ -91,6 +91,7 @@ export async function getPortalStudents(): Promise<PortalStudent[]> {
     teamId: student.team_id,
     teamName: teamMap.get(student.team_id) ?? "Unknown",
     score: student.total_points ?? 0,
+    avatar: student.avatar,
   }));
 }
 
@@ -99,6 +100,7 @@ export async function upsertPortalStudent(input: {
   name: string;
   chestNumber: string;
   teamId: string;
+  avatar?: string;
 }) {
   await connectDB();
   const chestNumber = input.chestNumber.trim().toUpperCase();
@@ -116,6 +118,12 @@ export async function upsertPortalStudent(input: {
   const isNew = !input.id;
 
   try {
+    const student = await StudentModel.findOne({ id: studentId }).lean();
+    if (student?.avatar && input.avatar && student.avatar !== input.avatar) {
+      const { deleteFile } = await import("./upload");
+      await deleteFile(student.avatar);
+    }
+
     await StudentModel.updateOne(
       { id: studentId },
       {
@@ -123,6 +131,7 @@ export async function upsertPortalStudent(input: {
           name: input.name,
           chest_no: chestNumber,
           team_id: input.teamId,
+          ...(input.avatar ? { avatar: input.avatar } : {}),
         },
         $setOnInsert: { total_points: 0 },
       },
@@ -148,6 +157,10 @@ export async function upsertPortalStudent(input: {
 export async function deletePortalStudent(studentId: string) {
   await connectDB();
   const student = await StudentModel.findOne({ id: studentId }).lean();
+  if (student?.avatar) {
+    const { deleteFile } = await import("./upload");
+    await deleteFile(student.avatar);
+  }
   await StudentModel.deleteOne({ id: studentId });
   await ProgramRegistrationModel.deleteMany({ studentId });
 

@@ -29,6 +29,7 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editChestNumber, setEditChestNumber] = useState("");
+  const [editAvatar, setEditAvatar] = useState<File | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter students based on search query
@@ -56,6 +57,7 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
     setEditingId(null);
     setEditName("");
     setEditChestNumber("");
+    setEditAvatar(null);
   };
 
   const handleSave = async (studentId: string) => {
@@ -63,10 +65,14 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
     formData.append("studentId", studentId);
     formData.append("name", editName.trim());
     formData.append("chestNumber", editChestNumber.trim().toUpperCase());
+    if (editAvatar) {
+      formData.append("avatar", editAvatar);
+    }
     await updateAction(formData);
     setEditingId(null);
     setEditName("");
     setEditChestNumber("");
+    setEditAvatar(null);
   };
 
   const handleDelete = async (studentId: string) => {
@@ -181,6 +187,15 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
                       maxLength={10}
                     />
                   </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs text-white/60 mb-1.5 block">Update Photo (Optional)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setEditAvatar(e.target.files?.[0] || null)}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/20 file:text-cyan-400 hover:file:bg-cyan-500/30 file:cursor-pointer"
+                    />
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -205,9 +220,19 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
               // View Mode
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className="rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 p-2.5 shrink-0">
-                    <User className="h-5 w-5 text-cyan-400" />
-                  </div>
+                  {student.avatar ? (
+                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-cyan-500/30">
+                      <img
+                        src={student.avatar}
+                        alt={student.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 p-2.5 shrink-0">
+                      <User className="h-5 w-5 text-cyan-400" />
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-white truncate">{student.name}</p>
                     <div className="flex items-center gap-2 mt-1 text-sm text-white/60">
@@ -254,33 +279,46 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
 
             {/* View Details Panel */}
             {isViewing && !isEditing && (
-              <div className="mt-4 pt-4 border-t border-white/10">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-xs text-white/60 mb-1">Student Name</p>
-                    <p className="font-medium text-white">{student.name}</p>
+              <div className="mt-4 pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-4">
+                {student.avatar && (
+                  <div className="shrink-0 flex justify-center sm:justify-start">
+                    <div className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-cyan-500/30">
+                      <img
+                        src={student.avatar}
+                        alt={student.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-white/60 mb-1">Chest Number</p>
-                    <p className="font-mono font-medium text-white">{student.chestNumber}</p>
+                )}
+                <div className="flex-1">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-xs text-white/60 mb-1">Student Name</p>
+                      <p className="font-medium text-white">{student.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/60 mb-1">Chest Number</p>
+                      <p className="font-mono font-medium text-white">{student.chestNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/60 mb-1">Team</p>
+                      <p className="font-medium text-white">{student.teamName}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/60 mb-1">Total Points</p>
+                      <p className="font-medium text-white">{student.score || 0}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-white/60 mb-1">Team</p>
-                    <p className="font-medium text-white">{student.teamName}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-white/60 mb-1">Total Points</p>
-                    <p className="font-medium text-white">{student.score || 0}</p>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setViewingId(null)}
+                    className="mt-4 w-full"
+                  >
+                    Close Details
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewingId(null)}
-                  className="mt-4 w-full"
-                >
-                  Close Details
-                </Button>
               </div>
             )}
           </Card>

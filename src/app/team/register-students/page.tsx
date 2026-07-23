@@ -58,6 +58,17 @@ async function createStudentAction(formData: FormData) {
     redirectWithMessage("Student name is required.");
   }
 
+  const avatarFile = formData.get("avatar") as File | null;
+  let avatarUrl: string | undefined = undefined;
+  if (avatarFile && avatarFile.size > 0) {
+    try {
+      const { uploadFile } = await import("@/lib/upload");
+      avatarUrl = await uploadFile(avatarFile, "image");
+    } catch (uploadError) {
+      redirectWithMessage("Failed to upload student image. Make sure it's a valid image file.");
+    }
+  }
+
   const students = await getPortalStudents();
   const chestNumber = generateNextChestNumber(team.teamName, students);
 
@@ -77,6 +88,7 @@ async function createStudentAction(formData: FormData) {
       name,
       chestNumber,
       teamId: team.id,
+      avatar: avatarUrl,
     });
   } catch (error) {
     redirectWithMessage((error as Error).message);
@@ -100,6 +112,17 @@ async function updateStudentAction(formData: FormData) {
   const chestNumber = String(formData.get("chestNumber") ?? "").trim().toUpperCase();
   if (!studentId) redirectWithMessage("Missing student ID.");
 
+  const avatarFile = formData.get("avatar") as File | null;
+  let avatarUrl: string | undefined = undefined;
+  if (avatarFile && avatarFile.size > 0) {
+    try {
+      const { uploadFile } = await import("@/lib/upload");
+      avatarUrl = await uploadFile(avatarFile, "image");
+    } catch (uploadError) {
+      redirectWithMessage("Failed to upload student image. Make sure it's a valid image file.");
+    }
+  }
+
   const students = await getPortalStudents();
   const current = students.find((student) => student.id === studentId);
   if (!current || current.teamId !== team.id) {
@@ -114,6 +137,7 @@ async function updateStudentAction(formData: FormData) {
       name,
       chestNumber,
       teamId: team.id,
+      avatar: avatarUrl,
     });
   } catch (error) {
     redirectWithMessage((error as Error).message);
@@ -213,14 +237,29 @@ export default async function RegisterStudentsPage({
         {isOpen ? (
           <>
             <ChestNumberPreview teamName={team.teamName} teamStudents={teamStudents} />
-            <form action={createStudentAction} className="mt-4 grid gap-3 sm:gap-4 sm:grid-cols-[1fr_auto]">
-              <Input 
-                name="name" 
-                placeholder="Enter student name" 
-                required 
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              />
-              <Button type="submit" className="w-full sm:w-auto">
+            <form
+              action={createStudentAction}
+              className="mt-4 grid gap-4 sm:grid-cols-2"
+            >
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-white/70">Student Name</label>
+                <Input 
+                  name="name" 
+                  placeholder="Enter student name" 
+                  required 
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-10"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-white/70">Student Photo (Optional)</label>
+                <input
+                  type="file"
+                  name="avatar"
+                  accept="image/*"
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/20 file:text-cyan-400 hover:file:bg-cyan-500/30 file:cursor-pointer h-10 flex items-center"
+                />
+              </div>
+              <Button type="submit" className="sm:col-span-2 w-full mt-2 h-10">
                 Add Student
               </Button>
             </form>

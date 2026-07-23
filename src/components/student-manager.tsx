@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { CheckCircle2, Eye, Pencil, Search, Trash2, Download, FileText, FileSpreadsheet } from "lucide-react";
+import { CheckCircle2, Eye, Pencil, Search, Trash2, Download, FileText, FileSpreadsheet, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -419,6 +419,19 @@ export const StudentManager = React.memo(function StudentManager({
                     checked={isSelected}
                     onChange={() => toggleSelectOne(student.id)}
                   />
+                  {student.avatar ? (
+                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-fuchsia-500/30">
+                      <img
+                        src={student.avatar}
+                        alt={student.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="rounded-full bg-gradient-to-br from-fuchsia-500/20 to-pink-500/20 p-2.5 shrink-0">
+                      <User className="h-5 w-5 text-fuchsia-400" />
+                    </div>
+                  )}
                   <div>
                     <p className="text-sm text-white/40">#{student.id.slice(0, 8)}</p>
                     <p className="text-lg font-semibold text-white">{student.name}</p>
@@ -477,6 +490,15 @@ export const StudentManager = React.memo(function StudentManager({
                     options={teams.map((team) => ({ value: team.id, label: team.name }))}
                     placeholder="Select team"
                   />
+                  <div className="md:col-span-3">
+                    <label className="text-xs text-white/60 mb-1.5 block">Update Photo (Optional)</label>
+                    <input
+                      type="file"
+                      name="avatar"
+                      accept="image/*"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:border-fuchsia-400 focus:outline-none file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-fuchsia-500/20 file:text-fuchsia-400 hover:file:bg-fuchsia-500/30 file:cursor-pointer"
+                    />
+                  </div>
                   <div className="flex items-center gap-3 md:col-span-3">
                     <Button type="submit" className="flex-1">
                       Save changes
@@ -548,16 +570,32 @@ export const StudentManager = React.memo(function StudentManager({
         }
       >
         {viewStudent && (
-          <div className="space-y-3 text-sm text-white/80">
-            <p>
-              <span className="text-white/50">Student ID:</span> {viewStudent.id}
-            </p>
-            <p>
-              <span className="text-white/50">Team:</span> {teamMap.get(viewStudent.team_id) ?? "Unknown"}
-            </p>
-            <p>
-              <span className="text-white/50">Chest number:</span> {viewStudent.chest_no}
-            </p>
+          <div className="space-y-4 text-sm text-white/80">
+            {viewStudent.avatar && (
+              <div className="flex justify-center">
+                <div className="relative h-32 w-32 overflow-hidden rounded-full border-4 border-fuchsia-500/30">
+                  <img
+                    src={viewStudent.avatar}
+                    alt={viewStudent.name}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <p>
+                <span className="text-white/55 font-semibold">Student ID:</span> {viewStudent.id}
+              </p>
+              <p>
+                <span className="text-white/55 font-semibold">Team:</span> {teamMap.get(viewStudent.team_id) ?? "Unknown"}
+              </p>
+              <p>
+                <span className="text-white/55 font-semibold">Chest number:</span> {viewStudent.chest_no}
+              </p>
+              <p>
+                <span className="text-white/55 font-semibold">Total Points:</span> {viewStudent.total_points ?? 0}
+              </p>
+            </div>
           </div>
         )}
       </Modal>

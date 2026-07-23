@@ -283,6 +283,11 @@ export async function updateStudentById(
     const student = await StudentModel.findOne({ id }).lean();
     const teamId = student?.team_id || data.team_id || "";
 
+    if (student?.avatar && data.avatar && student.avatar !== data.avatar) {
+      const { deleteFile } = await import("./upload");
+      await deleteFile(student.avatar);
+    }
+
     await StudentModel.updateOne({ id }, data);
 
     // Emit real-time event
@@ -302,6 +307,10 @@ export async function updateStudentById(
 export async function deleteStudentById(id: string) {
   await connectDB();
   const student = await StudentModel.findOne({ id }).lean();
+  if (student?.avatar) {
+    const { deleteFile } = await import("./upload");
+    await deleteFile(student.avatar);
+  }
   await StudentModel.deleteOne({ id });
 
   // Emit real-time event
@@ -458,22 +467,28 @@ const CATEGORY_SCORES: Record<
   "GENERAL": { 1: 10, 2: 6, 3: 2 },
 };
 
-const GRADE_BONUS: Record<Exclude<import("./types").GradeType, "none">, number> = {
+const SINGLE_GRADE_BONUS: Record<Exclude<import("./types").GradeType, "none">, number> = {
   A: 10,
   B: 6,
   C: 2,
 };
 
+const GROUP_GENERAL_GRADE_BONUS: Record<Exclude<import("./types").GradeType, "none">, number> = {
+  A: 20,
+  B: 10,
+  C: 6,
+};
+
 const GROUP_SCORES: Record<1 | 2 | 3, number> = {
-  1: 20,
-  2: 10,
-  3: 6,
+  1: 10,
+  2: 6,
+  3: 2,
 };
 
 const GENERAL_SCORES: Record<1 | 2 | 3, number> = {
-  1: 20,
-  2: 10,
-  3: 6,
+  1: 10,
+  2: 6,
+  3: 2,
 };
 
 export function calculateScore(
@@ -485,18 +500,18 @@ export function calculateScore(
   if (section === "single") {
     const categoryScores = category !== "none" ? CATEGORY_SCORES[category] : undefined;
     const base = categoryScores ? categoryScores[position] : 0;
-    const bonus = grade !== "none" ? GRADE_BONUS[grade] : 0;
+    const bonus = grade !== "none" ? SINGLE_GRADE_BONUS[grade] : 0;
     return base + bonus;
   }
 
   if (section === "group") {
     const base = GROUP_SCORES[position];
-    const bonus = grade !== "none" ? GRADE_BONUS[grade] : 0;
+    const bonus = grade !== "none" ? GROUP_GENERAL_GRADE_BONUS[grade] : 0;
     return base + bonus;
   }
 
   const base = GENERAL_SCORES[position];
-  const bonus = grade !== "none" ? GRADE_BONUS[grade] : 0;
+  const bonus = grade !== "none" ? GROUP_GENERAL_GRADE_BONUS[grade] : 0;
   return base + bonus;
 }
 

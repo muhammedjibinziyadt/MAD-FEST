@@ -69,6 +69,17 @@ async function upsertStudent(formData: FormData, mode: "create" | "update") {
   }
   const payload = parsed.data;
 
+  const avatarFile = formData.get("avatar") as File | null;
+  let avatarUrl: string | undefined = undefined;
+  if (avatarFile && avatarFile.size > 0) {
+    try {
+      const { uploadFile } = await import("@/lib/upload");
+      avatarUrl = await uploadFile(avatarFile, "image");
+    } catch (uploadError) {
+      throw new Error("Failed to upload student image. Make sure it's a valid image file.");
+    }
+  }
+
   let chest_no = payload.chest_no;
   
   if (mode === "create" && !chest_no) {
@@ -92,6 +103,7 @@ async function upsertStudent(formData: FormData, mode: "create" | "update") {
       name: payload.name,
       team_id: payload.team_id,
       chest_no: chest_no!,
+      avatar: avatarUrl,
     });
   } else {
     if (!payload.id) throw new Error("Student ID missing");
@@ -99,6 +111,7 @@ async function upsertStudent(formData: FormData, mode: "create" | "update") {
       name: payload.name,
       team_id: payload.team_id,
       chest_no: chest_no!,
+      ...(avatarUrl ? { avatar: avatarUrl } : {}),
     });
   }
 
@@ -372,14 +385,29 @@ export default async function StudentsPage() {
           action={createStudentAction}
           className="mt-6 grid gap-4 md:grid-cols-2"
         >
-          <Input name="name" placeholder="Student name" required />
-          <SearchSelect
-            name="team_id"
-            defaultValue={teams[0]?.id}
-            required
-            options={teams.map((team) => ({ value: team.id, label: team.name }))}
-            placeholder="Select team"
-          />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/70">Student Name</label>
+            <Input name="name" placeholder="Student name" required />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/70">Select Team</label>
+            <SearchSelect
+              name="team_id"
+              defaultValue={teams[0]?.id}
+              required
+              options={teams.map((team) => ({ value: team.id, label: team.name }))}
+              placeholder="Select team"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5 md:col-span-2">
+            <label className="text-xs font-semibold text-white/70">Student Photo (Optional)</label>
+            <input
+              type="file"
+              name="avatar"
+              accept="image/*"
+              className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:border-fuchsia-400 focus:outline-none file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-fuchsia-500/20 file:text-fuchsia-400 hover:file:bg-fuchsia-500/30 file:cursor-pointer"
+            />
+          </div>
           <Button type="submit" className="md:col-span-2">
             Save Student
           </Button>
