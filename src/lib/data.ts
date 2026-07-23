@@ -450,30 +450,30 @@ const CATEGORY_SCORES: Record<
   Exclude<CategoryType, "none">,
   Record<1 | 2 | 3, number>
 > = {
-  "KIDDIES": { 1: 10, 2: 7, 3: 5 },
-  "SUB-JUNIOR": { 1: 7, 2: 5, 3: 3 },
-  "JUNIOR": { 1: 5, 2: 3, 3: 1 },
-  "SENIOR": { 1: 5, 2: 3, 3: 1 },
-  "SUPER-SENIOR": { 1: 5, 2: 3, 3: 1 },
-  "GENERAL": { 1: 5, 2: 3, 3: 1 },
+  "KIDDIES": { 1: 10, 2: 6, 3: 2 },
+  "SUB-JUNIOR": { 1: 10, 2: 6, 3: 2 },
+  "JUNIOR": { 1: 10, 2: 6, 3: 2 },
+  "SENIOR": { 1: 10, 2: 6, 3: 2 },
+  "SUPER-SENIOR": { 1: 10, 2: 6, 3: 2 },
+  "GENERAL": { 1: 10, 2: 6, 3: 2 },
 };
 
 const GRADE_BONUS: Record<Exclude<import("./types").GradeType, "none">, number> = {
-  A: 5,
-  B: 3,
-  C: 1,
+  A: 10,
+  B: 6,
+  C: 2,
 };
 
 const GROUP_SCORES: Record<1 | 2 | 3, number> = {
   1: 20,
-  2: 15,
-  3: 10,
+  2: 10,
+  3: 6,
 };
 
 const GENERAL_SCORES: Record<1 | 2 | 3, number> = {
-  1: 25,
-  2: 20,
-  3: 15,
+  1: 20,
+  2: 10,
+  3: 6,
 };
 
 export function calculateScore(
@@ -483,16 +483,21 @@ export function calculateScore(
   grade: import("./types").GradeType = "none",
 ): number {
   if (section === "single") {
-    const base = category !== "none" ? CATEGORY_SCORES[category][position] : 0;
+    const categoryScores = category !== "none" ? CATEGORY_SCORES[category] : undefined;
+    const base = categoryScores ? categoryScores[position] : 0;
     const bonus = grade !== "none" ? GRADE_BONUS[grade] : 0;
     return base + bonus;
   }
 
   if (section === "group") {
-    return GROUP_SCORES[position];
+    const base = GROUP_SCORES[position];
+    const bonus = grade !== "none" ? GRADE_BONUS[grade] : 0;
+    return base + bonus;
   }
 
-  return GENERAL_SCORES[position];
+  const base = GENERAL_SCORES[position];
+  const bonus = grade !== "none" ? GRADE_BONUS[grade] : 0;
+  return base + bonus;
 }
 
 export async function updateLiveScore(teamId: string, delta: number) {
