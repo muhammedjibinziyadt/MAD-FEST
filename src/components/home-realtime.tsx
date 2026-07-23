@@ -76,18 +76,18 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
 
           {/* Main Title - Charutha Font */}
           <div>
-            <h1 className="text-[#A13A24] text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-2 font-['Charutha'] tracking-wide leading-5 md:leading-7">
-              Ishal Rabeeh '26
+            <h1 className="text-[#A13A24] text-4xl sm:text-5xl md:text-7xl lg:text-8xl mb-3 font-['Charutha'] tracking-wide leading-[0.95]">
+              Busthanul Uloom <br /> Higher Secondary Madrasa
             </h1>
 
             {/* Subtitle - Bricolage Font */}
             <h2 className="text-black text-xl sm:text-xl md:text-3xl font-['Bricolage'] mb-6 font-semibold tracking-tight">
-              Showcasing Islamic Art & Culture
+              ഇസ്‌ലാമിക കലയുടെയും സംസ്‌കാരത്തിന്റെയും മഹാമേള
             </h2>
           </div>
 
           {/* Description */}
-          <p className="text-gray-600 text-sm sm:text-base md:text-lg max-w-3xl mx-auto mb-8 px-4 leading-5 font-light">
+          <p className="text-gray-600 text-sm sm:text-base md:text-lg max-w-3xl mx-auto mb-8 px-4 leading-relaxed font-light">
             കലയുടെ ചിറകിൽ വിശ്വാസത്തിന്റെ വെളിച്ചം.
             ഓരോ പ്രതിഭയ്ക്കും വേദിയൊരുക്കുന്ന ഇശൽ റബീഅ് 26 ലേക്ക് സ്വാഗതം.
           </p>
@@ -96,17 +96,10 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
           <div className="relative z-50 flex flex-col sm:flex-row gap-4 items-center">
             <Link href="/results">
               <div className="bg-[#F2C04D] hover:bg-[#dbb13d] text-black font-medium text-lg px-8 py-3 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-3 active:scale-95">
-                Boys
+                ഫലം അറിയാം
                 <ArrowRight className="w-5 h-5" />
               </div>
             </Link>
-            <Link href="/results">
-              <div className="bg-[#F2C04D] hover:bg-[#dbb13d] text-black font-medium text-lg px-8 py-3 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-3 active:scale-95">
-                Girls
-                <ArrowRight className="w-5 h-5" />
-              </div>
-            </Link>
-
           </div>
         </div>
 
@@ -206,29 +199,23 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
           <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-lg p-6 sm:p-8 md:p-12 mb-10">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 sm:gap-8">
               <div className="flex-1">
-                <Badge className="bg-cyan-100 text-cyan-800 border-cyan-200 mb-3 sm:mb-4 text-xs sm:text-sm">Need help?</Badge>
+                <Badge className="bg-cyan-100 text-cyan-800 border-cyan-200 mb-3 sm:mb-4 text-xs sm:text-sm">സഹായം വേണോ?</Badge>
                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-[#8B4513] mb-3 sm:mb-4">
-                  Funoon Fiesta Control Room
+                  ഇശൽ റബീഅ് കൺട്രോൾ റൂം
                 </h2>
                 <p className="text-gray-700 text-base sm:text-lg leading-relaxed max-w-2xl">
-                  Contact us for support, inquiries, or assistance with the platform.
-                  Our team is here to help ensure a smooth and enjoyable experience.
-                  {/* <Link href="/admin/login" className="">
-                    <Button variant="secondary" className="text-sm text-black font-normal ml-2">
-                      Admin Login
-                    </Button>
-                  </Link> */}
+                  പ്ലാറ്റ്‌ഫോമുമായി ബന്ധപ്പെട്ട സംശയങ്ങൾക്കും സഹായങ്ങൾക്കുമായി ഞങ്ങളുമായി ബന്ധപ്പെടുക.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
                 <Link href="/jury/login" className="w-full sm:w-auto">
                   <Button variant="ghost" className="text-gray-700 hover:bg-gray-100 border border-gray-300 w-full sm:w-auto text-sm sm:text-base">
-                    Jury Login
+                    ജൂറി ലോഗിൻ
                   </Button>
                 </Link>
                 <Link href="/team/login" className="w-full sm:w-auto">
                   <Button className="bg-[#8B4513] hover:bg-[#6B3410] text-white w-full sm:w-auto text-sm sm:text-base">
-                    Team Portal
+                    ടീം പോർട്ടൽ
                   </Button>
                 </Link>
               </div>

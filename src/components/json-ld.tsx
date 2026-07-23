@@ -2,7 +2,7 @@ export function JsonLd() {
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "Event",
-        "name": "Funoon Fiesta",
+        "name": "Ishal Rabeeh '26",
         "description": "A premier platform for students to showcase their talents and highlight the rich art forms of Islamic culture.",
         "startDate": "2025-01-01",
         "endDate": "2025-01-05",
@@ -10,7 +10,7 @@ export function JsonLd() {
         "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
         "location": {
             "@type": "Place",
-            "name": "Funoon Fiesta Venue",
+            "name": "Ishal Rabeeh '26 Venue",
             "address": {
                 "@type": "PostalAddress",
                 "addressLocality": "Kerala",
@@ -19,7 +19,7 @@ export function JsonLd() {
         },
         "organizer": {
             "@type": "Organization",
-            "name": "Funoon Fiesta Committee",
+            "name": "Ishal Rabeeh '26 Committee",
             "url": "https://funoonfiesta.noorululama.org"
         }
     }

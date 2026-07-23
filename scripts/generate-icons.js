@@ -13,19 +13,18 @@ const fs = require('fs');
 const path = require('path');
 
 const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
-const sourceImage = path.join(__dirname, '../public/festlogo.png');
+const sourceImage = path.join(__dirname, '../public/img/assets/logo-new.png');
 const outputDir = path.join(__dirname, '../public');
+const appDir = path.join(__dirname, '../src/app');
 
 async function generateIcons() {
   try {
-    // Check if source image exists
     if (!fs.existsSync(sourceImage)) {
       console.error(`Source image not found: ${sourceImage}`);
-      console.log('Please ensure funoon-logo.webp exists in the public folder');
       return;
     }
 
-    console.log('Generating PWA icons...');
+    console.log('Generating PWA icons and favicons from logo-new.png...');
 
     for (const size of sizes) {
       const outputPath = path.join(outputDir, `icon-${size}x${size}.png`);
@@ -33,7 +32,7 @@ async function generateIcons() {
       await sharp(sourceImage)
         .resize(size, size, {
           fit: 'contain',
-          background: { r: 59, g: 7, b: 100, alpha: 1 } // #3b0764 theme color
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
         .png()
         .toFile(outputPath);
@@ -45,13 +44,39 @@ async function generateIcons() {
     await sharp(sourceImage)
       .resize(180, 180, {
         fit: 'contain',
-        background: { r: 59, g: 7, b: 100, alpha: 1 }
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
       })
       .png()
       .toFile(path.join(outputDir, 'apple-touch-icon.png'));
 
-    console.log('✓ Generated apple-touch-icon.png');
-    console.log('\n✅ All icons generated successfully!');
+    // Generate src/app/icon.png (32x32 and 48x48)
+    await sharp(sourceImage)
+      .resize(48, 48, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .png()
+      .toFile(path.join(appDir, 'icon.png'));
+
+    // Generate favicon.ico in src/app and public/
+    await sharp(sourceImage)
+      .resize(32, 32, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .toFormat('png')
+      .toFile(path.join(appDir, 'favicon.ico'));
+
+    await sharp(sourceImage)
+      .resize(32, 32, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .toFormat('png')
+      .toFile(path.join(outputDir, 'favicon.ico'));
+
+    console.log('✓ Generated app favicons');
+    console.log('\n✅ All icons and favicons generated successfully!');
   } catch (error) {
     console.error('Error generating icons:', error);
   }

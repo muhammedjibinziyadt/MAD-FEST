@@ -144,14 +144,14 @@ function TeamCard({ team, index, rank, maxPoints }: TeamCardProps) {
             <span className="block text-3xl font-black text-gray-900 tracking-tight" style={{ fontVariantNumeric: "tabular-nums" }}>
               {formatNumber(team.totalPoints)}
             </span>
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Points</span>
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">പോയിന്റ്</span>
           </div>
         </div>
 
         {/* Enhanced Progress Bar */}
         <div className="space-y-2">
           <div className="flex justify-between text-xs font-medium text-gray-500 mb-1">
-            <span>Performance</span>
+            <span>പ്രകടനം</span>
             <span style={{ color: team.colors.primary }}>{percentage.toFixed(0)}%</span>
           </div>
           <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden p-[2px]">
@@ -199,9 +199,9 @@ function AnalyticsSection({ teams }: { teams: any[] }) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
           <h4 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-[#8B4513]" /> Analytics
+            <BarChart3 className="w-5 h-5 text-[#8B4513]" /> വിശകലനം
           </h4>
-          <p className="text-sm text-gray-500">Live performance breakdown</p>
+          <p className="text-sm text-gray-500">തത്സമയ പ്രകടന ഗ്രാഫ്</p>
         </div>
 
         {/* Toggles */}
@@ -210,19 +210,19 @@ function AnalyticsSection({ teams }: { teams: any[] }) {
             onClick={() => setViewMode('total')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${viewMode === 'total' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            Total
+            ആകെ
           </button>
           <button
             onClick={() => setViewMode('daily')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${viewMode === 'daily' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            Daily
+            ദിവസേന
           </button>
           <button
             onClick={() => setViewMode('category')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${viewMode === 'category' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            Cat.
+            വിഭാഗം
           </button>
         </div>
       </div>
@@ -307,13 +307,13 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
             <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-100 text-red-600 animate-pulse">
               <div className="w-2.5 h-2.5 rounded-full bg-red-600" />
             </span>
-            <span className="text-red-600 font-bold tracking-widest text-xs uppercase">Live Updates</span>
+            <span className="text-red-600 font-bold tracking-widest text-xs uppercase">തത്സമയ വിവരങ്ങൾ</span>
           </motion.div>
           <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
-            <span className="text-transparent bg-clip-text bg-linear-to-r from-[#8B4513] to-amber-600">SCORE</span> PULSE
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-[#8B4513] to-amber-600">ലൈവ്</span> സ്കോർബോർഡ്
           </h2>
           <p className="text-gray-500 max-w-md text-lg">
-            Real-time tracking of the championship race. Watch the battle unfold.
+            ചാമ്പ്യൻഷിപ്പ് പോരാട്ടത്തിന്റെ തത്സമയ വിവരങ്ങൾ ഇവിടെ കാണാം.
           </p>
         </div>
 
@@ -362,7 +362,7 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
           >
             <Link href="/scoreboard" className="w-full">
               <Button className="w-full h-14 text-lg font-bold bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-900/20 hover:shadow-zinc-900/30 transition-all rounded-2xl group">
-                Full Scoreboard <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                പൂർണ്ണ സ്കോർബോർഡ് <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </Button>
             </Link>
           </motion.div>

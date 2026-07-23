@@ -7,29 +7,29 @@ import Link from "next/link";
 
 const features = [
     {
-        title: "Living Heritage",
-        description: "Celebrating art forms that have crossed centuries, weaving the past into the present.",
+        title: "സാംസ്കാരിക പാരമ്പര്യം",
+        description: "നൂറ്റാണ്ടുകളുടെ പാരമ്പര്യമുള്ള ഇസ്‌ലാമിക കലകളുടെ പുനരാവിഷ്കാരം.",
         icon: Palette,
         color: "bg-amber-100 text-amber-700",
         delay: 0.1,
     },
     {
-        title: "Rising Stars",
-        description: "A premier stage for the next generation to showcase talent and creative brilliance.",
+        title: "ഉദിച്ചുയരുന്ന പ്രതിഭകൾ",
+        description: "പുതിയ തലമുറയ്ക്ക് തങ്ങളുടെ കഴിവുകൾ തെളിയിക്കാനുള്ള മികച്ച വേദി.",
         icon: Star,
         color: "bg-rose-100 text-rose-700",
         delay: 0.2,
     },
     {
-        title: "Integrity in Art",
-        description: "Every stroke and score is evaluated with codified transparency and fairness.",
+        title: "സുതാര്യമായ മൂല്യനിർണ്ണയം",
+        description: "കൃത്യതയും സുതാര്യതയും ഉറപ്പുവരുത്തുന്ന മൂല്യനിർണ്ണയ രീതി.",
         icon: Scale,
         color: "bg-emerald-100 text-emerald-700",
         delay: 0.3,
     },
     {
-        title: "Pulse of the Event",
-        description: "Real-time connection to every heartbeat of the fiesta, shrinking the distance.",
+        title: "തത്സമയ വിവരങ്ങൾ",
+        description: "മേളയുടെ ഓരോ നിമിഷത്തെയും വിവരങ്ങൾ തത്സമയം അറിയാം.",
         icon: Activity,
         color: "bg-blue-100 text-blue-700",
         delay: 0.4,
@@ -60,30 +60,28 @@ export function AboutSection() {
                             transition={{ duration: 0.6 }}
                         >
                             <span className="inline-flex items-center rounded-full border mb-6 py-1.5 px-4 text-sm font-medium border-[#8B4513]/20 text-[#8B4513] bg-white shadow-sm">
-                                <Scroll className="w-3.5 h-3.5 mr-2" /> Our Legacy & Vision
+                                <Scroll className="w-3.5 h-3.5 mr-2" /> ഞങ്ങളുടെ പാരമ്പര്യവും കാഴ്ചപ്പാടും
                             </span>
 
                             <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#3A2D28] leading-[1.1] mb-6">
-                                Where <span className="text-[#8B4513]">Culture</span> Meets <span className="italic font-light">Creativity</span>
+                                <span className="text-[#8B4513]">സംസ്കാരവും</span> <span className="italic font-light">സർഗ്ഗാത്മകതയും</span> ഒന്നിക്കുന്ന ഇടം
                             </h2>
 
                             <div className="space-y-6 text-lg text-gray-600 leading-relaxed font-light">
                                 <p>
-                                    More than just a festival, <strong className="text-[#8B4513] font-medium">Funoon Fiesta</strong> is a breathing legacy.
-                                    For over a century, the Malabar coast has resonated with the soulful rhythms of knowledge
-                                    and faith. Today, we bridge that historic past with a vibrant, creative future.
+                                    കേവലമൊരു മേള എന്നതിലുപരി <strong className="text-[#8B4513] font-medium">ഇശൽ റബീഅ് 26</strong> ഒരു ചരിത്ര പാരമ്പര്യമാണ്.
+                                    മലബാറിന്റെ വിജ്ഞാനത്തിന്റെയും വിശ്വാസത്തിന്റെയും താളങ്ങളെ പുതിയ തലമുറയിലേക്ക് നാം സമന്വയിപ്പിക്കുന്നു.
                                 </p>
                                 <p>
-                                    We are a canvas for the community—illuminating the diverse artistry of Islamic culture.
-                                    From the intricate strokes of calligraphy to the powerful verses of poetry, we provide
-                                    the platform for stories to be told and heritage to be preserved through passion.
+                                    ഇസ്‌ലാമിക കലകളുടെയും സംസ്‌കാരത്തിന്റെയും വിവിധ രൂപങ്ങൾക്ക് നാം വേദിയൊരുക്കുന്നു.
+                                    കാലിഗ്രാഫിയും സാഹിത്യവും ഉൾപ്പെടെയുള്ള വൈവിധ്യമാർന്ന കലാപ്രകടനങ്ങൾ ഇവിടെ അവതരിപ്പിക്കപ്പെടുന്നു.
                                 </p>
                             </div>
 
                             <div className="pt-4">
                                 <Link href="https://www.noorululama.org/">
                                     <Button variant="outline" className="group border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white transition-all duration-300 rounded-full px-8 py-6 text-base">
-                                        Discover Our Story <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                        കൂടുതൽ അറിയാൻ <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                                     </Button>
                                 </Link>
                             </div>

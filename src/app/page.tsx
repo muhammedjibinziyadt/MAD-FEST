@@ -18,8 +18,8 @@ async function getHomeData() {
 }
 
 export const metadata = {
-  title: "Funoon Fiesta | Home",
-  description: "Welcome to Funoon Fiesta. Explore live scores, results, and participant performances.",
+  title: "Ishal Rabeeh '26 | Home",
+  description: "Welcome to Ishal Rabeeh '26. Explore live scores, results, and participant performances.",
 };
 
 export default async function HomePage() {
