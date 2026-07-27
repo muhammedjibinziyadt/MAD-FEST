@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Activity, Medal, TrendingUp, TrendingDown, Minus, ArrowUpRight, BarChart3, PieChart, LineChart } from "lucide-react";
 import type { Team } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
+import { getTeamColorTheme, TeamColorTheme } from "@/lib/team-colors";
 import {
   BarChart,
   Bar,
@@ -23,52 +24,6 @@ interface LiveScorePulseProps {
   liveScores: Map<string, number>;
 }
 
-// Enhanced Team Colors - More Saturated & Vibrant
-const TEAM_COLORS: Record<string, { primary: string; gradient: string; light: string; stroke: string; glow: string }> = {
-  SAMARQAND: {
-    primary: "#E11D48",
-    gradient: "from-rose-600 to-rose-500",
-    light: "#FFE4E6",
-    stroke: "#9F1239",
-    glow: "shadow-rose-500/20",
-  },
-  NAHAVAND: {
-    primary: "#2563EB",
-    gradient: "from-blue-600 to-blue-500",
-    light: "#DBEAFE",
-    stroke: "#1E40AF",
-    glow: "shadow-blue-500/20",
-  },
-  YAMAMA: {
-    primary: "#7C3AED",
-    gradient: "from-violet-600 to-violet-500",
-    light: "#EDE9FE",
-    stroke: "#5B21B6",
-    glow: "shadow-violet-500/20",
-  },
-  QURTUBA: {
-    primary: "#D97706",
-    gradient: "from-amber-500 to-amber-400",
-    light: "#FEF3C7",
-    stroke: "#B45309",
-    glow: "shadow-amber-500/20",
-  },
-  MUQADDAS: {
-    primary: "#059669",
-    gradient: "from-emerald-600 to-emerald-500",
-    light: "#D1FAE5",
-    stroke: "#065F46",
-    glow: "shadow-emerald-500/20",
-  },
-  BUKHARA: {
-    primary: "#EA580C",
-    gradient: "from-orange-600 to-orange-500",
-    light: "#FFEDD5",
-    stroke: "#9A3412",
-    glow: "shadow-orange-500/20",
-  },
-};
-
 function getMedalColor(rank: number): string {
   switch (rank) {
     case 1: return "#FFD700";
@@ -79,7 +34,7 @@ function getMedalColor(rank: number): string {
 }
 
 interface TeamCardProps {
-  team: Team & { totalPoints: number; colors: typeof TEAM_COLORS[string] };
+  team: Team & { totalPoints: number; colors: TeamColorTheme };
   index: number;
   rank: number;
   maxPoints: number;
@@ -88,6 +43,7 @@ interface TeamCardProps {
 function TeamCard({ team, index, rank, maxPoints }: TeamCardProps) {
   const percentage = maxPoints > 0 ? (team.totalPoints / maxPoints) * 100 : 0;
   const isTopThree = rank <= 3;
+  const primaryColor = team.colors.primary;
 
   return (
     <motion.div
@@ -99,18 +55,37 @@ function TeamCard({ team, index, rank, maxPoints }: TeamCardProps) {
       className="relative group"
     >
       <div
-        className={`relative overflow-hidden bg-white border border-gray-100 rounded-3xl p-5 transition-all duration-300 ${team.colors.glow} hover:shadow-2xl shadow-xl z-0`}
+        className="relative overflow-hidden bg-white border border-gray-100 rounded-3xl p-5 transition-all duration-300 hover:shadow-2xl shadow-xl z-0"
+        style={{
+          boxShadow: `0 10px 30px ${primaryColor}22`,
+        }}
       >
-        {/* Dynamic Gradient Border/Glow effect */}
-        <div className={`absolute top-0 left-0 w-1.5 h-full bg-linear-to-b ${team.colors.gradient}`} />
+        {/* Dynamic Accent Bar */}
+        <div
+          className="absolute top-0 left-0 w-1.5 h-full"
+          style={{
+            background: `linear-gradient(to bottom, ${primaryColor}, ${primaryColor}88)`,
+          }}
+        />
 
         {/* Hover Gradient Background */}
-        <div className={`absolute inset-0 bg-linear-to-br ${team.colors.gradient} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300 pointer-events-none`} />
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-300 pointer-events-none"
+          style={{
+            background: `linear-gradient(135deg, ${primaryColor}, transparent)`,
+          }}
+        />
 
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-4">
             {/* Rank Badge */}
-            <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-linear-to-br ${team.colors.gradient} text-white font-bold shadow-lg`}>
+            <div
+              className="flex flex-col items-center justify-center w-12 h-12 rounded-2xl text-white font-bold shadow-lg"
+              style={{
+                background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)`,
+                boxShadow: `0 4px 14px ${primaryColor}40`,
+              }}
+            >
               <span className="text-lg leading-none">#{rank}</span>
             </div>
 
@@ -121,7 +96,7 @@ function TeamCard({ team, index, rank, maxPoints }: TeamCardProps) {
                   <Medal className="w-5 h-5 drop-shadow-md animate-pulse" style={{ color: getMedalColor(rank) }} />
                 )}
               </div>
-              {/* Mock Trend Indicator */}
+              {/* Trend Indicator */}
               <div className="flex items-center gap-1 text-xs font-medium text-gray-500">
                 {rank === 1 ? (
                   <div className="flex items-center text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
@@ -152,7 +127,7 @@ function TeamCard({ team, index, rank, maxPoints }: TeamCardProps) {
         <div className="space-y-2">
           <div className="flex justify-between text-xs font-medium text-gray-500 mb-1">
             <span>പ്രകടനം</span>
-            <span style={{ color: team.colors.primary }}>{percentage.toFixed(0)}%</span>
+            <span style={{ color: primaryColor, fontWeight: 700 }}>{percentage.toFixed(0)}%</span>
           </div>
           <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden p-[2px]">
             <motion.div
@@ -160,7 +135,10 @@ function TeamCard({ team, index, rank, maxPoints }: TeamCardProps) {
               whileInView={{ width: `${percentage}%` }}
               viewport={{ once: true }}
               transition={{ duration: 1, ease: "circOut" }}
-              className={`h-full rounded-full bg-linear-to-r ${team.colors.gradient} relative overflow-hidden`}
+              className="h-full rounded-full relative overflow-hidden"
+              style={{
+                background: `linear-gradient(to right, ${primaryColor}, ${primaryColor}cc)`,
+              }}
             >
               <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" />
             </motion.div>
@@ -265,15 +243,9 @@ function AnalyticsSection({ teams }: { teams: any[] }) {
 }
 
 export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
-  const teamsWithScores = teams.map((team) => {
+  const teamsWithScores = teams.map((team, idx) => {
     const totalPoints = liveScores.get(team.id) ?? team.total_points;
-    const colors = TEAM_COLORS[team.name] || {
-      primary: "#6B7280",
-      gradient: "from-gray-500 to-gray-600",
-      light: "#F9FAFB",
-      stroke: "#4B5563",
-      glow: "shadow-gray-500/20",
-    };
+    const colors = getTeamColorTheme(team, idx);
     return { ...team, totalPoints, colors };
   });
 

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Crown, Trophy } from "lucide-react";
 import type { Team } from "@/lib/types";
+import { getTeamColorHex } from "@/lib/team-colors";
 
 interface TeamLeaderboardProps {
     teams: Team[];
@@ -113,7 +114,7 @@ export function TeamLeaderboard({ teams }: TeamLeaderboardProps) {
                                     )}
                                     <div
                                         className={`w-20 h-20 md:w-28 md:h-28 rounded-full flex items-center justify-center text-3xl md:text-5xl font-bold text-white shadow-xl border-4 relative z-10 ${getPodiumStyles(topTeams[1].rank).border} ${getPodiumStyles(topTeams[1].rank).ring}`}
-                                        style={{ backgroundColor: topTeams[1].color }}
+                                        style={{ backgroundColor: getTeamColorHex(topTeams[1], 1) }}
                                     >
                                         {topTeams[1].name[0]}
                                     </div>
@@ -148,7 +149,7 @@ export function TeamLeaderboard({ teams }: TeamLeaderboardProps) {
                                     )}
                                     <div
                                         className={`w-24 h-24 md:w-36 md:h-36 rounded-full flex items-center justify-center text-4xl md:text-6xl font-bold text-white shadow-2xl border-4 relative z-10 ${getPodiumStyles(topTeams[0].rank).border} ${getPodiumStyles(topTeams[0].rank).ring}`}
-                                        style={{ backgroundColor: topTeams[0].color }}
+                                        style={{ backgroundColor: getTeamColorHex(topTeams[0], 0) }}
                                     >
                                         {topTeams[0].name[0]}
                                     </div>
@@ -183,7 +184,7 @@ export function TeamLeaderboard({ teams }: TeamLeaderboardProps) {
                                     )}
                                     <div
                                         className={`w-20 h-20 md:w-28 md:h-28 rounded-full flex items-center justify-center text-3xl md:text-5xl font-bold text-white shadow-xl border-4 relative z-10 ${getPodiumStyles(topTeams[2].rank).border} ${getPodiumStyles(topTeams[2].rank).ring}`}
-                                        style={{ backgroundColor: topTeams[2].color }}
+                                        style={{ backgroundColor: getTeamColorHex(topTeams[2], 2) }}
                                     >
                                         {topTeams[2].name[0]}
                                     </div>
@@ -231,7 +232,7 @@ export function TeamLeaderboard({ teams }: TeamLeaderboardProps) {
                                 {/* Team Avatar */}
                                 <div
                                     className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-xl shadow-sm flex items-center justify-center text-white font-bold text-lg"
-                                    style={{ backgroundColor: team.color }}
+                                    style={{ backgroundColor: getTeamColorHex(team, index) }}
                                 >
                                     {team.name[0]}
                                 </div>

@@ -19,15 +19,7 @@ interface LiveScorePieProps {
   liveScores: Map<string, number>;
 }
 
-// Match team brand colors used across the app
-const TEAM_COLORS: Record<string, string> = {
-  SAMARQAND: "#D72638",
-  NAHAVAND: "#1E3A8A",
-  YAMAMA: "#7C3AED",
-  QURTUBA: "#FACC15",
-  MUQADDAS: "#059669",
-  BUKHARA: "#FB923C",
-};
+import { getTeamColorHex } from "@/lib/team-colors";
 
 export function LiveScorePie({ teams, liveScores }: LiveScorePieProps) {
   const teamsWithScores = teams.map((team) => {
@@ -38,16 +30,7 @@ export function LiveScorePie({ teams, liveScores }: LiveScorePieProps) {
   const sorted = [...teamsWithScores].sort((a, b) => b.totalPoints - a.totalPoints);
 
   const chartData = sorted.map((team, index) => {
-    const fallbackPalette = [
-      "#D72638",
-      "#1E3A8A",
-      "#7C3AED",
-      "#FACC15",
-      "#059669",
-      "#FB923C",
-    ];
-    const fallback = fallbackPalette[index % fallbackPalette.length];
-    const fill = TEAM_COLORS[team.name] ?? fallback;
+    const fill = getTeamColorHex(team, index);
     return {
       team: team.name,
       points: team.totalPoints,
