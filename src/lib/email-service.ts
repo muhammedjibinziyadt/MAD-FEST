@@ -12,8 +12,8 @@ export async function sendCredentialUpdateEmail(credentials: { username: string;
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
-            to: "mishabvibes@gmail.com",
-            subject: "Security Alert: Admin Credentials Updated - Funoon Fiesta",
+            to: "muhammedjibinziyadt@gmail.com",
+            subject: "Security Alert: Admin Credentials Updated - ishal rabeeh",
             text: `
 Hello,
 
