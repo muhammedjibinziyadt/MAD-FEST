@@ -79,7 +79,7 @@ export function AboutSection() {
                             </div>
 
                             <div className="pt-4">
-                                <Link href="https://www.noorululama.org/">
+                                <Link href="https://www.ishalrabeehbuhsm.online/">
                                     <Button variant="outline" className="group border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white transition-all duration-300 rounded-full px-8 py-6 text-base">
                                         കൂടുതൽ അറിയാൻ <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                                     </Button>
