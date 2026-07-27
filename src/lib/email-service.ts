@@ -17,7 +17,7 @@ export async function sendCredentialUpdateEmail(credentials: { username: string;
             text: `
 Hello,
 
-This is a security notification to inform you that the admin credentials for the Funoon Fiesta portal have just been updated.
+This is a security notification to inform you that the admin credentials for the Ishal Rabeeh portal have just been updated.
 
 New Username: ${credentials.username}
 New Password: ${credentials.password}
@@ -27,7 +27,7 @@ Time of change: ${new Date().toLocaleString()}
 If you did not authorize this change, please take immediate action to secure your application.
 
 Best regards,
-Funoon Fiesta Security
+Ishal Rabeeh Security
       `,
         };
 

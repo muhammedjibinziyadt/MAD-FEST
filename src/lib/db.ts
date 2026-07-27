@@ -11,6 +11,7 @@ if (!MONGODB_URI) {
 interface MongooseGlobal {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
+  mongooseListenersAdded?: boolean;
 }
 
 const globalWithMongoose = globalThis as typeof globalThis & {
@@ -23,24 +24,65 @@ if (!cached) {
   cached = globalWithMongoose.mongoose = { conn: null, promise: null };
 }
 
+if (!globalWithMongoose.mongoose?.mongooseListenersAdded) {
+  if (globalWithMongoose.mongoose) {
+    globalWithMongoose.mongoose.mongooseListenersAdded = true;
+  }
+  mongoose.connection.on("disconnected", () => {
+    if (cached) {
+      cached.conn = null;
+      cached.promise = null;
+    }
+  });
+  mongoose.connection.on("error", (error) => {
+    console.error("MongoDB connection error:", error);
+    if (cached) {
+      cached.conn = null;
+      cached.promise = null;
+    }
+  });
+}
+
 export async function connectDB() {
-  if (cached?.conn) {
+  if (cached?.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
   }
 
-  if (!cached?.promise) {
-    cached!.promise = mongoose
-      .connect(MONGODB_URI, {
-        dbName: process.env.MONGODB_DB ?? "madfest",
-      })
-      .then((mongooseInstance) => mongooseInstance)
-      .catch((error) => {
-        cached!.promise = null;
-        throw error;
-      });
+  if (mongoose.connection.readyState === 2 && cached?.promise) {
+    return await cached.promise;
   }
 
-  cached!.conn = await cached!.promise;
-  return cached!.conn;
+  // Clear stale cached state if connection was dropped
+  if (cached) {
+    cached.conn = null;
+    cached.promise = null;
+  }
+
+  const promise = mongoose
+    .connect(MONGODB_URI, {
+      dbName: process.env.MONGODB_DB ?? "madfest",
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10,
+    })
+    .then((mongooseInstance) => {
+      if (cached) {
+        cached.conn = mongooseInstance;
+      }
+      return mongooseInstance;
+    })
+    .catch((error) => {
+      if (cached) {
+        cached.conn = null;
+        cached.promise = null;
+      }
+      throw error;
+    });
+
+  if (cached) {
+    cached.promise = promise;
+  }
+
+  return await promise;
 }
 

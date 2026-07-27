@@ -29,6 +29,8 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editChestNumber, setEditChestNumber] = useState("");
+  const [editGender, setEditGender] = useState<string>("");
+  const [editCategory, setEditCategory] = useState<string>("none");
   const [editAvatar, setEditAvatar] = useState<File | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -43,7 +45,9 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
       const nameMatch = student.name.toLowerCase().includes(query);
       const chestMatch = student.chestNumber.toLowerCase().includes(query);
       const teamMatch = student.teamName.toLowerCase().includes(query);
-      return nameMatch || chestMatch || teamMatch;
+      const genderMatch = (student.gender ?? "").toLowerCase().includes(query);
+      const categoryMatch = (student.category ?? "").toLowerCase().includes(query);
+      return nameMatch || chestMatch || teamMatch || genderMatch || categoryMatch;
     });
   }, [students, searchQuery]);
 
@@ -51,12 +55,16 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
     setEditingId(student.id);
     setEditName(student.name);
     setEditChestNumber(student.chestNumber);
+    setEditGender(student.gender ?? "");
+    setEditCategory(student.category ?? "none");
   };
 
   const handleCancel = () => {
     setEditingId(null);
     setEditName("");
     setEditChestNumber("");
+    setEditGender("");
+    setEditCategory("none");
     setEditAvatar(null);
   };
 
@@ -65,6 +73,8 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
     formData.append("studentId", studentId);
     formData.append("name", editName.trim());
     formData.append("chestNumber", editChestNumber.trim().toUpperCase());
+    formData.append("gender", editGender);
+    formData.append("category", editCategory);
     if (editAvatar) {
       formData.append("avatar", editAvatar);
     }
@@ -72,6 +82,8 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
     setEditingId(null);
     setEditName("");
     setEditChestNumber("");
+    setEditGender("");
+    setEditCategory("none");
     setEditAvatar(null);
   };
 
@@ -187,6 +199,34 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
                       maxLength={10}
                     />
                   </div>
+                  <div>
+                    <label className="text-xs text-white/60 mb-1.5 block">Gender</label>
+                    <select
+                      value={editGender}
+                      onChange={(e) => setEditGender(e.target.value)}
+                      className="w-full rounded-2xl border border-white/20 bg-slate-900 px-4 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="boy">Boy</option>
+                      <option value="girl">Girl</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/60 mb-1.5 block">Category</label>
+                    <select
+                      value={editCategory}
+                      onChange={(e) => setEditCategory(e.target.value)}
+                      className="w-full rounded-2xl border border-white/20 bg-slate-900 px-4 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none"
+                    >
+                      <option value="none">General / None</option>
+                      <option value="KIDDIES">KIDDIES</option>
+                      <option value="SUB-JUNIOR">SUB-JUNIOR</option>
+                      <option value="JUNIOR">JUNIOR</option>
+                      <option value="SENIOR">SENIOR</option>
+                      <option value="SUPER-SENIOR">SUPER-SENIOR</option>
+                      <option value="GENERAL">GENERAL</option>
+                    </select>
+                  </div>
                   <div className="sm:col-span-2">
                     <label className="text-xs text-white/60 mb-1.5 block">Update Photo (Optional)</label>
                     <input
@@ -234,7 +274,25 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-white truncate">{student.name}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-white truncate">{student.name}</p>
+                      {student.gender && (
+                        <span
+                          className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                            student.gender === "boy"
+                              ? "border-sky-500/40 bg-sky-500/10 text-sky-400"
+                              : "border-pink-500/40 bg-pink-500/10 text-pink-400"
+                          }`}
+                        >
+                          {student.gender === "boy" ? "Boy" : "Girl"}
+                        </span>
+                      )}
+                      {student.category && student.category !== "none" && (
+                        <span className="rounded-full border border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-300 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                          {student.category}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 mt-1 text-sm text-white/60">
                       <Hash className="h-3 w-3" />
                       <span className="font-mono">{student.chestNumber}</span>
@@ -300,6 +358,14 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
                     <div>
                       <p className="text-xs text-white/60 mb-1">Chest Number</p>
                       <p className="font-mono font-medium text-white">{student.chestNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/60 mb-1">Gender</p>
+                      <p className="font-medium text-white capitalize">{student.gender || "Not specified"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/60 mb-1">Category</p>
+                      <p className="font-medium text-white">{student.category || "General / None"}</p>
                     </div>
                     <div>
                       <p className="text-xs text-white/60 mb-1">Team</p>

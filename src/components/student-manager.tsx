@@ -71,6 +71,8 @@ export const StudentManager = React.memo(function StudentManager({
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [teamFilter, setTeamFilter] = useState("");
   const [programFilter, setProgramFilter] = useState("");
+  const [genderFilter, setGenderFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [sort, setSort] = useState<SortOption>("latest");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export const StudentManager = React.memo(function StudentManager({
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearchQuery, teamFilter, programFilter, sort]);
+  }, [debouncedSearchQuery, teamFilter, programFilter, genderFilter, categoryFilter, sort]);
 
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
@@ -93,9 +95,11 @@ export const StudentManager = React.memo(function StudentManager({
       const matchesProgram = programFilter
         ? studentRegistrationsMap.get(student.id)?.has(programFilter) ?? false
         : true;
-      return matchesSearch && matchesTeam && matchesProgram;
+      const matchesGender = genderFilter ? student.gender === genderFilter : true;
+      const matchesCategory = categoryFilter ? student.category === categoryFilter : true;
+      return matchesSearch && matchesTeam && matchesProgram && matchesGender && matchesCategory;
     });
-  }, [students, debouncedSearchQuery, teamFilter, programFilter, studentRegistrationsMap]);
+  }, [students, debouncedSearchQuery, teamFilter, programFilter, genderFilter, categoryFilter, studentRegistrationsMap]);
 
   const sortedStudents = useMemo(() => {
     const list = [...filteredStudents];
@@ -324,7 +328,7 @@ export const StudentManager = React.memo(function StudentManager({
         </div>
       </div>
 
-      <div className="relative z-20 grid gap-3 md:grid-cols-5">
+      <div className="relative z-20 grid gap-3 md:grid-cols-3 lg:grid-cols-6">
         <div className="relative z-20 md:col-span-2 flex items-center rounded-2xl border border-white/10 bg-white/5 px-4 transition-all duration-200 hover:border-white/20 focus-within:border-fuchsia-400/50 focus-within:ring-2 focus-within:ring-fuchsia-400/30 focus-within:bg-white/10">
           <Search className="mr-2 h-4 w-4 text-white/50 flex-shrink-0" />
           <Input
@@ -342,15 +346,32 @@ export const StudentManager = React.memo(function StudentManager({
           onValueChange={setTeamFilter}
           placeholder="Filter by team"
         />
-        {programOptions.length > 1 && (
-          <SearchSelect
-            name="program_filter"
-            options={programOptions}
-            value={programFilter}
-            onValueChange={(value) => setProgramFilter(value)}
-            placeholder="Filter by program"
-          />
-        )}
+        <SearchSelect
+          name="gender_filter"
+          options={[
+            { value: "", label: "All Genders" },
+            { value: "boy", label: "Boys" },
+            { value: "girl", label: "Girls" },
+          ]}
+          value={genderFilter}
+          onValueChange={setGenderFilter}
+          placeholder="Filter by gender"
+        />
+        <SearchSelect
+          name="category_filter"
+          options={[
+            { value: "", label: "All Categories" },
+            { value: "KIDDIES", label: "KIDDIES" },
+            { value: "SUB-JUNIOR", label: "SUB-JUNIOR" },
+            { value: "JUNIOR", label: "JUNIOR" },
+            { value: "SENIOR", label: "SENIOR" },
+            { value: "SUPER-SENIOR", label: "SUPER-SENIOR" },
+            { value: "GENERAL", label: "GENERAL" },
+          ]}
+          value={categoryFilter}
+          onValueChange={setCategoryFilter}
+          placeholder="Filter by category"
+        />
         <SearchSelect
           name="page_size"
           options={pageSizeOptions}
@@ -437,11 +458,27 @@ export const StudentManager = React.memo(function StudentManager({
                     <p className="text-lg font-semibold text-white">{student.name}</p>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-wide text-white/60 w-full xl:flex-1">
+                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/60 w-full xl:flex-1">
                   <span className="rounded-full border border-white/15 px-3 py-1">
                     {teamMap.get(student.team_id) ?? "Unknown team"}
                   </span>
                   <span className="rounded-full border border-white/15 px-3 py-1">Chest #{student.chest_no}</span>
+                  {student.gender && (
+                    <span
+                      className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                        student.gender === "boy"
+                          ? "border-sky-500/40 bg-sky-500/10 text-sky-400"
+                          : "border-pink-500/40 bg-pink-500/10 text-pink-400"
+                      }`}
+                    >
+                      {student.gender === "boy" ? "Boy" : "Girl"}
+                    </span>
+                  )}
+                  {student.category && student.category !== "none" && (
+                    <span className="rounded-full border border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-300 px-3 py-1 text-xs font-bold uppercase tracking-wider">
+                      {student.category}
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2 w-full xl:ml-auto xl:w-auto xl:justify-end">
                   <Button
@@ -479,17 +516,54 @@ export const StudentManager = React.memo(function StudentManager({
                   className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white md:grid-cols-3"
                 >
                   <input type="hidden" name="id" value={student.id} />
-                  <Input name="name" defaultValue={student.name} placeholder="Student name" />
-                  <input type="hidden" name="chest_no" value={student.chest_no} />
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70">
-                    Chest: {student.chest_no}
+                  <div>
+                    <label className="text-xs text-white/60 mb-1 block">Student Name</label>
+                    <Input name="name" defaultValue={student.name} placeholder="Student name" />
                   </div>
-                  <SearchSelect
-                    name="team_id"
-                    defaultValue={student.team_id}
-                    options={teams.map((team) => ({ value: team.id, label: team.name }))}
-                    placeholder="Select team"
-                  />
+                  <input type="hidden" name="chest_no" value={student.chest_no} />
+                  <div>
+                    <label className="text-xs text-white/60 mb-1 block">Chest Number</label>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70">
+                      Chest: {student.chest_no}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/60 mb-1 block">Team</label>
+                    <SearchSelect
+                      name="team_id"
+                      defaultValue={student.team_id}
+                      options={teams.map((team) => ({ value: team.id, label: team.name }))}
+                      placeholder="Select team"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/60 mb-1 block">Gender</label>
+                    <select
+                      name="gender"
+                      defaultValue={student.gender ?? ""}
+                      className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-2 text-sm text-white focus:border-fuchsia-400 focus:outline-none"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="boy">Boy</option>
+                      <option value="girl">Girl</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/60 mb-1 block">Category</label>
+                    <select
+                      name="category"
+                      defaultValue={student.category ?? "none"}
+                      className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-2 text-sm text-white focus:border-fuchsia-400 focus:outline-none"
+                    >
+                      <option value="none">General / None</option>
+                      <option value="KIDDIES">KIDDIES</option>
+                      <option value="SUB-JUNIOR">SUB-JUNIOR</option>
+                      <option value="JUNIOR">JUNIOR</option>
+                      <option value="SENIOR">SENIOR</option>
+                      <option value="SUPER-SENIOR">SUPER-SENIOR</option>
+                      <option value="GENERAL">GENERAL</option>
+                    </select>
+                  </div>
                   <div className="md:col-span-3">
                     <label className="text-xs text-white/60 mb-1.5 block">Update Photo (Optional)</label>
                     <input

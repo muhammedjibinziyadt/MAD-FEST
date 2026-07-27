@@ -92,6 +92,8 @@ export async function getPortalStudents(): Promise<PortalStudent[]> {
     teamName: teamMap.get(student.team_id) ?? "Unknown",
     score: student.total_points ?? 0,
     avatar: student.avatar,
+    gender: (student as any).gender,
+    category: (student as any).category,
   }));
 }
 
@@ -101,6 +103,8 @@ export async function upsertPortalStudent(input: {
   chestNumber: string;
   teamId: string;
   avatar?: string;
+  gender?: import("./types").GenderType;
+  category?: import("./types").CategoryType;
 }) {
   await connectDB();
   const chestNumber = input.chestNumber.trim().toUpperCase();
@@ -132,6 +136,8 @@ export async function upsertPortalStudent(input: {
           chest_no: chestNumber,
           team_id: input.teamId,
           ...(input.avatar ? { avatar: input.avatar } : {}),
+          ...(input.gender ? { gender: input.gender } : {}),
+          ...(input.category ? { category: input.category } : {}),
         },
         $setOnInsert: { total_points: 0 },
       },

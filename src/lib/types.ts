@@ -14,6 +14,8 @@ export interface Team {
   portal_password?: string;
 }
 
+export type GenderType = "boy" | "girl";
+
 export interface Student {
   id: string;
   name: string;
@@ -22,6 +24,8 @@ export interface Student {
   avatar?: string;
   total_points: number;
   phone_number?: string; // Added for Festory verification
+  gender?: GenderType;
+  category?: CategoryType;
 }
 
 // ... existing types ...
@@ -99,6 +103,8 @@ export interface PortalStudent {
   teamName: string;
   score: number;
   avatar?: string;
+  gender?: GenderType;
+  category?: CategoryType;
 }
 
 export interface RegistrationSchedule {

@@ -62,7 +62,19 @@ export function ReplacementRequestForm({
       );
 
       if (isAlreadyInProgram) {
-        return null; // Cannot replace if already in the program (e.g., in a group event, replacing another member with an existing member makes no sense usually, or at least redundant)
+        return null; // Cannot replace if already in the program
+      }
+
+      // Check Category Eligibility
+      if (
+        selectedProgram.category &&
+        selectedProgram.category !== "none" &&
+        selectedProgram.category !== "GENERAL" &&
+        student.category &&
+        student.category !== "none" &&
+        student.category !== selectedProgram.category
+      ) {
+        return null; // Cannot replace with student from a different category
       }
 
       // 2. Check Participation Limits

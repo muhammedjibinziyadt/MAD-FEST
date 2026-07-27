@@ -13,7 +13,7 @@ import { PublicPageWrapper } from "@/components/public-page-wrapper";
 import { JsonLd } from "@/components/json-ld";
 
 const anekMalayalam = Anek_Malayalam({
-  subsets: ["latin"], // Change to ["malayalam", "latin"] if your Next.js version supports it.
+  subsets: ["malayalam", "latin"],
   variable: "--font-anek-malayalam",
   display: "swap",
 });

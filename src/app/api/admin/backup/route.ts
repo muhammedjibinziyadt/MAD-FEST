@@ -43,7 +43,7 @@ export async function GET() {
     };
 
     const json = JSON.stringify(data, null, 2);
-    const filename = `funoon-fiesta-backup-${new Date().toISOString().split("T")[0]}.json`;
+    const filename = `ishal-rabeeh-backup-${new Date().toISOString().split("T")[0]}.json`;
 
     return new NextResponse(json, {
         headers: {

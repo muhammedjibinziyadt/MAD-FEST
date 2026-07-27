@@ -178,7 +178,7 @@ export async function generateResultPoster(data: PosterData, style: PosterStyle 
   const titleY = 400 * scaleY;
   const fontSize = 74 * scaleY;
   ctx.fillStyle = theme.textColors.program;
-  ctx.font = `${fontSize}px 'Charutha', sans-serif`;
+  ctx.font = `${fontSize}px 'Charutha', 'Anek Malayalam', sans-serif`;
   // Truncate long program names if needed
   let displayProgramName = data.programName;
   const maxTitleWidth = 940 * scaleX;

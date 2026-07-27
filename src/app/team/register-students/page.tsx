@@ -83,12 +83,21 @@ async function createStudentAction(formData: FormData) {
   ) {
     redirectWithMessage("Student name already exists for this team.");
   }
+  const genderRaw = String(formData.get("gender") ?? "").trim().toLowerCase();
+  const gender = genderRaw === "boy" || genderRaw === "girl" ? (genderRaw as "boy" | "girl") : undefined;
+
+  const categoryRaw = String(formData.get("category") ?? "").trim().toUpperCase();
+  const validCategories = ["KIDDIES", "SUB-JUNIOR", "JUNIOR", "SENIOR", "SUPER-SENIOR", "GENERAL", "none"];
+  const category = validCategories.includes(categoryRaw) ? (categoryRaw as import("@/lib/types").CategoryType) : undefined;
+
   try {
     await upsertPortalStudent({
       name,
       chestNumber,
       teamId: team.id,
       avatar: avatarUrl,
+      gender,
+      category,
     });
   } catch (error) {
     redirectWithMessage((error as Error).message);
@@ -123,6 +132,13 @@ async function updateStudentAction(formData: FormData) {
     }
   }
 
+  const genderRaw = String(formData.get("gender") ?? "").trim().toLowerCase();
+  const gender = genderRaw === "boy" || genderRaw === "girl" ? (genderRaw as "boy" | "girl") : undefined;
+
+  const categoryRaw = String(formData.get("category") ?? "").trim().toUpperCase();
+  const validCategories = ["KIDDIES", "SUB-JUNIOR", "JUNIOR", "SENIOR", "SUPER-SENIOR", "GENERAL", "none"];
+  const category = validCategories.includes(categoryRaw) ? (categoryRaw as import("@/lib/types").CategoryType) : undefined;
+
   const students = await getPortalStudents();
   const current = students.find((student) => student.id === studentId);
   if (!current || current.teamId !== team.id) {
@@ -138,6 +154,8 @@ async function updateStudentAction(formData: FormData) {
       chestNumber,
       teamId: team.id,
       avatar: avatarUrl,
+      gender,
+      category,
     });
   } catch (error) {
     redirectWithMessage((error as Error).message);
@@ -251,6 +269,32 @@ export default async function RegisterStudentsPage({
                 />
               </div>
               <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-white/70">Gender</label>
+                <select
+                  name="gender"
+                  className="w-full rounded-2xl border border-white/20 bg-slate-900 px-4 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none h-10"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="boy">Boy</option>
+                  <option value="girl">Girl</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-white/70">Category</label>
+                <select
+                  name="category"
+                  className="w-full rounded-2xl border border-white/20 bg-slate-900 px-4 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none h-10"
+                >
+                  <option value="none">General / None</option>
+                  <option value="KIDDIES">KIDDIES</option>
+                  <option value="SUB-JUNIOR">SUB-JUNIOR</option>
+                  <option value="JUNIOR">JUNIOR</option>
+                  <option value="SENIOR">SENIOR</option>
+                  <option value="SUPER-SENIOR">SUPER-SENIOR</option>
+                  <option value="GENERAL">GENERAL</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
                 <label className="text-sm font-medium text-white/70">Student Photo (Optional)</label>
                 <input
                   type="file"

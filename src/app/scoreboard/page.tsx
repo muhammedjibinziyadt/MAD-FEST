@@ -24,7 +24,7 @@ async function getScoreboardData() {
 
 export const metadata = {
   title: "Live Scoreboard",
-  description: "View the live team standings and points table for Funoon Fiesta. Track the leading teams in real-time.",
+  description: "View the live team standings and points table for Ishal Rabeeh. Track the leading teams in real-time.",
 };
 
 export default async function ScoreboardPage() {

@@ -62,6 +62,18 @@ async function registerProgramAction(formData: FormData) {
     redirectWithMessage("Student already registered for this program.");
   }
 
+  if (
+    program.category &&
+    program.category !== "none" &&
+    program.category !== "GENERAL" &&
+    student.category &&
+    student.category !== "none" &&
+    student.category !== program.category
+  ) {
+    redirectWithMessage(`Student "${student.name}" (${student.category}) is not eligible for ${program.name} (${program.category}).`);
+    return;
+  }
+
   // Check participation limits
   const limitCheck = validateParticipationLimit(studentId, program, programs, registrations);
   if (!limitCheck.allowed) {
@@ -138,6 +150,20 @@ async function registerMultipleStudentsAction(formData: FormData) {
   );
   if (alreadyRegistered) {
     redirectWithMessage("One or more students are already registered for this program.");
+  }
+
+  for (const student of selectedStudents) {
+    if (
+      program.category &&
+      program.category !== "none" &&
+      program.category !== "GENERAL" &&
+      student.category &&
+      student.category !== "none" &&
+      student.category !== program.category
+    ) {
+      redirectWithMessage(`Student "${student.name}" (${student.category}) is not eligible for ${program.name} (${program.category}).`);
+      return;
+    }
   }
 
   const limitViolations: string[] = [];

@@ -45,6 +45,8 @@ const studentSchema = z.object({
   name: z.string().min(2),
   team_id: z.string().min(2),
   chest_no: z.string().optional(),
+  gender: z.enum(["boy", "girl"]).optional(),
+  category: z.enum(["KIDDIES", "SUB-JUNIOR", "JUNIOR", "SENIOR", "SUPER-SENIOR", "GENERAL", "none"]).optional(),
 });
 
 const csvStudentSchema = z.object({
@@ -52,17 +54,28 @@ const csvStudentSchema = z.object({
   team_id: z.string().min(2).optional(),
   team_name: z.string().min(2).optional(),
   chest_no: z.string().optional(),
+  gender: z.string().optional(),
+  category: z.string().optional(),
 }).refine((data) => data.team_id || data.team_name, {
   message: "Either team_id or team_name is required",
   path: ["team_id"],
 });
 
 async function upsertStudent(formData: FormData, mode: "create" | "update") {
+  const genderRaw = String(formData.get("gender") ?? "").trim().toLowerCase();
+  const gender = genderRaw === "boy" || genderRaw === "girl" ? (genderRaw as "boy" | "girl") : undefined;
+
+  const categoryRaw = String(formData.get("category") ?? "").trim().toUpperCase();
+  const validCategories = ["KIDDIES", "SUB-JUNIOR", "JUNIOR", "SENIOR", "SUPER-SENIOR", "GENERAL", "none"];
+  const category = validCategories.includes(categoryRaw) ? (categoryRaw as import("@/lib/types").CategoryType) : undefined;
+
   const parsed = studentSchema.safeParse({
     id: String(formData.get("id") ?? "").trim() || undefined,
     name: String(formData.get("name") ?? "").trim(),
     team_id: String(formData.get("team_id") ?? "").trim(),
     chest_no: String(formData.get("chest_no") ?? "").trim() || undefined,
+    gender,
+    category,
   });
   if (!parsed.success) {
     throw new Error(parsed.error.issues.map((issue) => issue.message).join(", "));
@@ -104,6 +117,8 @@ async function upsertStudent(formData: FormData, mode: "create" | "update") {
       team_id: payload.team_id,
       chest_no: chest_no!,
       avatar: avatarUrl,
+      gender: payload.gender,
+      category: payload.category,
     });
   } else {
     if (!payload.id) throw new Error("Student ID missing");
@@ -112,6 +127,8 @@ async function upsertStudent(formData: FormData, mode: "create" | "update") {
       team_id: payload.team_id,
       chest_no: chest_no!,
       ...(avatarUrl ? { avatar: avatarUrl } : {}),
+      gender: payload.gender,
+      category: payload.category,
     });
   }
 
@@ -398,6 +415,32 @@ export default async function StudentsPage() {
               options={teams.map((team) => ({ value: team.id, label: team.name }))}
               placeholder="Select team"
             />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/70">Gender</label>
+            <select
+              name="gender"
+              className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:border-fuchsia-400 focus:outline-none"
+            >
+              <option value="" className="bg-slate-900 text-white">Select Gender</option>
+              <option value="boy" className="bg-slate-900 text-white">Boy</option>
+              <option value="girl" className="bg-slate-900 text-white">Girl</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/70">Category</label>
+            <select
+              name="category"
+              className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:border-fuchsia-400 focus:outline-none"
+            >
+              <option value="none" className="bg-slate-900 text-white">General / None</option>
+              <option value="KIDDIES" className="bg-slate-900 text-white">KIDDIES</option>
+              <option value="SUB-JUNIOR" className="bg-slate-900 text-white">SUB-JUNIOR</option>
+              <option value="JUNIOR" className="bg-slate-900 text-white">JUNIOR</option>
+              <option value="SENIOR" className="bg-slate-900 text-white">SENIOR</option>
+              <option value="SUPER-SENIOR" className="bg-slate-900 text-white">SUPER-SENIOR</option>
+              <option value="GENERAL" className="bg-slate-900 text-white">GENERAL</option>
+            </select>
           </div>
           <div className="flex flex-col gap-1.5 md:col-span-2">
             <label className="text-xs font-semibold text-white/70">Student Photo (Optional)</label>

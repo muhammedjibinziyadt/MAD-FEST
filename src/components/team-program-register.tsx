@@ -484,9 +484,16 @@ export function TeamProgramRegister({
         const registrations = teamRegistrations.filter(
           (registration) => registration.programId === program.id,
         );
-        const availableStudents = teamStudents.filter(
-          (student) => !registrations.some((registration) => registration.studentId === student.id),
-        );
+        const availableStudents = teamStudents.filter((student) => {
+          const isNotRegistered = !registrations.some((registration) => registration.studentId === student.id);
+          let categoryMatch = true;
+          if (program.category && program.category !== "none" && program.category !== "GENERAL") {
+            if (student.category && student.category !== "none") {
+              categoryMatch = student.category === program.category;
+            }
+          }
+          return isNotRegistered && categoryMatch;
+        });
         const limitReached = registrations.length >= program.candidateLimit;
         const isGroupOrGeneral = program.section === "group" || program.section === "general";
         const remainingSlots = program.candidateLimit - registrations.length;

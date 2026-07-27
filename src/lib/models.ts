@@ -71,6 +71,12 @@ const StudentSchema = new Schema<Student>(
     avatar: { type: String },
     total_points: { type: Number, default: 0 },
     phone_number: { type: String },
+    gender: { type: String, enum: ["boy", "girl", null], default: null },
+    category: {
+      type: String,
+      enum: ["KIDDIES", "SUB-JUNIOR", "JUNIOR", "SENIOR", "SUPER-SENIOR", "GENERAL", "none"],
+      default: "none",
+    },
   },
   { timestamps: true },
 );
