@@ -5,6 +5,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { TeamStudentList } from "@/components/team-student-list";
 import { ChestNumberPreview } from "@/components/chest-number-preview";
+import { StudentPhotoInput } from "@/components/student-photo-input";
 import { getCurrentTeam } from "@/lib/auth";
 import {
   deletePortalStudent,
@@ -271,6 +272,7 @@ export default async function RegisterStudentsPage({
             <ChestNumberPreview teamName={team.teamName} teamStudents={teamStudents} />
             <form
               action={createStudentAction}
+              encType="multipart/form-data"
               className="mt-4 grid gap-4 sm:grid-cols-2"
             >
               <div className="flex flex-col gap-1.5">
@@ -321,12 +323,7 @@ export default async function RegisterStudentsPage({
               </div>
               <div className="flex flex-col gap-1.5 sm:col-span-2">
                 <label className="text-sm font-medium text-white/70">Student Photo (Optional)</label>
-                <input
-                  type="file"
-                  name="avatar"
-                  accept="image/*"
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/20 file:text-cyan-400 hover:file:bg-cyan-500/30 file:cursor-pointer h-10 flex items-center"
-                />
+                <StudentPhotoInput />
               </div>
               <Button type="submit" className="sm:col-span-2 w-full mt-2 h-10">
                 Add Student

@@ -33,6 +33,7 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
   const [editGender, setEditGender] = useState<string>("");
   const [editCategory, setEditCategory] = useState<string>("none");
   const [editAvatar, setEditAvatar] = useState<File | null>(null);
+  const [editAvatarError, setEditAvatarError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter students based on search query
@@ -67,9 +68,14 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
     setEditGender("");
     setEditCategory("none");
     setEditAvatar(null);
+    setEditAvatarError(null);
   };
 
   const handleSave = async (studentId: string) => {
+    if (editAvatarError) {
+      alert(editAvatarError);
+      return;
+    }
     const formData = new FormData();
     formData.append("studentId", studentId);
     formData.append("name", editName.trim());
@@ -87,6 +93,7 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
     setEditGender("");
     setEditCategory("none");
     setEditAvatar(null);
+    setEditAvatarError(null);
   };
 
   const handleDelete = async (studentId: string) => {
@@ -239,10 +246,30 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
                     <label className="text-xs text-white/60 mb-1.5 block">Update Photo (Optional)</label>
                     <input
                       type="file"
-                      accept="image/*"
-                      onChange={(e) => setEditAvatar(e.target.files?.[0] || null)}
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        if (file) {
+                          const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+                          if (!validTypes.includes(file.type)) {
+                            setEditAvatarError("Only JPG, JPEG, PNG, or WEBP images are allowed.");
+                            setEditAvatar(null);
+                            e.target.value = "";
+                            return;
+                          }
+                          if (file.size > 2 * 1024 * 1024) {
+                            setEditAvatarError("Image size must be less than 2 MB.");
+                            setEditAvatar(null);
+                            e.target.value = "";
+                            return;
+                          }
+                        }
+                        setEditAvatarError(null);
+                        setEditAvatar(file);
+                      }}
                       className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/20 file:text-cyan-400 hover:file:bg-cyan-500/30 file:cursor-pointer"
                     />
+                    {editAvatarError && <p className="text-xs text-red-400 mt-1">{editAvatarError}</p>}
                   </div>
                 </div>
                 <div className="flex gap-2">
