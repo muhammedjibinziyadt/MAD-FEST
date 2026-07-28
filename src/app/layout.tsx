@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Anek_Malayalam } from "next/font/google";
 
 import "./globals.css";
 
@@ -12,11 +11,6 @@ import { RealtimeProvider } from "@/components/realtime-provider";
 import { PublicPageWrapper } from "@/components/public-page-wrapper";
 import { JsonLd } from "@/components/json-ld";
 
-const anekMalayalam = Anek_Malayalam({
-  subsets: ["malayalam", "latin"],
-  variable: "--font-anek-malayalam",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -27,7 +21,7 @@ export const metadata: Metadata = {
     "A premier platform for students to showcase their talents and highlight the rich art forms of Islamic culture. Live scoreboard, admin controls, and jury tools for Ishal Rabeeh '26.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ||
-    "https://funoonfiesta.noorululama.org"
+    "https://www.ishalrabeehbuhsm.online/"
   ),
   keywords: [
     "Ishal Rabeeh '26",
@@ -147,7 +141,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body
-        className={`${GeistSans.variable} ${GeistMono.variable} ${anekMalayalam.variable} antialiased`}
+        className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
         suppressHydrationWarning
       >
         <RealtimeProvider>
