@@ -14,7 +14,7 @@ export async function GET(
     const safeFilename = path.basename(filename);
 
     // Construct path. Note: We use process.cwd() + public to match the upload logic
-    const filePath = path.join(process.cwd(), "public", "uploads", "festory", safeFilename);
+    const filePath = path.join(process.cwd(), "public", "uploads", "students", safeFilename);
 
     if (!existsSync(filePath)) {
         return new NextResponse("File not found", { status: 404 });

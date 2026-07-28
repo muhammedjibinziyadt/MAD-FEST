@@ -17,9 +17,6 @@ import type {
   Prediction,
   Vote,
   UserScore,
-  FestoryPost,
-  FestoryUser,
-  FestoryComment,
 } from "./types";
 
 // Force new schema in dev
@@ -42,9 +39,6 @@ if (process.env.NODE_ENV !== "production") {
   delete models.PredictionEvent;
   delete models.Prediction;
   delete models.UserScore;
-  delete models.FestoryPost;
-  delete models.FestoryComment;
-  delete models.FestoryUser;
 }
 
 const TeamSchema = new Schema<Team>(
@@ -387,66 +381,5 @@ export const UserScoreModel =
 
 
 
-const FestoryPostSchema = new Schema<FestoryPost>(
-  {
-    id: { type: String, required: true, unique: true },
-    userId: { type: String, required: true },
-    userName: { type: String, required: true },
-    userTeamId: { type: String, required: true },
-    type: { type: String, enum: ["text", "image", "audio", "poll"], required: true },
-    content: { type: String, default: "" },
-    mediaUrl: { type: String },
-    likes: { type: [String], default: [] },
-    pollOptions: [
-      {
-        id: { type: String, required: true },
-        text: { type: String, required: true },
-        votes: { type: [String], default: [] },
-      },
-    ],
-    commentsCount: { type: Number, default: 0 },
-  },
-  { timestamps: true },
-);
 
-const FestoryCommentSchema = new Schema<FestoryComment>(
-  {
-    id: { type: String, required: true, unique: true },
-    postId: { type: String, required: true },
-    userId: { type: String, required: true },
-    userName: { type: String, required: true },
-    userImage: { type: String },
-    content: { type: String, required: true },
-    parentId: { type: String },
-  },
-  { timestamps: true },
-);
-
-const FestoryUserSchema = new Schema<FestoryUser>(
-  {
-    id: { type: String, required: true, unique: true },
-    studentId: { type: String }, // Removed required & unique
-    googleId: { type: String },
-    email: { type: String },
-    name: { type: String, required: true },
-    teamId: { type: String, required: true },
-    phoneNumber: { type: String, required: true },
-    isBanned: { type: Boolean, default: false },
-    image: { type: String },
-    profileImageUpdateCount: { type: Number, default: 0 },
-  },
-  { timestamps: true },
-);
-
-export const FestoryPostModel =
-  (models.FestoryPost as Model<FestoryPost>) ??
-  model<FestoryPost>("FestoryPost", FestoryPostSchema);
-
-export const FestoryCommentModel =
-  (models.FestoryComment as Model<FestoryComment>) ??
-  model<FestoryComment>("FestoryComment", FestoryCommentSchema);
-
-export const FestoryUserModel =
-  (models.FestoryUser as Model<FestoryUser>) ??
-  model<FestoryUser>("FestoryUser", FestoryUserSchema);
 

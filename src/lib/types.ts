@@ -25,7 +25,6 @@ export interface Student {
   chest_no: string;
   avatar?: string;
   total_points: number;
-  phone_number?: string; // Added for Festory verification
   gender?: GenderType;
   category?: CategoryType;
 }
@@ -218,45 +217,3 @@ export interface UserScore {
   rank?: number;
 }
 
-export interface FestoryComment {
-  id: string;
-  postId: string;
-  userId: string;
-  userName: string;
-  userImage?: string;
-  content: string;
-  createdAt: string;
-  parentId?: string;
-}
-
-export interface FestoryPost {
-  id: string;
-  userId: string;
-  userName: string;
-  userImage?: string;
-  userTeamId: string;
-  type: "text" | "image" | "audio" | "poll";
-  content: string;
-  mediaUrl?: string;
-  likes: string[]; // Array of User IDs
-  pollOptions?: {
-    id: string;
-    text: string;
-    votes: string[]; // Array of User IDs who voted for this option
-  }[];
-  commentsCount: number;
-  createdAt: string;
-}
-
-export interface FestoryUser {
-  id: string;
-  studentId?: string;
-  googleId?: string;
-  email?: string;
-  name: string;
-  teamId: string;
-  phoneNumber: string;
-  isBanned: boolean;
-  image?: string;
-  profileImageUpdateCount?: number;
-}

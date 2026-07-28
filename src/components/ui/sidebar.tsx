@@ -53,7 +53,6 @@ const ICONS = {
   settings: Settings,
   polls: BarChart,
   predictions: Trophy,
-  festory: MessageCircle,
 
 } satisfies Record<string, LucideIcon>;
 

@@ -3,7 +3,7 @@ import path from "path";
 import { randomUUID } from "crypto";
 import sharp from "sharp";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "festory");
+const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "students");
 
 export async function uploadFile(file: File, type: "image" | "audio"): Promise<string> {
     await mkdir(UPLOAD_DIR, { recursive: true });
@@ -25,7 +25,7 @@ export async function uploadFile(file: File, type: "image" | "audio"): Promise<s
         await writeFile(filepath, buffer);
     }
 
-    return `/uploads/festory/${filename}`;
+    return `/uploads/students/${filename}`;
 }
 
 export async function deleteFile(fileUrl: string) {
