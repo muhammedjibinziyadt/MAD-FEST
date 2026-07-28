@@ -34,7 +34,7 @@ async function juryLoginAction(
 
 export default function JuryLoginPage() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col justify-center gap-10 px-5 py-16 md:px-8">
+    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-10 px-5 py-16 md:px-8">
       <div className="space-y-4 text-center">
         <Badge tone="cyan" className="mx-auto">
           Jury Portal

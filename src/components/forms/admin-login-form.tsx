@@ -35,7 +35,6 @@ export function AdminLoginForm({ action }: AdminLoginFormProps) {
         <label className="text-sm font-medium text-white/80">Username</label>
         <Input
           name="username"
-          placeholder="admin"
           className="mt-2"
           autoComplete="username"
           required
@@ -46,7 +45,6 @@ export function AdminLoginForm({ action }: AdminLoginFormProps) {
         <Input
           name="password"
           type="password"
-          placeholder="••••••••"
           className="mt-2"
           autoComplete="current-password"
           required

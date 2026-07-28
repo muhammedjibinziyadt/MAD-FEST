@@ -174,7 +174,6 @@ export function FestoryLoginForm() {
                                             required
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
-                                            placeholder="Enter your full name"
                                             className="h-12 bg-white/5 border-white/10 text-base md:text-sm text-white placeholder:text-white/20 focus:bg-white/10 transition-all rounded-2xl"
                                         />
                                     </div>
@@ -190,7 +189,6 @@ export function FestoryLoginForm() {
                                             required
                                             value={teamName}
                                             onChange={(e) => setTeamName(e.target.value)}
-                                            placeholder="Enter team name"
                                             className="h-12 bg-white/5 border-white/10 text-base md:text-sm text-white placeholder:text-white/20 focus:bg-white/10 transition-all rounded-2xl"
                                         />
                                     </div>
@@ -211,7 +209,6 @@ export function FestoryLoginForm() {
                                                     setPhone(e.target.value);
                                                     setError("");
                                                 }}
-                                                placeholder="Enter phone number"
                                                 className="pl-10 h-12 bg-white/5 border-white/10 text-base md:text-sm text-white placeholder:text-white/20 focus:bg-white/10 transition-all rounded-2xl"
                                             />
                                         </div>

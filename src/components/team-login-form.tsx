@@ -27,14 +27,20 @@ export function TeamLoginForm({
   const [state, formAction] = useActionState(action, {});
 
   return (
-    <Card className="max-w-lg border-white/10 bg-white/5 p-6 text-white">
-      <CardTitle>Team Login</CardTitle>
+    <Card className="w-full max-w-md border-white/10 bg-white/5 p-8 text-white rounded-3xl backdrop-blur-2xl">
+      <CardTitle className="text-2xl font-bold">Team Login</CardTitle>
       <CardDescription className="mt-2 text-white/70">
         Enter your team name and password to access the portal.
       </CardDescription>
       <form action={formAction} className="mt-6 space-y-4">
-        <Input name="teamName" placeholder="Team name" required />
-        <Input name="password" type="password" placeholder="Password" required />
+        <div>
+          <label className="text-sm font-semibold text-white/80">Team Name</label>
+          <Input name="teamName" className="mt-2" required />
+        </div>
+        <div>
+          <label className="text-sm font-semibold text-white/80">Password</label>
+          <Input name="password" type="password" className="mt-2" required />
+        </div>
         {state.error && <p className="text-sm text-red-400">{state.error}</p>}
         <SubmitButton />
       </form>

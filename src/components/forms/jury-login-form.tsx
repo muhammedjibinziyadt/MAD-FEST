@@ -37,7 +37,6 @@ export function JuryLoginForm({ action }: JuryLoginFormProps) {
         </label>
         <Input
           name="identifier"
-          placeholder="jury-anika"
           className="mt-2"
           required
         />
@@ -47,7 +46,6 @@ export function JuryLoginForm({ action }: JuryLoginFormProps) {
         <Input
           name="password"
           type="password"
-          placeholder="••••••"
           className="mt-2"
           required
         />
