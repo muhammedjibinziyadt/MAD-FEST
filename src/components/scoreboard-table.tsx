@@ -211,7 +211,7 @@ export function ScoreboardTable({
   const [activeTeam, setActiveTeam] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>("Single Programs"); // Default open one
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
-  const [genderFilter, setGenderFilter] = useState<"all" | "boys" | "girls">("all");
+  const [genderFilter, setGenderFilter] = useState<"boys" | "girls">("boys");
 
   const filteredTeams = useMemo(() => {
     if (genderFilter === "boys") return teams.filter(t => t.gender === "boys");
@@ -508,17 +508,6 @@ export function ScoreboardTable({
       {/* Gender Standings Selector Tabs */}
       <div className="flex justify-center mb-8">
         <div className="inline-flex p-1 bg-amber-50 rounded-2xl border border-amber-900/10 shadow-inner">
-          <button
-            onClick={() => setGenderFilter("all")}
-            className={cn(
-              "px-5 py-2 text-sm font-bold rounded-xl transition-all duration-200",
-              genderFilter === "all"
-                ? "bg-[#8B4513] text-white shadow-sm"
-                : "text-[#8B4513]/70 hover:text-[#8B4513] hover:bg-amber-100/50"
-            )}
-          >
-            Overall Standings
-          </button>
           <button
             onClick={() => setGenderFilter("boys")}
             className={cn(

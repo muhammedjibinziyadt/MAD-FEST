@@ -258,7 +258,7 @@ function AnalyticsSection({ teams }: { teams: any[] }) {
 }
 
 export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
-  const [genderFilter, setGenderFilter] = useState<"all" | "boys" | "girls">("all");
+  const [genderFilter, setGenderFilter] = useState<"boys" | "girls">("boys");
 
   const teamsWithScores = useMemo(() => {
     return teams.map((team, idx) => {
@@ -323,12 +323,6 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
         {/* Dynamic Standing Filter Selector */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="inline-flex p-1 bg-white border border-gray-200/80 shadow-md rounded-2xl">
-            <button
-              onClick={() => setGenderFilter("all")}
-              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200 ${genderFilter === "all" ? 'bg-zinc-900 text-white shadow-sm' : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100/50'}`}
-            >
-              Overall
-            </button>
             <button
               onClick={() => setGenderFilter("boys")}
               className={`px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200 ${genderFilter === "boys" ? 'bg-zinc-900 text-white shadow-sm' : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100/50'}`}
