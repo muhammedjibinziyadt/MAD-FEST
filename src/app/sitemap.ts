@@ -2,15 +2,25 @@ import { MetadataRoute } from 'next'
 import { getPrograms } from '@/lib/data'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://funoonfiesta.noorululama.org';
-    const programs = await getPrograms();
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.ishalrabeehbuhsm.online/';
+    let programUrls: Array<{
+        url: string;
+        lastModified: Date;
+        changeFrequency: "hourly";
+        priority: number;
+    }> = [];
 
-    const programUrls = programs.map((program) => ({
-        url: `${baseUrl}/results/${program.id}`,
-        lastModified: new Date(),
-        changeFrequency: 'hourly' as const,
-        priority: 0.8,
-    }));
+    try {
+        const programs = await getPrograms();
+        programUrls = programs.map((program) => ({
+            url: `${baseUrl}/results/${program.id}`,
+            lastModified: new Date(),
+            changeFrequency: 'hourly' as const,
+            priority: 0.8,
+        }));
+    } catch (error) {
+        console.error("Failed to fetch programs for sitemap during build:", error);
+    }
 
     return [
         {
