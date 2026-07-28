@@ -20,6 +20,7 @@ async function upsertTeamAction(formData: FormData) {
     const password = String(formData.get("password") ?? "").trim();
     const leaderName = String(formData.get("leaderName") ?? "").trim();
     const themeColor = sanitizeColor(String(formData.get("themeColor") ?? "#0ea5e9"));
+    const gender = String(formData.get("gender") ?? "mixed") as "boys" | "girls" | "mixed";
 
     // Check if we are UPDATING an existing team (id is present in form data)
     const isUpdate = formData.get("id") !== null;
@@ -45,6 +46,7 @@ async function upsertTeamAction(formData: FormData) {
       password, // Function handles empty password logic internally
       leaderName,
       themeColor,
+      gender,
     });
     revalidatePath("/admin/team-portal-control");
     redirectWithToast("/admin/team-portal-control", isUpdate ? "Team updated successfully!" : "Team created successfully!", "success");
@@ -134,6 +136,17 @@ export default async function TeamPortalControlPage() {
             <Input name="teamName" placeholder="Team name" required />
             <Input name="leaderName" placeholder="Leader name" required />
             <Input name="password" type="text" placeholder="Password" required />
+            <div>
+              <select
+                name="gender"
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-2.5 text-sm text-white/95 focus:border-fuchsia-400 focus:outline-none focus:ring-1 focus:ring-fuchsia-400/50 transition-all duration-200"
+                required
+              >
+                <option value="mixed" className="bg-slate-900">Mixed Team (Boys & Girls)</option>
+                <option value="boys" className="bg-slate-900">Boys Team</option>
+                <option value="girls" className="bg-slate-900">Girls Team</option>
+              </select>
+            </div>
             <ColorSelectorInput name="themeColor" defaultValue="#E11D48" />
             <Button type="submit" className="w-full">
               Create Team

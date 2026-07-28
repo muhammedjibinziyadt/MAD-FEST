@@ -12,7 +12,9 @@ export interface Team {
   contact: string;
   total_points: number;
   portal_password?: string;
+  gender?: "boys" | "girls" | "mixed";
 }
+
 
 export type GenderType = "boy" | "girl";
 
@@ -93,6 +95,7 @@ export interface PortalTeam {
   password: string;
   leaderName: string;
   themeColor?: string;
+  gender?: "boys" | "girls" | "mixed";
 }
 
 export interface PortalStudent {

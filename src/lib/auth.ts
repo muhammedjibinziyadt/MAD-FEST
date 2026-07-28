@@ -143,6 +143,7 @@ export async function authenticateTeam(teamName: string, password: string): Prom
     password: teamDoc.portal_password ?? "", // This is now hashed
     leaderName: teamDoc.leader,
     themeColor: teamDoc.color,
+    gender: (teamDoc as any).gender ?? "mixed",
   };
 
   const isHashed = team.password.startsWith("$2");
@@ -180,6 +181,7 @@ export async function getCurrentTeam(): Promise<PortalTeam | undefined> {
     password: teamDoc.portal_password ?? "",
     leaderName: teamDoc.leader,
     themeColor: teamDoc.color,
+    gender: (teamDoc as any).gender ?? "mixed",
   };
 }
 

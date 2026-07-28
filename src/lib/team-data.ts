@@ -32,6 +32,7 @@ export async function getPortalTeams(): Promise<PortalTeam[]> {
     password: "", // SECURITY: Do not leak password
     leaderName: team.leader,
     themeColor: sanitizeColor(team.color),
+    gender: (team as any).gender ?? "mixed",
   }));
 }
 
@@ -42,6 +43,7 @@ export async function savePortalTeam(team: PortalTeam) {
     name: team.teamName,
     leader: team.leaderName,
     color: sanitizeColor(team.themeColor),
+    gender: team.gender ?? "mixed",
   };
 
   // Only update password if provided and not empty

@@ -22,9 +22,10 @@ interface Props {
   updateAction: (formData: FormData) => Promise<void>;
   deleteAction: (formData: FormData) => Promise<void>;
   isRegistrationOpen: boolean;
+  teamGender?: "boys" | "girls" | "mixed";
 }
 
-export function TeamStudentList({ students, updateAction, deleteAction, isRegistrationOpen }: Props) {
+export function TeamStudentList({ students, updateAction, deleteAction, isRegistrationOpen, teamGender }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -73,7 +74,8 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
     formData.append("studentId", studentId);
     formData.append("name", editName.trim());
     formData.append("chestNumber", editChestNumber.trim().toUpperCase());
-    formData.append("gender", editGender);
+    const finalGender = teamGender === "boys" ? "boy" : teamGender === "girls" ? "girl" : editGender;
+    formData.append("gender", finalGender);
     formData.append("category", editCategory);
     if (editAvatar) {
       formData.append("avatar", editAvatar);
@@ -201,15 +203,21 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
                   </div>
                   <div>
                     <label className="text-xs text-white/60 mb-1.5 block">Gender</label>
-                    <select
-                      value={editGender}
-                      onChange={(e) => setEditGender(e.target.value)}
-                      className="w-full rounded-2xl border border-white/20 bg-slate-900 px-4 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none"
-                    >
-                      <option value="">Select Gender</option>
-                      <option value="boy">Boy</option>
-                      <option value="girl">Girl</option>
-                    </select>
+                    {teamGender && teamGender !== "mixed" ? (
+                      <div className="w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-2 text-sm text-white/60 h-10 flex items-center capitalize">
+                        {teamGender === "boys" ? "Boy" : "Girl"}
+                      </div>
+                    ) : (
+                      <select
+                        value={editGender}
+                        onChange={(e) => setEditGender(e.target.value)}
+                        className="w-full rounded-2xl border border-white/20 bg-slate-900 px-4 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none"
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="boy">Boy</option>
+                        <option value="girl">Girl</option>
+                      </select>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs text-white/60 mb-1.5 block">Category</label>

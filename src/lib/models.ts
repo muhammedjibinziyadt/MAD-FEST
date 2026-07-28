@@ -58,6 +58,7 @@ const TeamSchema = new Schema<Team>(
     contact: { type: String, required: true },
     total_points: { type: Number, default: 0 },
     portal_password: { type: String, default: "" },
+    gender: { type: String, enum: ["boys", "girls", "mixed"], default: "mixed" },
   },
   { timestamps: true },
 );

@@ -287,7 +287,16 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <p className="text-xs text-white/50">ID: {team.id}</p>
-                        <h3 className="font-semibold text-white mt-1">{team.teamName}</h3>
+                        <h3 className="font-semibold text-white mt-1 flex items-center gap-2">
+                          {team.teamName}
+                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${
+                            team.gender === "boys" ? "bg-sky-500/10 border-sky-500/30 text-sky-400" :
+                            team.gender === "girls" ? "bg-pink-500/10 border-pink-500/30 text-pink-400" :
+                            "bg-purple-500/10 border-purple-500/30 text-purple-400"
+                          }`}>
+                            {team.gender === "boys" ? "Boys" : team.gender === "girls" ? "Girls" : "Mixed"}
+                          </span>
+                        </h3>
                         <p className="text-sm text-white/70 mt-1">Leader: {team.leaderName}</p>
                         <div className="flex gap-4 mt-2 text-xs text-white/60">
                           <span>Students: {stats.studentCount}</span>
@@ -619,6 +628,21 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
                 For security, existing passwords are not shown. Enter a new one to update.
               </p>
             </div>
+             <div>
+              <label className="text-sm font-semibold text-white/70 mb-2 block">
+                Team Gender / Type
+              </label>
+              <select
+                name="gender"
+                defaultValue={editingTeam.gender || "mixed"}
+                className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-2.5 text-sm text-white focus:border-fuchsia-400 focus:outline-none"
+                required
+              >
+                <option value="mixed">Mixed Team (Boys & Girls)</option>
+                <option value="boys">Boys Team</option>
+                <option value="girls">Girls Team</option>
+              </select>
+            </div>
             <ColorSelectorInput
               key={editingTeam.id}
               name="themeColor"
@@ -657,6 +681,10 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
             <div>
               <p className="text-xs text-white/50">Leader</p>
               <p className="text-sm text-white">{viewingTeam.leaderName}</p>
+            </div>
+            <div>
+              <p className="text-xs text-white/50">Team Gender / Type</p>
+              <p className="text-sm text-white capitalize">{viewingTeam.gender ?? "mixed"}</p>
             </div>
             <div>
               <p className="text-xs text-white/50">Theme Color</p>

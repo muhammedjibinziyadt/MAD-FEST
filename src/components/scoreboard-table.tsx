@@ -41,14 +41,24 @@ function TeamCard({ team, totalPoints, medals, penaltyPoints, isActive, onClick,
       <div className="relative z-10 flex flex-col gap-3">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
-            <div className={cn(
-              "flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm",
-              rank === 1 ? "bg-yellow-100 text-yellow-700" :
-                rank === 2 ? "bg-gray-100 text-gray-700" :
-                  rank === 3 ? "bg-orange-100 text-orange-800" : "bg-slate-50 text-slate-500"
-            )}>
-              {rank}
-            </div>
+            {team.gender === "boys" || team.gender === "girls" ? (
+              <div className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-200 shrink-0">
+                <img
+                  src={team.gender === "boys" ? "/img/assets/islamic_boy.png" : "/img/assets/islamic_girl.png"}
+                  alt={team.gender === "boys" ? "Boys Team" : "Girls Team"}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className={cn(
+                "flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm shrink-0",
+                rank === 1 ? "bg-yellow-100 text-yellow-700" :
+                  rank === 2 ? "bg-gray-100 text-gray-700" :
+                    rank === 3 ? "bg-orange-100 text-orange-800" : "bg-slate-50 text-slate-500"
+              )}>
+                {rank}
+              </div>
+            )}
             <h3 className="font-bold text-gray-900 text-lg leading-tight">{team.name}</h3>
           </div>
           <div className="text-right">
@@ -201,8 +211,15 @@ export function ScoreboardTable({
   const [activeTeam, setActiveTeam] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>("Single Programs"); // Default open one
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
+  const [genderFilter, setGenderFilter] = useState<"all" | "boys" | "girls">("all");
 
-  const teamNames = teams.map((t) => t.name);
+  const filteredTeams = useMemo(() => {
+    if (genderFilter === "boys") return teams.filter(t => t.gender === "boys");
+    if (genderFilter === "girls") return teams.filter(t => t.gender === "girls");
+    return teams;
+  }, [teams, genderFilter]);
+
+  const teamNames = filteredTeams.map((t) => t.name);
   const studentMap = new Map(students.map((s) => [s.id, s]));
 
   // Organize programs by section
@@ -259,7 +276,7 @@ export function ScoreboardTable({
   };
 
   const rankedTeams = useMemo(() => {
-    const sorted = [...teams].sort((a, b) => getTotalPointsForTeam(b.id) - getTotalPointsForTeam(a.id));
+    const sorted = [...filteredTeams].sort((a, b) => getTotalPointsForTeam(b.id) - getTotalPointsForTeam(a.id));
     let currentRank = 1;
     return sorted.map((team, index) => {
       if (index > 0 && getTotalPointsForTeam(team.id) < getTotalPointsForTeam(sorted[index - 1].id)) {
@@ -267,7 +284,7 @@ export function ScoreboardTable({
       }
       return { ...team, rank: currentRank };
     });
-  }, [teams, liveScores]); // Recalculate if scores change
+  }, [filteredTeams, liveScores]); // Recalculate if scores change
 
   const renderMobileView = () => (
     <div className="space-y-8 pb-10">
@@ -334,7 +351,7 @@ export function ScoreboardTable({
                             key={program.id}
                             program={program}
                             teamNames={teamNames}
-                            teams={teams}
+                            teams={filteredTeams}
                             results={programResults}
                             students={students}
                             isExpanded={expandedProgram === program.id}
@@ -394,7 +411,7 @@ export function ScoreboardTable({
                         <span className="font-semibold text-gray-900">{program.name}</span>
                       </div>
                     </td>
-                    {teams.map((team) => {
+                    {filteredTeams.map((team) => {
                       // Get ALL entries for this team in this program
                       const teamEntries: Array<{ entry: ResultEntry; result: ResultRecord }> = [];
                       programResults.forEach((result) => {
@@ -437,7 +454,7 @@ export function ScoreboardTable({
               {/* Total Row */}
               <tr className="bg-[#8B4513]/5 border-t-2 border-[#8B4513]/10 font-bold text-base">
                 <td className="px-6 py-5 text-[#8B4513] uppercase tracking-wider">Total Score</td>
-                {teams.map((team) => (
+                {filteredTeams.map((team) => (
                   <td key={team.id} className="px-4 py-5 text-center text-[#8B4513]">
                     {getTotalPointsForTeam(team.id)}
                   </td>
@@ -449,7 +466,7 @@ export function ScoreboardTable({
                 <td className="px-6 py-4 text-red-700 font-medium flex items-center gap-2">
                   <MinusCircle className="w-4 h-4" /> Penalties
                 </td>
-                {teams.map((team) => {
+                {filteredTeams.map((team) => {
                   const penaltyTotal = getTotalPenaltyPoints(team.id);
                   return (
                     <td key={team.id} className="px-4 py-4 text-center font-medium text-red-600">
@@ -479,13 +496,52 @@ export function ScoreboardTable({
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 md:px-8 max-w-7xl">
-      <div className="mb-10 text-center space-y-2">
+      <div className="mb-8 text-center space-y-2">
         <h1 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tight">
           LIVE <span className="text-[#8B4513]">SCOREBOARD</span>
         </h1>
         <p className="text-gray-500 text-sm md:text-base max-w-lg mx-auto">
           Real-time standings and detailed point breakdown for all houses.
         </p>
+      </div>
+
+      {/* Gender Standings Selector Tabs */}
+      <div className="flex justify-center mb-8">
+        <div className="inline-flex p-1 bg-amber-50 rounded-2xl border border-amber-900/10 shadow-inner">
+          <button
+            onClick={() => setGenderFilter("all")}
+            className={cn(
+              "px-5 py-2 text-sm font-bold rounded-xl transition-all duration-200",
+              genderFilter === "all"
+                ? "bg-[#8B4513] text-white shadow-sm"
+                : "text-[#8B4513]/70 hover:text-[#8B4513] hover:bg-amber-100/50"
+            )}
+          >
+            Overall Standings
+          </button>
+          <button
+            onClick={() => setGenderFilter("boys")}
+            className={cn(
+              "px-5 py-2 text-sm font-bold rounded-xl transition-all duration-200",
+              genderFilter === "boys"
+                ? "bg-[#8B4513] text-white shadow-sm"
+                : "text-[#8B4513]/70 hover:text-[#8B4513] hover:bg-amber-100/50"
+            )}
+          >
+            Boys Standings
+          </button>
+          <button
+            onClick={() => setGenderFilter("girls")}
+            className={cn(
+              "px-5 py-2 text-sm font-bold rounded-xl transition-all duration-200",
+              genderFilter === "girls"
+                ? "bg-[#8B4513] text-white shadow-sm"
+                : "text-[#8B4513]/70 hover:text-[#8B4513] hover:bg-amber-100/50"
+            )}
+          >
+            Girls Standings
+          </button>
+        </div>
       </div>
 
       {!hasData ? (

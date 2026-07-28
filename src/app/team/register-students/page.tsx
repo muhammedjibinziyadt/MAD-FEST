@@ -83,8 +83,15 @@ async function createStudentAction(formData: FormData) {
   ) {
     redirectWithMessage("Student name already exists for this team.");
   }
-  const genderRaw = String(formData.get("gender") ?? "").trim().toLowerCase();
-  const gender = genderRaw === "boy" || genderRaw === "girl" ? (genderRaw as "boy" | "girl") : undefined;
+  let gender: "boy" | "girl" | undefined = undefined;
+  if (team.gender === "boys") {
+    gender = "boy";
+  } else if (team.gender === "girls") {
+    gender = "girl";
+  } else {
+    const genderRaw = String(formData.get("gender") ?? "").trim().toLowerCase();
+    gender = genderRaw === "boy" || genderRaw === "girl" ? (genderRaw as "boy" | "girl") : undefined;
+  }
 
   const categoryRaw = String(formData.get("category") ?? "").trim().toUpperCase();
   const validCategories = ["KIDDIES", "SUB-JUNIOR", "JUNIOR", "SENIOR", "SUPER-SENIOR", "GENERAL", "none"];
@@ -132,8 +139,15 @@ async function updateStudentAction(formData: FormData) {
     }
   }
 
-  const genderRaw = String(formData.get("gender") ?? "").trim().toLowerCase();
-  const gender = genderRaw === "boy" || genderRaw === "girl" ? (genderRaw as "boy" | "girl") : undefined;
+  let gender: "boy" | "girl" | undefined = undefined;
+  if (team.gender === "boys") {
+    gender = "boy";
+  } else if (team.gender === "girls") {
+    gender = "girl";
+  } else {
+    const genderRaw = String(formData.get("gender") ?? "").trim().toLowerCase();
+    gender = genderRaw === "boy" || genderRaw === "girl" ? (genderRaw as "boy" | "girl") : undefined;
+  }
 
   const categoryRaw = String(formData.get("category") ?? "").trim().toUpperCase();
   const validCategories = ["KIDDIES", "SUB-JUNIOR", "JUNIOR", "SENIOR", "SUPER-SENIOR", "GENERAL", "none"];
@@ -268,17 +282,28 @@ export default async function RegisterStudentsPage({
                   className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-10"
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-white/70">Gender</label>
-                <select
-                  name="gender"
-                  className="w-full rounded-2xl border border-white/20 bg-slate-900 px-4 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none h-10"
-                >
-                  <option value="">Select Gender</option>
-                  <option value="boy">Boy</option>
-                  <option value="girl">Girl</option>
-                </select>
-              </div>
+              {team.gender && team.gender !== "mixed" ? (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-white/70">Gender</label>
+                  <div className="w-full rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-2 text-sm text-white/60 h-10 flex items-center capitalize">
+                    {team.gender === "boys" ? "Boy" : "Girl"} (Locked for {team.gender === "boys" ? "Boys" : "Girls"} Team)
+                  </div>
+                  <input type="hidden" name="gender" value={team.gender === "boys" ? "boy" : "girl"} />
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-white/70">Gender</label>
+                  <select
+                    name="gender"
+                    className="w-full rounded-2xl border border-white/20 bg-slate-900 px-4 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none h-10"
+                    required
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="boy">Boy</option>
+                    <option value="girl">Girl</option>
+                  </select>
+                </div>
+              )}
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-white/70">Category</label>
                 <select
@@ -329,6 +354,7 @@ export default async function RegisterStudentsPage({
           updateAction={updateStudentAction}
           deleteAction={deleteStudentAction}
           isRegistrationOpen={isOpen}
+          teamGender={team.gender}
         />
       </div>
     </div>

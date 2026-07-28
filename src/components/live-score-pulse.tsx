@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Activity, Medal, TrendingUp, TrendingDown, Minus, ArrowUpRight, BarChart3, PieChart, LineChart } from "lucide-react";
@@ -78,16 +78,31 @@ function TeamCard({ team, index, rank, maxPoints }: TeamCardProps) {
 
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-4">
-            {/* Rank Badge */}
-            <div
-              className="flex flex-col items-center justify-center w-12 h-12 rounded-2xl text-white font-bold shadow-lg"
-              style={{
-                background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)`,
-                boxShadow: `0 4px 14px ${primaryColor}40`,
-              }}
-            >
-              <span className="text-lg leading-none">#{rank}</span>
-            </div>
+            {/* Rank Badge / Avatar */}
+            {team.gender === "boys" || team.gender === "girls" ? (
+              <div
+                className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-lg border border-white/20 shrink-0"
+                style={{
+                  boxShadow: `0 4px 14px ${primaryColor}40`,
+                }}
+              >
+                <img
+                  src={team.gender === "boys" ? "/img/assets/islamic_boy.png" : "/img/assets/islamic_girl.png"}
+                  alt={team.gender === "boys" ? "Islamic Boy" : "Islamic Girl"}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div
+                className="flex flex-col items-center justify-center w-12 h-12 rounded-2xl text-white font-bold shadow-lg shrink-0"
+                style={{
+                  background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)`,
+                  boxShadow: `0 4px 14px ${primaryColor}40`,
+                }}
+              >
+                <span className="text-lg leading-none">#{rank}</span>
+              </div>
+            )}
 
             <div>
               <div className="flex items-center gap-2">
@@ -243,23 +258,39 @@ function AnalyticsSection({ teams }: { teams: any[] }) {
 }
 
 export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
-  const teamsWithScores = teams.map((team, idx) => {
-    const totalPoints = liveScores.get(team.id) ?? team.total_points;
-    const colors = getTeamColorTheme(team, idx);
-    return { ...team, totalPoints, colors };
-  });
+  const [genderFilter, setGenderFilter] = useState<"all" | "boys" | "girls">("all");
 
-  const sortedTeams = [...teamsWithScores].sort((a, b) => b.totalPoints - a.totalPoints);
+  const teamsWithScores = useMemo(() => {
+    return teams.map((team, idx) => {
+      const totalPoints = liveScores.get(team.id) ?? team.total_points;
+      const colors = getTeamColorTheme(team, idx);
+      return { ...team, totalPoints, colors };
+    });
+  }, [teams, liveScores]);
 
-  let currentRank = 1;
-  const rankedTeams = sortedTeams.map((team, index) => {
-    if (index > 0 && team.totalPoints < sortedTeams[index - 1].totalPoints) {
-      currentRank++;
-    }
-    return { ...team, rank: currentRank };
-  });
+  const filteredTeams = useMemo(() => {
+    if (genderFilter === "boys") return teamsWithScores.filter(t => t.gender === "boys");
+    if (genderFilter === "girls") return teamsWithScores.filter(t => t.gender === "girls");
+    return teamsWithScores;
+  }, [teamsWithScores, genderFilter]);
 
-  const maxPoints = Math.max(...rankedTeams.map((t) => t.totalPoints), 1);
+  const sortedTeams = useMemo(() => {
+    return [...filteredTeams].sort((a, b) => b.totalPoints - a.totalPoints);
+  }, [filteredTeams]);
+
+  const rankedTeams = useMemo(() => {
+    let currentRank = 1;
+    return sortedTeams.map((team, index) => {
+      if (index > 0 && team.totalPoints < sortedTeams[index - 1].totalPoints) {
+        currentRank++;
+      }
+      return { ...team, rank: currentRank };
+    });
+  }, [sortedTeams]);
+
+  const maxPoints = useMemo(() => {
+    return Math.max(...rankedTeams.map((t) => t.totalPoints), 1);
+  }, [rankedTeams]);
 
   return (
     <section className="space-y-8 relative z-10">
@@ -268,7 +299,7 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
       <div className="absolute top-40 right-0 w-96 h-96 bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 px-2">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-2">
         <div className="space-y-2">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -289,16 +320,40 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
           </p>
         </div>
 
-        <div className="hidden md:block pb-2">
-          <div className="flex -space-x-2">
+        {/* Dynamic Standing Filter Selector */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="inline-flex p-1 bg-white border border-gray-200/80 shadow-md rounded-2xl">
+            <button
+              onClick={() => setGenderFilter("all")}
+              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200 ${genderFilter === "all" ? 'bg-zinc-900 text-white shadow-sm' : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100/50'}`}
+            >
+              Overall
+            </button>
+            <button
+              onClick={() => setGenderFilter("boys")}
+              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200 ${genderFilter === "boys" ? 'bg-zinc-900 text-white shadow-sm' : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100/50'}`}
+            >
+              Boys
+            </button>
+            <button
+              onClick={() => setGenderFilter("girls")}
+              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200 ${genderFilter === "girls" ? 'bg-zinc-900 text-white shadow-sm' : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100/50'}`}
+            >
+              Girls
+            </button>
+          </div>
+
+          <div className="hidden md:flex -space-x-2 pb-1">
             {rankedTeams.slice(0, 3).map((t, i) => (
               <div key={t.id} className="w-10 h-10 rounded-full border-2 border-white shadow-lg bg-gray-100 flex items-center justify-center font-bold text-xs" style={{ backgroundColor: t.colors.light, color: t.colors.primary }}>
                 {t.name[0]}
               </div>
             ))}
-            <div className="w-10 h-10 rounded-full border-2 border-white shadow-lg bg-gray-100 flex items-center justify-center font-bold text-xs text-gray-400">
-              +{rankedTeams.length - 3}
-            </div>
+            {rankedTeams.length > 3 && (
+              <div className="w-10 h-10 rounded-full border-2 border-white shadow-lg bg-gray-100 flex items-center justify-center font-bold text-xs text-gray-400">
+                +{rankedTeams.length - 3}
+              </div>
+            )}
           </div>
         </div>
       </div>
