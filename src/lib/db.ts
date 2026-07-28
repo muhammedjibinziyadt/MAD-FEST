@@ -1,12 +1,14 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI =
-  process.env.MONGODB_URI ??
-  "mongodb+srv://jdsaadmin:jdsaadmin9544@madfest.khdsxcz.mongodb.net/madfest?retryWrites=true&w=majority&appName=madfest";
+const MONGODB_URI = process.env.MONGODB_URI as string;
 
 if (!MONGODB_URI) {
   throw new Error("Missing MONGODB_URI environment variable");
 }
+
+// Mask password in MONGODB_URI for security logs
+const maskedUri = MONGODB_URI.replace(/:([^@]+)@/, ":******@");
+console.log("Mongoose Connecting to:", maskedUri);
 
 interface MongooseGlobal {
   conn: typeof mongoose | null;

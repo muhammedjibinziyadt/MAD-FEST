@@ -23,7 +23,23 @@ export default async function TeamLayout({ children }: { children: ReactNode }) 
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div className="flex-1 min-w-0">
-              <Badge tone="cyan" className="text-xs sm:text-sm mb-1 sm:mb-0">Team Portal</Badge>
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <Badge tone="cyan" className="text-xs sm:text-sm">Team Portal</Badge>
+                {team?.gender && (
+                  <Badge
+                    tone={
+                      team.gender === "boys"
+                        ? "cyan"
+                        : team.gender === "girls"
+                          ? "pink"
+                          : "amber"
+                    }
+                    className="text-xs sm:text-sm"
+                  >
+                    {team.gender}
+                  </Badge>
+                )}
+              </div>
               <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold truncate">
                 {team ? (
                   <>

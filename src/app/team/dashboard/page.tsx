@@ -116,7 +116,17 @@ export default async function TeamDashboardPage() {
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-white/60 uppercase tracking-wider mb-1">Team Dashboard</p>
-                <h1 className="text-2xl font-bold text-white truncate">{team.teamName}</h1>
+                <h1 className="text-2xl font-bold text-white truncate flex items-center gap-2">
+                  {team.teamName}
+                  {team.gender && (
+                    <Badge 
+                      tone={team.gender === "boys" ? "cyan" : team.gender === "girls" ? "pink" : "amber"} 
+                      className="text-[10px] py-0.5 px-2"
+                    >
+                      {team.gender}
+                    </Badge>
+                  )}
+                </h1>
                 <p className="text-sm text-white/70 mt-1 truncate">{team.leaderName}</p>
               </div>
               <Badge 
@@ -294,7 +304,17 @@ export default async function TeamDashboardPage() {
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <p className="text-sm font-medium text-white/60 uppercase tracking-wider mb-2">Welcome back</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-sm font-medium text-white/60 uppercase tracking-wider">Welcome back</p>
+                  {team.gender && (
+                    <Badge 
+                      tone={team.gender === "boys" ? "cyan" : team.gender === "girls" ? "pink" : "amber"} 
+                      className="text-[10px] py-0.5 px-2 animate-pulse"
+                    >
+                      {team.gender}
+                    </Badge>
+                  )}
+                </div>
                 <h1 className="text-4xl font-bold text-white mb-2">{team.teamName}</h1>
                 <p className="text-base text-white/70">Led by {team.leaderName}</p>
               </div>
