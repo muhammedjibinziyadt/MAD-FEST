@@ -413,12 +413,22 @@ export async function getOrCreateAdminJury(): Promise<Jury> {
 
   if (!adminJury) {
     const hashedPassword = await hash("admin@jury", 10);
-    await JuryModel.create({
-      id: adminJuryId,
-      name: "Admin",
-      password: hashedPassword,
-      avatar: "/img/jury.webp",
-    });
+    try {
+      await JuryModel.updateOne(
+        { id: adminJuryId },
+        {
+          $setOnInsert: {
+            id: adminJuryId,
+            name: "Admin",
+            password: hashedPassword,
+            avatar: "/img/jury.webp",
+          },
+        },
+        { upsert: true }
+      );
+    } catch (e) {
+      // Ignore concurrent upsert race conditions
+    }
 
     adminJury = await JuryModel.findOne({ id: adminJuryId }).lean<Jury>().exec();
   }
