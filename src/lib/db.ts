@@ -1,90 +1,47 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI as string;
+const MONGODB_URI =
+  process.env.MONGODB_URI ||
+  "mongodb+srv://usr_fierce-lemur-210_6bc2:gqj9acdHEP1aCwl7MHAt@cluster-pool-02.ys3h6pu.mongodb.net/db_fierce-lemur-210_6bc2?retryWrites=true&w=majority";
 
-if (!MONGODB_URI) {
-  throw new Error("Missing MONGODB_URI environment variable");
-}
-
-// Mask password in MONGODB_URI for security logs
-const maskedUri = MONGODB_URI.replace(/:([^@]+)@/, ":******@");
-console.log("Mongoose Connecting to:", maskedUri);
-
-interface MongooseGlobal {
-  conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
-  mongooseListenersAdded?: boolean;
-}
-
-const globalWithMongoose = globalThis as typeof globalThis & {
-  mongoose?: MongooseGlobal;
-};
-
-let cached = globalWithMongoose.mongoose;
-
-if (!cached) {
-  cached = globalWithMongoose.mongoose = { conn: null, promise: null };
-}
-
-if (!globalWithMongoose.mongoose?.mongooseListenersAdded) {
-  if (globalWithMongoose.mongoose) {
-    globalWithMongoose.mongoose.mongooseListenersAdded = true;
-  }
-  mongoose.connection.on("disconnected", () => {
-    if (cached) {
-      cached.conn = null;
-      cached.promise = null;
+declare global {
+  var mongooseCache:
+    | {
+      conn: typeof mongoose | null;
+      promise: Promise<typeof mongoose> | null;
     }
-  });
-  mongoose.connection.on("error", (error) => {
-    console.error("MongoDB connection error:", error);
-    if (cached) {
-      cached.conn = null;
-      cached.promise = null;
-    }
-  });
+    | undefined;
 }
+
+const cached =
+  global.mongooseCache ??
+  (global.mongooseCache = {
+    conn: null,
+    promise: null,
+  });
 
 export async function connectDB() {
-  if (cached?.conn && mongoose.connection.readyState === 1) {
+  if (cached.conn) {
     return cached.conn;
   }
 
-  if (mongoose.connection.readyState === 2 && cached?.promise) {
-    return await cached.promise;
-  }
-
-  // Clear stale cached state if connection was dropped
-  if (cached) {
-    cached.conn = null;
-    cached.promise = null;
-  }
-
-  const promise = mongoose
-    .connect(MONGODB_URI, {
-      dbName: process.env.MONGODB_DB ?? "madfest",
+  if (!cached.promise) {
+    const dbName = process.env.MONGODB_DB || "db_fierce-lemur-210_6bc2";
+    cached.promise = mongoose.connect(MONGODB_URI, {
+      dbName,
       serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
       maxPoolSize: 10,
-    })
-    .then((mongooseInstance) => {
-      if (cached) {
-        cached.conn = mongooseInstance;
-      }
-      return mongooseInstance;
-    })
-    .catch((error) => {
-      if (cached) {
-        cached.conn = null;
-        cached.promise = null;
-      }
-      throw error;
     });
-
-  if (cached) {
-    cached.promise = promise;
   }
 
-  return await promise;
+  try {
+    cached.conn = await cached.promise;
+    console.log("✅ MongoDB Connected");
+    return cached.conn;
+  } catch (error) {
+    cached.promise = null;
+    console.error("❌ MongoDB Connection Error:", error);
+    throw error;
+  }
 }
-

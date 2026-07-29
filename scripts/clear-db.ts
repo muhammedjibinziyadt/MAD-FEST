@@ -37,9 +37,6 @@ async function run() {
     PollModel,
     PredictionModel,
     PredictionEventModel,
-    FestoryPostModel,
-    FestoryUserModel,
-    FestoryCommentModel,
     VoteModel,
     UserScoreModel,
   } = await import("../src/lib/models");
@@ -64,9 +61,6 @@ async function run() {
     PollModel.deleteMany({}),
     PredictionModel.deleteMany({}),
     PredictionEventModel.deleteMany({}),
-    FestoryPostModel.deleteMany({}),
-    FestoryUserModel.deleteMany({}),
-    FestoryCommentModel.deleteMany({}),
     VoteModel.deleteMany({}),
     UserScoreModel.deleteMany({}),
   ]);

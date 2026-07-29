@@ -272,7 +272,6 @@ export default async function RegisterStudentsPage({
             <ChestNumberPreview teamName={team.teamName} teamStudents={teamStudents} />
             <form
               action={createStudentAction}
-              encType="multipart/form-data"
               className="mt-4 grid gap-4 sm:grid-cols-2"
             >
               <div className="flex flex-col gap-1.5">

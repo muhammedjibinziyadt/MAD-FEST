@@ -25,6 +25,7 @@ export interface Student {
   chest_no: string;
   avatar?: string;
   total_points: number;
+  phone_number?: string;
   gender?: GenderType;
   category?: CategoryType;
 }
