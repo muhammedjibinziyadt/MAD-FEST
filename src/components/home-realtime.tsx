@@ -31,7 +31,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
       <section className="relative w-full min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#FFFCF5]">
 
         {/* Decorative Sun/Starburst - Left (Half Visible) */}
-        <div className="absolute top-3/4 left-0 -translate-y-1/2 -translate-x-1/2 w-20 h-20 md:w-40 md:h-40 opacity-90 animate-[sun-rotate_60s_linear_infinite]">
+        <div suppressHydrationWarning className="absolute top-3/4 left-0 -translate-y-1/2 -translate-x-1/2 w-20 h-20 md:w-40 md:h-40 opacity-90 animate-[sun-rotate_60s_linear_infinite]">
           <Image
             src="/img/assets/sun.webp"
             alt="Decoration Left"
@@ -41,7 +41,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
         </div>
 
         {/* Decorative Sun/Starburst - Top Right (Half Visible) */}
-        <div className="absolute top-20 right-0 translate-x-1/2 w-26 h-26 md:w-48 md:h-48 opacity-90 animate-[sun-rotate_60s_linear_infinite]">
+        <div suppressHydrationWarning className="absolute top-20 right-0 translate-x-1/2 w-26 h-26 md:w-48 md:h-48 opacity-90 animate-[sun-rotate_60s_linear_infinite]">
           <Image
             src="/img/assets/sun.webp"
             alt="Decoration Right"
@@ -64,7 +64,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
           </div> */}
 
           {/* Ship - Center */}
-          <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-[300px] lg:h-[300px] mb-2">
+          <div suppressHydrationWarning className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-[300px] lg:h-[300px] mb-2">
             <Image
               src="/img/assets/logo-new.png"
               alt="Logo"

@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const MONGODB_URI =
   process.env.MONGODB_URI ||
-  "mongodb+srv://usr_fierce-lemur-210_6bc2:gqj9acdHEP1aCwl7MHAt@cluster-pool-02.ys3h6pu.mongodb.net/db_fierce-lemur-210_6bc2?retryWrites=true&w=majority";
+  "mongodb+srv://navasmuhammed:SNTCM2lcuvSQiz5f@madfest.i7kxhee.mongodb.net/?appName=madfest";
 
 declare global {
   var mongooseCache:
@@ -26,7 +26,7 @@ export async function connectDB() {
   }
 
   if (!cached.promise) {
-    const dbName = process.env.MONGODB_DB || "db_fierce-lemur-210_6bc2";
+    const dbName = process.env.MONGODB_DB || "madrasafest";
     cached.promise = mongoose.connect(MONGODB_URI, {
       dbName,
       serverSelectionTimeoutMS: 10000,
