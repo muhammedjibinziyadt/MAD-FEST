@@ -32,6 +32,7 @@ export async function connectDB() {
       serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
       maxPoolSize: 10,
+      family: 4, // Force IPv4 to bypass IPv6/DNS64 resolution timeouts on Windows
     });
   }
 

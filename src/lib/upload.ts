@@ -43,28 +43,16 @@ export async function deleteFile(fileUrl: string) {
 export async function uploadGalleryImage(file: File): Promise<string> {
     const buffer = Buffer.from(await file.arrayBuffer());
     const webpBuffer = await sharp(buffer)
-        .resize(1200, 800, { fit: "inside", withoutEnlargement: true })
-        .webp({ quality: 80 })
+        .resize(800, 600, { fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 75 })
         .toBuffer();
 
-    const GALLERY_DIR = path.join(process.cwd(), "public", "uploads", "gallery");
-    await mkdir(GALLERY_DIR, { recursive: true });
-
-    const filename = `${randomUUID()}.webp`;
-    const filepath = path.join(GALLERY_DIR, webpBuffer.length > 0 ? filename : ""); // placeholder check
-    await writeFile(filepath, webpBuffer);
-    return `/uploads/gallery/${filename}`;
+    const base64 = webpBuffer.toString("base64");
+    return `data:image/webp;base64,${base64}`;
 }
 
 export async function deleteGalleryFile(fileUrl: string) {
-    if (!fileUrl) return;
-    try {
-        const filename = fileUrl.split("/").pop();
-        if (!filename) return;
-        const filepath = path.join(process.cwd(), "public", "uploads", "gallery", filename);
-        await unlink(filepath);
-    } catch (error) {
-        console.error("Failed to delete gallery file:", error);
-    }
+    // No local file to delete for base64 data URLs
+    return;
 }
 
