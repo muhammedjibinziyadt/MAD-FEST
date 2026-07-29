@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { CheckCircle2, Eye, Pencil, Search, Trash2, Calendar, User, Award, Table, FileText } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, Eye, Pencil, Search, Trash2, Calendar, User, Users, Award, FileText, Layers } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { SearchSelect } from "@/components/ui/search-select";
+import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/hooks/use-debounce";
-import type { Program, ResultRecord, Jury, Student, Team } from "@/lib/types";
+import type { Program, ResultRecord, Jury, Student, Team, ProgramRegistration } from "@/lib/types";
 
 interface ResultManagerProps {
   results: ResultRecord[];
@@ -17,6 +18,7 @@ interface ResultManagerProps {
   juries: Jury[];
   students: Student[];
   teams: Team[];
+  registrations?: ProgramRegistration[];
   deleteAction: (formData: FormData) => Promise<void>;
   approveAction?: (formData: FormData) => Promise<void>;
   rejectAction?: (formData: FormData) => Promise<void>;
@@ -37,6 +39,7 @@ export const ResultManager = React.memo(function ResultManager({
   juries,
   students,
   teams,
+  registrations = [],
   deleteAction,
   approveAction,
   rejectAction,
@@ -68,6 +71,37 @@ export const ResultManager = React.memo(function ResultManager({
   useEffect(() => {
     setPage(1);
   }, [debouncedSearchQuery, programFilter, juryFilter, sort]);
+
+  // Determine Gender (BOYS / GIRLS / MIXED) for a Result
+  const getResultGender = (result: ResultRecord): "BOYS" | "GIRLS" | "MIXED" => {
+    const program = programMap.get(result.program_id);
+    let boyCount = 0;
+    let girlCount = 0;
+
+    for (const entry of result.entries) {
+      if (entry.student_id) {
+        const student = studentMap.get(entry.student_id);
+        if (student?.gender === "boy") boyCount++;
+        if (student?.gender === "girl") girlCount++;
+      }
+      if (entry.team_id) {
+        const team = teamMap.get(entry.team_id);
+        const genderLower = String((team as any)?.gender ?? "").toLowerCase();
+        if (genderLower.includes("boy")) boyCount++;
+        if (genderLower.includes("girl")) girlCount++;
+      }
+    }
+
+    if (boyCount > 0 && girlCount === 0) return "BOYS";
+    if (girlCount > 0 && boyCount === 0) return "GIRLS";
+    if (boyCount > 0 && girlCount > 0) return "MIXED";
+
+    const progName = program?.name.toLowerCase() ?? "";
+    if (progName.includes("girl") || progName.includes("female") || progName.includes("പെൺ")) return "GIRLS";
+    if (progName.includes("boy") || progName.includes("male") || progName.includes("ആൺ")) return "BOYS";
+
+    return "BOYS";
+  };
 
   const filteredResults = useMemo(() => {
     return results.filter((result) => {
@@ -102,8 +136,8 @@ export const ResultManager = React.memo(function ResultManager({
       });
     } else if (sort === "score") {
       list.sort((a, b) => {
-        const aScore = getTotalScore(a);
-        const bScore = getTotalScore(b);
+        const aScore = a.entries.reduce((sum, e) => sum + e.score, 0);
+        const bScore = b.entries.reduce((sum, e) => sum + e.score, 0);
         return bScore - aScore;
       });
     } else {
@@ -112,437 +146,457 @@ export const ResultManager = React.memo(function ResultManager({
     return list;
   }, [filteredResults, sort, programMap, juryMap]);
 
-  const totalPages = Math.max(1, Math.ceil(sortedResults.length / pageSize)) || 1;
+  const totalPages = Math.ceil(sortedResults.length / pageSize) || 1;
+  const paginatedResults = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return sortedResults.slice(start, start + pageSize);
+  }, [sortedResults, page, pageSize]);
 
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
-
-  const startIndex = (page - 1) * pageSize;
-  const visibleResults = sortedResults.slice(startIndex, startIndex + pageSize);
-  const showingFrom = sortedResults.length === 0 ? 0 : startIndex + 1;
-  const showingTo = Math.min(startIndex + pageSize, sortedResults.length);
-
-  const getWinnerName = (entry: { student_id?: string; team_id?: string }) => {
+  const getWinnerName = (entry: ResultRecord["entries"][number]) => {
     if (entry.student_id) {
       const student = studentMap.get(entry.student_id);
-      return student?.name ?? "—";
+      return student?.name ?? "Unknown Student";
     }
     if (entry.team_id) {
       const team = teamMap.get(entry.team_id);
-      return team?.name ?? "—";
+      return team?.name ?? "Unknown Team";
     }
-    return "—";
+    return "Unknown";
   };
 
-  function getPenaltyTotal(result: ResultRecord) {
-    return result.penalties?.reduce((sum, penalty) => sum + penalty.points, 0) ?? 0;
-  }
+  const getTotalScore = (result: ResultRecord) => {
+    const entriesTotal = result.entries.reduce((sum, entry) => sum + entry.score, 0);
+    const penaltiesTotal = result.penalties?.reduce((sum, p) => sum + p.points, 0) ?? 0;
+    return Math.max(0, entriesTotal - penaltiesTotal);
+  };
 
-  function getTotalScore(result: ResultRecord) {
-    const penaltyTotal = getPenaltyTotal(result);
-    const entryTotal = result.entries.reduce((sum, entry) => sum + entry.score, 0);
-    return entryTotal - penaltyTotal;
-  }
-
-  const getPositionName = useCallback((result: ResultRecord, position: number) => {
-    const entry = result.entries.find((e) => e.position === position);
-    if (!entry) return "—";
-    return getWinnerName(entry);
-  }, [getWinnerName]);
-
-  const handleExport = useCallback((type: "csv" | "pdf") => {
-    const data = sortedResults.map((result) => {
-      const programName = programMap.get(result.program_id)?.name ?? "Unknown Program";
-      const first = getPositionName(result, 1);
-      const second = getPositionName(result, 2);
-      const third = getPositionName(result, 3);
-      return [programName, first, second, third];
-    });
-
-    if (type === "pdf") {
-      import("jspdf").then((jsPDFModule) => {
-        import("jspdf-autotable").then((autoTableModule) => {
-          const jsPDF = jsPDFModule.default;
-          const autoTable = autoTableModule.default;
-          const doc = new jsPDF();
-
-          doc.setFontSize(18);
-          doc.text("Approved Results", 14, 22);
-
-          autoTable(doc, {
-            head: [["Program Name", "First Place", "Second Place", "Third Place"]],
-            body: data,
-            startY: 30,
-            styles: { fontSize: 10, cellPadding: 3 },
-            headStyles: { fillColor: [8, 47, 73] }, // Slate 900
-          });
-
-          doc.save("approved-results.pdf");
-        });
-      });
-    } else {
-      const headers = ["Program Name", "First Place", "Second Place", "Third Place"];
-      const csvContent =
-        "data:text/csv;charset=utf-8," +
-        [headers, ...data].map((e) => e.map(item => `"${item}"`).join(",")).join("\n");
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "approved-results.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  }, [sortedResults, programMap, getPositionName]);
+  const getPenaltyTotal = (result: ResultRecord) => {
+    return result.penalties?.reduce((sum, p) => sum + p.points, 0) ?? 0;
+  };
 
   return (
-    <div className="space-y-6 rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-[0_20px_60px_rgba(8,47,73,0.35)]">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-widest text-white/50">Results roster</p>
-          <h2 className="text-2xl font-semibold text-white">
-            Manage {isPending ? "Pending" : "Approved"} Results
-          </h2>
-          <p className="text-sm text-white/60">
-            Search, filter, and manage result entries.
-          </p>
+    <div className="space-y-6">
+      {/* Search and Filters */}
+      <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md md:flex-row md:items-center md:justify-between">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by program, jury, or ID..."
+            className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+          />
         </div>
-        {!isPending && (
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => handleExport("csv")}
-              className="gap-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/20"
-            >
-              <Table className="h-4 w-4" /> CSV
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => handleExport("pdf")}
-              className="gap-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20"
-            >
-              <FileText className="h-4 w-4" /> PDF
-            </Button>
+        <div className="flex flex-wrap gap-3">
+          <div className="w-48">
+            <SearchSelect
+              name="program_filter"
+              options={programOptions}
+              value={programFilter}
+              onValueChange={setProgramFilter}
+              placeholder="All Programs"
+            />
           </div>
+          <div className="w-48">
+            <SearchSelect
+              name="jury_filter"
+              options={juryOptions}
+              value={juryFilter}
+              onValueChange={setJuryFilter}
+              placeholder="All Juries"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Sort buttons */}
+      <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs uppercase tracking-wider text-white/40 font-semibold mr-1">Quick Sort:</span>
+          {(["latest", "program", "jury", "score"] as SortOption[]).map((option) => (
+            <Button
+              key={option}
+              type="button"
+              variant={sort === option ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setSort(option)}
+              className="text-xs capitalize"
+            >
+              {option === "latest" ? "Latest First" : option === "score" ? "Highest Score" : `${option} A-Z`}
+            </Button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-32">
+            <SearchSelect
+              name="page_size"
+              options={pageSizeOptions}
+              value={String(pageSize)}
+              onValueChange={(val) => setPageSize(Number(val))}
+            />
+          </div>
+          <span className="text-xs text-white/50">{filteredResults.length} results</span>
+        </div>
+      </div>
+
+      {/* Results List */}
+      <div className="space-y-4">
+        {paginatedResults.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-12 text-center text-white/60">
+            No results found.
+          </div>
+        ) : (
+          paginatedResults.map((result) => {
+            const program = programMap.get(result.program_id);
+            const jury = juryMap.get(result.jury_id);
+            const totalScore = getTotalScore(result);
+            const gender = getResultGender(result);
+
+            return (
+              <div
+                key={result.id}
+                className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 via-slate-900/50 to-slate-800/50 p-5 shadow-xl transition hover:border-cyan-500/40"
+              >
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-center">
+                  {/* Left Column: Program Info & Badges */}
+                  <div className="w-full xl:flex-1">
+                    <p className="text-xs text-white/40 font-mono mb-1">#{result.id.slice(0, 8)}</p>
+                    <p className="text-xl font-bold text-white mb-2">{program?.name ?? "Unknown Program"}</p>
+                    
+                    {/* Gender, Category, and Section Badges */}
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
+                        gender === "BOYS" 
+                          ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" 
+                          : gender === "GIRLS" 
+                          ? "bg-pink-500/20 text-pink-300 border-pink-500/40" 
+                          : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                      }`}>
+                        {gender === "BOYS" ? "👦 BOYS" : gender === "GIRLS" ? "👧 GIRLS" : "👥 MIXED"}
+                      </span>
+
+                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 uppercase tracking-wider">
+                        🏷️ {program?.category || "GENERAL"}
+                      </span>
+
+                      <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider">
+                        {program?.section || "general"}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-white/60 flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5 text-cyan-400" />
+                      Jury: <span className="text-white/80 font-medium">{jury?.name ?? "Unknown Jury"}</span>
+                    </p>
+                  </div>
+
+                  {/* Middle Column: Winners Grid */}
+                  <div className="flex flex-col gap-2 w-full sm:flex-row sm:flex-wrap sm:gap-3 xl:max-w-md">
+                    {result.entries.map((entry, index) => (
+                      <div
+                        key={entry.student_id || entry.team_id || `${entry.position}-${index}`}
+                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center min-w-[100px]"
+                      >
+                        <p className="text-xs font-semibold text-amber-400">
+                          {entry.position === 1 ? "🥇 1st" : entry.position === 2 ? "🥈 2nd" : "🥉 3rd"}
+                        </p>
+                        <p className="text-sm font-semibold text-white truncate max-w-[140px]">{getWinnerName(entry)}</p>
+                        <p className="text-xs text-emerald-300 font-bold">{entry.score} pts</p>
+                      </div>
+                    ))}
+                    {(result.penalties?.length ?? 0) > 0 && (
+                      <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-center">
+                        <p className="text-xs text-red-200/90 font-bold">Penalty</p>
+                        <p className="text-sm font-semibold text-red-300">
+                          -{getPenaltyTotal(result)} pts
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column: Score & Actions */}
+                  <div className="text-center w-full sm:w-auto">
+                    <p className="text-2xl font-bold text-emerald-300">{totalScore}</p>
+                    <p className="text-xs text-white/50 uppercase tracking-wider">Total Pts</p>
+                  </div>
+
+                  <div className="text-sm text-white/70 w-full sm:w-auto text-right">
+                    <p className="flex items-center justify-end gap-1 text-xs">
+                      <Calendar className="h-3 w-3 text-white/50" />
+                      {new Date(result.submitted_at).toLocaleDateString()}
+                    </p>
+                    <p className="text-xs text-white/40 mt-0.5">
+                      {new Date(result.submitted_at).toLocaleTimeString()}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 w-full xl:ml-auto xl:w-auto xl:justify-end">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="gap-2 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/30 border border-cyan-500/40"
+                      onClick={() => setViewResult(result)}
+                    >
+                      <Eye className="h-4 w-4" />
+                      View Details
+                    </Button>
+
+                    <Link href={`/admin/${isPending ? "pending" : "approved"}-results/${result.id}/edit`}>
+                      <Button type="button" variant="ghost" size="sm" className="gap-2 border border-white/15 bg-white/5 hover:bg-white/10">
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                      </Button>
+                    </Link>
+
+                    {isPending && approveAction && (
+                      <form action={approveAction}>
+                        <input type="hidden" name="id" value={result.id} />
+                        <Button type="submit" variant="secondary" size="sm" className="gap-2 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40">
+                          <CheckCircle2 className="h-4 w-4" />
+                          Approve
+                        </Button>
+                      </form>
+                    )}
+
+                    {isPending && rejectAction && (
+                      <form action={rejectAction}>
+                        <input type="hidden" name="id" value={result.id} />
+                        <Button type="submit" variant="destructive" size="sm" className="gap-2">
+                          <Trash2 className="h-4 w-4" />
+                          Reject
+                        </Button>
+                      </form>
+                    )}
+
+                    {!isPending && (
+                      <form action={deleteAction}>
+                        <input type="hidden" name="id" value={result.id} />
+                        <Button type="submit" variant="destructive" size="sm" className="gap-2">
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </Button>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
 
-      <div className="grid gap-3 md:grid-cols-4">
-        <div className="relative z-20 md:col-span-2 flex items-center rounded-2xl border border-white/10 bg-white/5 px-4 transition-all duration-200 hover:border-white/20 focus-within:border-fuchsia-400/50 focus-within:ring-2 focus-within:ring-fuchsia-400/30 focus-within:bg-white/10">
-          <Search className="mr-2 h-4 w-4 text-white/50 shrink-0" />
-          <Input
-            type="text"
-            placeholder="Search by program, jury, or ID..."
-            className="border-none bg-transparent px-0 placeholder:text-white/40"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-          />
-        </div>
-        <SearchSelect
-          name="program_filter"
-          options={programOptions}
-          value={programFilter}
-          onValueChange={setProgramFilter}
-          placeholder="Filter by program"
-        />
-        <SearchSelect
-          name="jury_filter"
-          options={juryOptions}
-          value={juryFilter}
-          onValueChange={setJuryFilter}
-          placeholder="Filter by jury"
-        />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-xs uppercase tracking-widest text-white/50">Quick sort</span>
-        <div className="flex flex-wrap gap-2">
-          {[
-            { label: "Latest First", value: "latest" },
-            { label: "Program A-Z", value: "program" },
-            { label: "Jury A-Z", value: "jury" },
-            { label: "Highest Score", value: "score" },
-          ].map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => setSort(option.value as SortOption)}
-              className={`rounded-full px-4 py-1 text-xs font-semibold transition ${sort === option.value
-                ? "bg-emerald-500/20 text-emerald-300"
-                : "border border-white/10 text-white/60 hover:text-white"
-                }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        <div className="ml-auto flex items-center gap-4 text-sm text-white/60">
-          <SearchSelect
-            name="page_size"
-            className="w-32"
-            options={pageSizeOptions}
-            value={String(pageSize)}
-            onValueChange={(value) => {
-              setPageSize(Number(value));
-              setPage(1);
-            }}
-            placeholder="Page size"
-          />
-          <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-          {sortedResults.length} results
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <div className="hidden items-center gap-4 text-xs uppercase tracking-widest text-white/50 lg:flex">
-          <span className="flex-1">Program & Jury</span>
-          <span>Winners</span>
-          <span>Score</span>
-          <span>Date</span>
-          <span>Actions</span>
-        </div>
-
-        {visibleResults.map((result) => {
-          const program = programMap.get(result.program_id);
-          const jury = juryMap.get(result.jury_id);
-          const totalScore = getTotalScore(result);
-
-          return (
-            <div
-              key={result.id}
-              className="rounded-2xl border border-white/10 bg-linear-to-br from-slate-900/70 via-slate-900/40 to-slate-800/40 px-4 py-4 shadow-[0_15px_60px_rgba(15,23,42,0.45)] transition hover:border-fuchsia-400/40"
-            >
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-center">
-                <div className="w-full xl:flex-1">
-                  <p className="text-sm text-white/40">#{result.id.slice(0, 8)}</p>
-                  <p className="text-lg font-semibold text-white">{program?.name ?? "Unknown Program"}</p>
-                  <p className="text-xs text-white/60 flex items-center gap-1 mt-1">
-                    <User className="h-3 w-3" />
-                    {jury?.name ?? "Unknown Jury"}
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2 w-full sm:flex-row sm:flex-wrap sm:gap-3 xl:max-w-md">
-              {result.entries.map((entry, index) => (
-                <div
-                  key={entry.student_id || entry.team_id || `${entry.position}-${index}`}
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center"
-                >
-                      <p className="text-xs text-white/50">
-                        {entry.position === 1 ? "1st" : entry.position === 2 ? "2nd" : "3rd"}
-                      </p>
-                      <p className="text-sm font-semibold text-white">{getWinnerName(entry)}</p>
-                      <p className="text-xs text-emerald-300">{entry.score} pts</p>
-                    </div>
-                  ))}
-                  {(result.penalties?.length ?? 0) > 0 && (
-                    <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-center">
-                      <p className="text-xs text-red-200/90">Penalty</p>
-                      <p className="text-sm font-semibold text-white">
-                        -
-                        {getPenaltyTotal(result)}
-                        {" pts"}
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <div className="text-center w-full sm:w-auto">
-                  <p className="text-lg font-bold text-emerald-300">{totalScore}</p>
-                  <p className="text-xs text-white/50">Total</p>
-                </div>
-                <div className="text-sm text-white/70 w-full sm:w-auto">
-                  <p className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(result.submitted_at).toLocaleDateString()}
-                  </p>
-                  <p className="text-xs text-white/50 mt-1">
-                    {new Date(result.submitted_at).toLocaleTimeString()}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2 w-full xl:ml-auto xl:w-auto xl:justify-end">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => setViewResult(result)}
-                  >
-                    <Eye className="h-4 w-4" />
-                    View
-                  </Button>
-                  <Link href={`/admin/${isPending ? "pending" : "approved"}-results/${result.id}/edit`}>
-                    <Button type="button" variant="ghost" size="sm" className="gap-2 border border-white/15 bg-white/5">
-                      <Pencil className="h-4 w-4" />
-                      Edit
-                    </Button>
-                  </Link>
-                  {isPending && approveAction && (
-                    <form action={approveAction}>
-                      <input type="hidden" name="id" value={result.id} />
-                      <Button type="submit" variant="secondary" size="sm" className="gap-2">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Approve
-                      </Button>
-                    </form>
-                  )}
-                  {isPending && rejectAction && (
-                    <form action={rejectAction}>
-                      <input type="hidden" name="id" value={result.id} />
-                      <Button type="submit" variant="danger" size="sm" className="gap-2">
-                        <Trash2 className="h-4 w-4" />
-                        Reject
-                      </Button>
-                    </form>
-                  )}
-                  {!isPending && (
-                    <form action={deleteAction}>
-                      <input type="hidden" name="id" value={result.id} />
-                      <Button type="submit" variant="danger" size="sm" className="gap-2">
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </Button>
-                    </form>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {sortedResults.length === 0 && (
-        <div className="py-12 text-center">
-          <Award className="h-12 w-12 text-white/20 mx-auto mb-4" />
-          <p className="text-white/60">No results found matching your filters.</p>
-        </div>
-      )}
-
+      {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="text-sm text-white/60">
-            Showing {showingFrom} to {showingTo} of {sortedResults.length} results
-          </p>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={page === 1}
-              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-            >
-              Previous
-            </Button>
-            <div className="flex items-center gap-2">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (page <= 3) {
-                  pageNum = i + 1;
-                } else if (page >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = page - 2 + i;
-                }
-                return (
-                  <button
-                    key={pageNum}
-                    type="button"
-                    onClick={() => setPage(pageNum)}
-                    className={`w-8 h-8 rounded-lg text-sm transition ${page === pageNum
-                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                      : "border border-white/10 text-white/60 hover:text-white hover:border-white/20"
-                      }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={page === totalPages}
-              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-            >
-              Next
-            </Button>
-          </div>
+        <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Previous
+          </Button>
+          <span className="text-xs text-white/60">
+            Page {page} of {totalPages}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Next
+          </Button>
         </div>
       )}
 
-      {/* View Modal */}
+      {/* View Result Modal (Eye Icon Click) */}
       {viewResult && (
         <Modal
           open={!!viewResult}
-          title={`Result Details - ${programMap.get(viewResult.program_id)?.name ?? "Unknown"}`}
+          title={`Result Details • ${programMap.get(viewResult.program_id)?.name ?? "Program"}`}
           onClose={() => setViewResult(null)}
         >
-          <div className="space-y-4">
-            <div className="grid gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
-              <p className="text-sm text-white/60">Program</p>
-              <p className="font-semibold text-white">
-                {programMap.get(viewResult.program_id)?.name ?? "Unknown"}
-              </p>
-              <p className="text-sm text-white/60">Jury</p>
-              <p className="font-semibold text-white">
-                {juryMap.get(viewResult.jury_id)?.name ?? "Unknown"}
-              </p>
-              <p className="text-sm text-white/60">Submitted</p>
-              <p className="font-semibold text-white">
-                {new Date(viewResult.submitted_at).toLocaleString()}
-              </p>
-              <p className="text-sm text-white/60">Total Score</p>
-              <p className="text-2xl font-bold text-emerald-300">{getTotalScore(viewResult)}</p>
+          <div className="space-y-5">
+            {/* Overview Card */}
+            <div className="grid gap-3 rounded-2xl border border-white/10 bg-slate-900/80 p-5">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div>
+                  <p className="text-xs text-white/50 uppercase tracking-wider font-semibold">Program Name</p>
+                  <p className="text-xl font-bold text-white mt-0.5">
+                    {programMap.get(viewResult.program_id)?.name ?? "Unknown"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const gender = getResultGender(viewResult);
+                    const prog = programMap.get(viewResult.program_id);
+                    return (
+                      <>
+                        <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border ${
+                          gender === "BOYS" 
+                            ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" 
+                            : gender === "GIRLS" 
+                            ? "bg-pink-500/20 text-pink-300 border-pink-500/40" 
+                            : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                        }`}>
+                          {gender === "BOYS" ? "👦 BOYS" : gender === "GIRLS" ? "👧 GIRLS" : "👥 MIXED"}
+                        </span>
+                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 uppercase">
+                          🏷️ {prog?.category || "GENERAL"}
+                        </span>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-2 text-sm">
+                <div>
+                  <p className="text-xs text-white/50">Evaluated By Jury</p>
+                  <p className="font-semibold text-white mt-0.5">
+                    {juryMap.get(viewResult.jury_id)?.name ?? "Admin"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-white/50">Submitted Time</p>
+                  <p className="font-semibold text-white mt-0.5">
+                    {new Date(viewResult.submitted_at).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-white/50">Event Section</p>
+                  <p className="font-semibold text-emerald-400 capitalize mt-0.5">
+                    {programMap.get(viewResult.program_id)?.section || "single"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-white/50">Total Awarded Points</p>
+                  <p className="text-xl font-bold text-emerald-300 mt-0.5">{getTotalScore(viewResult)} pts</p>
+                </div>
+              </div>
             </div>
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-white">Winners</p>
+
+            {/* Winners & Team Members Breakdown */}
+            <div className="space-y-4">
+              <p className="text-base font-bold text-white flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-400" />
+                Winner Placements & Team Members
+              </p>
+
               {viewResult.entries.map((entry, index) => {
                 const winnerName = getWinnerName(entry);
                 const student = entry.student_id ? studentMap.get(entry.student_id) : undefined;
-                const team = entry.team_id ? teamMap.get(entry.team_id) : undefined;
+                const teamId = entry.team_id || student?.team_id;
+                const team = teamId ? teamMap.get(teamId) : undefined;
+
+                // Find team members for this team/program
+                const programRegs = registrations.filter(
+                  (r) => r.programId === viewResult.program_id && (r.teamId === teamId || r.studentId === student?.id)
+                );
+                
+                // All members of team
+                const teamMembers = students.filter((s) => s.team_id === teamId);
+
                 return (
                   <div
                     key={entry.student_id || entry.team_id || `${entry.position}-${index}`}
-                    className="rounded-xl border border-white/10 bg-white/5 p-4"
+                    className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 space-y-3"
                   >
-                    <p className="text-sm uppercase text-white/50">
-                      {entry.position === 1 ? "1st Place" : entry.position === 2 ? "2nd Place" : "3rd Place"}
-                    </p>
-                    <p className="text-lg font-semibold text-white mt-1">{winnerName}</p>
-                    {student && (
-                      <p className="text-xs text-white/60 mt-1">Chest #{student.chest_no}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge tone={entry.position === 1 ? "amber" : entry.position === 2 ? "cyan" : "pink"}>
+                          {entry.position === 1 ? "🥇 1st Place" : entry.position === 2 ? "🥈 2nd Place" : "🥉 3rd Place"}
+                        </Badge>
+                        {entry.grade && entry.grade !== "none" && (
+                          <Badge tone="emerald">Grade {entry.grade}</Badge>
+                        )}
+                      </div>
+                      <span className="text-base font-bold text-emerald-300">{entry.score} pts</span>
+                    </div>
+
+                    <div>
+                      <p className="text-lg font-bold text-white">{winnerName}</p>
+                      {student && (
+                        <p className="text-xs text-white/60 mt-0.5">
+                          Chest #{student.chest_no} · Category: {student.category} · Team: <span className="text-cyan-300 font-semibold">{team?.name}</span>
+                        </p>
+                      )}
+                      {!student && team && (
+                        <p className="text-xs text-cyan-300 font-semibold mt-0.5">
+                          Team: {team.name} {team.leader ? `(Leader: ${team.leader})` : ""}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* TEAM MEMBERS BREAKDOWN */}
+                    {team && (
+                      <div className="rounded-xl border border-white/10 bg-white/5 p-3 mt-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5" />
+                            {team.name} Team Members ({teamMembers.length})
+                          </p>
+                          {programRegs.length > 0 && (
+                            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30 font-medium">
+                              {programRegs.length} Registered for this event
+                            </span>
+                          )}
+                        </div>
+
+                        {teamMembers.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                            {teamMembers.map((member) => {
+                              const isParticipant = programRegs.some((r) => r.studentId === member.id);
+                              return (
+                                <div
+                                  key={member.id}
+                                  className={`rounded-lg p-2 text-xs border ${
+                                    isParticipant
+                                      ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-100"
+                                      : "bg-white/5 border-white/5 text-white/80"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <p className="font-semibold truncate">{member.name}</p>
+                                    <span className="text-[10px] opacity-75 font-mono">#{member.chest_no}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[10px] opacity-60 mt-1">
+                                    <span>{member.category}</span>
+                                    {isParticipant && <span className="text-cyan-300 font-bold">Event Participant</span>}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-white/40 italic">No registered team members found.</p>
+                        )}
+                      </div>
                     )}
-                    {entry.grade && entry.grade !== "none" && (
-                      <p className="text-xs text-white/60 mt-1">Grade: {entry.grade}</p>
-                    )}
-                    <p className="text-sm text-emerald-300 mt-2">Score: {entry.score}</p>
                   </div>
                 );
               })}
+
+              {/* Penalties inside modal */}
               {(viewResult.penalties?.length ?? 0) > 0 && (
-                <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-4 space-y-2">
-                  <p className="text-sm font-semibold text-red-200">Minus points</p>
+                <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 space-y-2">
+                  <p className="text-sm font-bold text-red-200">No-Show Deductions / Penalties</p>
                   {viewResult.penalties?.map((penalty, index) => {
                     const student = penalty.student_id ? studentMap.get(penalty.student_id) : undefined;
                     const team = penalty.team_id ? teamMap.get(penalty.team_id) : undefined;
                     return (
                       <div key={`${penalty.team_id ?? penalty.student_id ?? index}`} className="text-sm text-white/80">
-                        <p className="font-semibold">
+                        <p className="font-semibold text-red-300">
                           {student?.name ?? team?.name ?? "Unknown"} · -{penalty.points} pts
                         </p>
                         {student && (
                           <p className="text-xs text-white/50">
                             Chest #{student.chest_no} · Team {teamMap.get(student.team_id)?.name ?? "Unknown"}
                           </p>
-                        )}
-                        {!student && team && (
-                          <p className="text-xs text-white/50">Team ID: {team.id}</p>
                         )}
                       </div>
                     );
@@ -556,4 +610,3 @@ export const ResultManager = React.memo(function ResultManager({
     </div>
   );
 });
-

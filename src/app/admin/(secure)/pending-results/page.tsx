@@ -6,6 +6,7 @@ import {
   getStudents,
   getTeams,
 } from "@/lib/data";
+import { getProgramRegistrations } from "@/lib/team-data";
 import { approveResult, rejectResult } from "@/lib/result-service";
 import { revalidatePath } from "next/cache";
 import { redirectWithToast } from "@/lib/actions";
@@ -43,12 +44,13 @@ async function rejectResultAction(formData: FormData) {
 }
 
 export default async function PendingResultsPage() {
-  const [pending, programs, juries, students, teams] = await Promise.all([
+  const [pending, programs, juries, students, teams, registrations] = await Promise.all([
     getPendingResults(),
     getPrograms(),
     getJuries(),
     getStudents(),
     getTeams(),
+    getProgramRegistrations(),
   ]);
 
   return (
@@ -58,6 +60,7 @@ export default async function PendingResultsPage() {
       juries={juries}
       students={students}
       teams={teams}
+      registrations={registrations}
       approveAction={approveResultAction}
       rejectAction={rejectResultAction}
     />

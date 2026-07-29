@@ -6,6 +6,7 @@ import {
   getStudents,
   getTeams,
 } from "@/lib/data";
+import { getProgramRegistrations } from "@/lib/team-data";
 import { deleteApprovedResult } from "@/lib/result-service";
 import { revalidatePath } from "next/cache";
 import { redirectWithToast } from "@/lib/actions";
@@ -27,12 +28,13 @@ async function deleteApprovedResultAction(formData: FormData) {
 }
 
 export default async function ApprovedResultsAdminPage() {
-  const [results, programs, students, teams, juries] = await Promise.all([
+  const [results, programs, students, teams, juries, registrations] = await Promise.all([
     getApprovedResults(),
     getPrograms(),
     getStudents(),
     getTeams(),
     getJuries(),
+    getProgramRegistrations(),
   ]);
 
   return (
@@ -43,6 +45,7 @@ export default async function ApprovedResultsAdminPage() {
         juries={juries}
         students={students}
         teams={teams}
+        registrations={registrations}
         deleteAction={deleteApprovedResultAction}
         isPending={false}
       />

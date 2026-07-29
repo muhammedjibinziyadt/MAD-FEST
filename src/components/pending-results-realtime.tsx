@@ -12,6 +12,7 @@ interface PendingResultsRealtimeProps {
   juries: Jury[];
   students: Student[];
   teams: Team[];
+  registrations?: import("@/lib/types").ProgramRegistration[];
   approveAction: (formData: FormData) => Promise<void>;
   rejectAction: (formData: FormData) => Promise<void>;
 }
@@ -22,6 +23,7 @@ export function PendingResultsRealtime({
   juries,
   students,
   teams,
+  registrations,
   approveAction,
   rejectAction,
 }: PendingResultsRealtimeProps) {
@@ -39,6 +41,7 @@ export function PendingResultsRealtime({
         juries={juries}
         students={students}
         teams={teams}
+        registrations={registrations}
         deleteAction={rejectAction}
         approveAction={approveAction}
         rejectAction={rejectAction}
