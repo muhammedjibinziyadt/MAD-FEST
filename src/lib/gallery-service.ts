@@ -69,7 +69,7 @@ export async function createGalleryItem(input: {
 
 export async function deleteGalleryItem(id: string): Promise<void> {
   await connectDB();
-  const record = await GalleryModel.findOne({ id }).lean();
+  const record = (await GalleryModel.findOne({ id }).lean()) as any;
   if (record) {
     await deleteGalleryFile(record.imageUrl);
     await GalleryModel.deleteOne({ id });
