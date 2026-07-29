@@ -3,9 +3,6 @@ import withPWA from "@ducanh2912/next-pwa";
 
 const nextConfig = {
   reactStrictMode: true,
-  serverActions: {
-    bodySizeLimit: "50mb",
-  },
   experimental: {
     serverActions: {
       bodySizeLimit: "50mb",
