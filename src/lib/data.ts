@@ -22,6 +22,7 @@ import {
   StudentModel,
   TeamModel,
 } from "./models";
+import { getCached, setCached, clearCache } from "./data-cache";
 
 let seedPromise: Promise<void> | null = null;
 
@@ -98,35 +99,51 @@ function normalize<T>(docs: T[]): T[] {
 }
 
 export async function getTeams(): Promise<Team[]> {
+  const cached = getCached<Team[]>("teams");
+  if (cached) return cached;
+
   await ensureSeedData();
   const teams = await TeamModel.find().lean<Team[]>();
   const normalized = normalize(teams);
   // SECURITY: Strip passwords from output
-  return normalized.map(t => {
+  const processed = normalized.map(t => {
     const { portal_password, ...rest } = t;
     return { ...rest, portal_password: "" } as Team;
   });
+  return setCached("teams", processed);
 }
 
 export async function getLiveScores(): Promise<LiveScore[]> {
+  const cached = getCached<LiveScore[]>("liveScores");
+  if (cached) return cached;
+
   await ensureSeedData();
   const scores = await LiveScoreModel.find().lean<LiveScore[]>();
-  return normalize(scores);
+  return setCached("liveScores", normalize(scores));
 }
 
 export async function getStudents(): Promise<Student[]> {
+  const cached = getCached<Student[]>("students");
+  if (cached) return cached;
+
   await ensureSeedData();
   const students = await StudentModel.find().lean<Student[]>();
-  return normalize(students);
+  return setCached("students", normalize(students));
 }
 
 export async function getPrograms(): Promise<Program[]> {
+  const cached = getCached<Program[]>("programs");
+  if (cached) return cached;
+
   await ensureSeedData();
   const programs = await ProgramModel.find().lean<Program[]>();
-  return normalize(programs);
+  return setCached("programs", normalize(programs));
 }
 
 export async function getJuries(): Promise<Jury[]> {
+  const cached = getCached<Jury[]>("juries");
+  if (cached) return cached;
+
   await ensureSeedData();
   const juries = await JuryModel.find().lean<Jury[]>();
   const normalized = normalize(juries);
@@ -151,25 +168,34 @@ export async function getJuries(): Promise<Jury[]> {
     })
   );
 
-  return juriesWithAvatars;
+  return setCached("juries", juriesWithAvatars);
 }
 
 export async function getAssignments(): Promise<AssignedProgram[]> {
+  const cached = getCached<AssignedProgram[]>("assignments");
+  if (cached) return cached;
+
   await ensureSeedData();
   const assignments = await AssignedProgramModel.find().lean<AssignedProgram[]>();
-  return normalize(assignments);
+  return setCached("assignments", normalize(assignments));
 }
 
 export async function getPendingResults(): Promise<ResultRecord[]> {
+  const cached = getCached<ResultRecord[]>("pendingResults");
+  if (cached) return cached;
+
   await ensureSeedData();
   const results = await PendingResultModel.find().lean<ResultRecord[]>();
-  return normalize(results);
+  return setCached("pendingResults", normalize(results));
 }
 
 export async function getApprovedResults(): Promise<ResultRecord[]> {
+  const cached = getCached<ResultRecord[]>("approvedResults");
+  if (cached) return cached;
+
   await ensureSeedData();
   const results = await ApprovedResultModel.find().lean<ResultRecord[]>();
-  return normalize(results);
+  return setCached("approvedResults", normalize(results));
 }
 
 /**
@@ -202,6 +228,7 @@ export async function getApprovedResultById(
 export async function createProgram(input: Omit<Program, "id">): Promise<Program> {
   await connectDB();
   const created = await ProgramModel.create({ ...input, id: randomUUID() });
+  clearCache("programs");
   return JSON.parse(JSON.stringify(created)) as Program;
 }
 
@@ -211,11 +238,13 @@ export async function updateProgramById(
 ) {
   await connectDB();
   await ProgramModel.updateOne({ id }, data);
+  clearCache("programs");
 }
 
 export async function deleteProgramById(id: string) {
   await connectDB();
   await ProgramModel.deleteOne({ id });
+  clearCache("programs");
 }
 
 export async function createStudent(input: Omit<Student, "id" | "total_points">) {
@@ -241,10 +270,12 @@ export async function createStudent(input: Omit<Student, "id" | "total_points">)
       id: studentId,
       total_points: 0,
     });
+    clearCache("students");
 
-    // Emit real-time event
-    const { emitStudentCreated } = await import("./pusher");
-    await emitStudentCreated(studentId, input.team_id);
+    // Emit real-time event (non-blocking)
+    import("./pusher")
+      .then(({ emitStudentCreated }) => emitStudentCreated(studentId, input.team_id))
+      .catch((err) => console.error("Pusher error:", err));
   } catch (error: any) {
     // Handle MongoDB duplicate key error (code 11000)
     if (error.code === 11000) {
@@ -289,11 +320,13 @@ export async function updateStudentById(
     }
 
     await StudentModel.updateOne({ id }, data);
+    clearCache("students");
 
-    // Emit real-time event
+    // Emit real-time event (non-blocking)
     if (teamId) {
-      const { emitStudentUpdated } = await import("./pusher");
-      await emitStudentUpdated(id, teamId);
+      import("./pusher")
+        .then(({ emitStudentUpdated }) => emitStudentUpdated(id, teamId))
+        .catch((err) => console.error("Pusher error:", err));
     }
   } catch (error: any) {
     // Handle MongoDB duplicate key error (code 11000)
@@ -312,11 +345,13 @@ export async function deleteStudentById(id: string) {
     await deleteFile(student.avatar);
   }
   await StudentModel.deleteOne({ id });
+  clearCache("students");
 
-  // Emit real-time event
+  // Emit real-time event (non-blocking)
   if (student?.team_id) {
-    const { emitStudentDeleted } = await import("./pusher");
-    await emitStudentDeleted(id, student.team_id);
+    import("./pusher")
+      .then(({ emitStudentDeleted }) => emitStudentDeleted(id, student.team_id))
+      .catch((err) => console.error("Pusher error:", err));
   }
 }
 
@@ -347,6 +382,7 @@ export async function createJury(input: Omit<Jury, "id">) {
     password: hashedPassword,
     avatar, // Avatar is set once at creation and never changes
   });
+  clearCache("juries");
 }
 
 export async function updateJuryById(id: string, data: Partial<Omit<Jury, "id">>) {
@@ -360,11 +396,13 @@ export async function updateJuryById(id: string, data: Partial<Omit<Jury, "id">>
   }
 
   await JuryModel.updateOne({ id }, updatePayload);
+  clearCache("juries");
 }
 
 export async function deleteJuryById(id: string) {
   await connectDB();
   await JuryModel.deleteOne({ id });
+  clearCache("juries");
 }
 
 export async function getOrCreateAdminJury(): Promise<Jury> {
@@ -422,11 +460,13 @@ export async function assignProgramToJury(programId: string, juryId: string) {
       { program_id: programId, jury_id: juryId, status: "pending" },
       { upsert: true },
     );
+    clearCache("assignments");
 
-    // Emit real-time event only if assignment was newly created
+    // Emit real-time event only if assignment was newly created (non-blocking)
     if (!existing) {
-      const { emitAssignmentCreated } = await import("./pusher");
-      await emitAssignmentCreated(programId, juryId);
+      import("./pusher")
+        .then(({ emitAssignmentCreated }) => emitAssignmentCreated(programId, juryId))
+        .catch((err) => console.error("Pusher error:", err));
     }
   } catch (error: any) {
     // Handle MongoDB duplicate key error (code 11000) for program_id + jury_id unique index
@@ -444,15 +484,18 @@ export async function updateAssignmentStatus(
 ) {
   await connectDB();
   await AssignedProgramModel.updateOne({ program_id: programId, jury_id: juryId }, { status });
+  clearCache("assignments");
 }
 
 export async function deleteAssignment(programId: string, juryId: string) {
   await connectDB();
   await AssignedProgramModel.deleteOne({ program_id: programId, jury_id: juryId });
+  clearCache("assignments");
 
-  // Emit real-time event
-  const { emitAssignmentDeleted } = await import("./pusher");
-  await emitAssignmentDeleted(programId, juryId);
+  // Emit real-time event (non-blocking)
+  import("./pusher")
+    .then(({ emitAssignmentDeleted }) => emitAssignmentDeleted(programId, juryId))
+    .catch((err) => console.error("Pusher error:", err));
 }
 
 const CATEGORY_SCORES: Record<
@@ -523,6 +566,8 @@ export async function updateLiveScore(teamId: string, delta: number) {
     { upsert: true },
   );
   await updateTeamTotals(teamId, delta);
+  clearCache("liveScores");
+  clearCache("teams");
 }
 
 export async function updateStudentScore(studentId: string, delta: number) {
@@ -532,6 +577,7 @@ export async function updateStudentScore(studentId: string, delta: number) {
     { $inc: { total_points: delta } },
     { upsert: false },
   );
+  clearCache("students");
 }
 
 async function updateTeamTotals(teamId: string, delta: number) {
@@ -546,6 +592,9 @@ export async function resetLiveScores() {
     TeamModel.updateMany({}, { $set: { total_points: 0 } }),
     StudentModel.updateMany({}, { $set: { total_points: 0 } }),
   ]);
+  clearCache("liveScores");
+  clearCache("teams");
+  clearCache("students");
 }
 
 const defaultTeams: Team[] = [];

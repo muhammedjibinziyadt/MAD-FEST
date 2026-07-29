@@ -17,6 +17,8 @@ import {
   TeamModel,
 } from "./models";
 import { connectDB } from "./db";
+import { getCached, setCached, clearCache } from "./data-cache";
+import { getTeams, getStudents, getPrograms } from "./data";
 
 function sanitizeColor(color?: string) {
   if (!color) return "#0ea5e9";
@@ -24,8 +26,7 @@ function sanitizeColor(color?: string) {
 }
 
 export async function getPortalTeams(): Promise<PortalTeam[]> {
-  await connectDB();
-  const teams = await TeamModel.find().lean();
+  const teams = await getTeams();
   return teams.map((team) => ({
     id: team.id,
     teamName: team.name,
@@ -48,10 +49,6 @@ export async function savePortalTeam(team: PortalTeam) {
 
   // Only update password if provided and not empty
   if (team.password && team.password.trim() !== "") {
-    // If it looks like a bcrypt hash, assume it's already hashed (e.g. from seed or re-save)
-    // But usually we just re-hash if it's being saved from UI.
-    // To be safe, if the UI sends a new password, we hash it.
-    // If the UI sends the 'placeholder' (empty), we skip this block.
     if (!team.password.startsWith("$2")) {
       updateData.portal_password = await hash(team.password, 10);
     }
@@ -70,6 +67,7 @@ export async function savePortalTeam(team: PortalTeam) {
     },
     { upsert: true },
   );
+  clearCache("teams");
 }
 
 export async function deletePortalTeam(teamId: string) {
@@ -77,13 +75,15 @@ export async function deletePortalTeam(teamId: string) {
   await TeamModel.deleteOne({ id: teamId });
   await StudentModel.deleteMany({ team_id: teamId });
   await ProgramRegistrationModel.deleteMany({ teamId });
+  clearCache("teams");
+  clearCache("students");
+  clearCache("registrations");
 }
 
 export async function getPortalStudents(): Promise<PortalStudent[]> {
-  await connectDB();
   const [students, teams] = await Promise.all([
-    StudentModel.find().lean(),
-    TeamModel.find().lean(),
+    getStudents(),
+    getTeams(),
   ]);
   const teamMap = new Map(teams.map((team) => [team.id, team.name]));
   return students.map((student) => ({
@@ -145,14 +145,18 @@ export async function upsertPortalStudent(input: {
       },
       { upsert: true },
     );
+    clearCache("students");
 
-    // Emit real-time event
-    const { emitStudentCreated, emitStudentUpdated } = await import("./pusher");
-    if (isNew) {
-      await emitStudentCreated(studentId, input.teamId);
-    } else {
-      await emitStudentUpdated(studentId, input.teamId);
-    }
+    // Emit real-time event (non-blocking)
+    import("./pusher")
+      .then(({ emitStudentCreated, emitStudentUpdated }) => {
+        if (isNew) {
+          emitStudentCreated(studentId, input.teamId);
+        } else {
+          emitStudentUpdated(studentId, input.teamId);
+        }
+      })
+      .catch((err) => console.error("Pusher error:", err));
   } catch (error: any) {
     // Handle MongoDB duplicate key error (code 11000) for chest_no unique index
     if (error.code === 11000 && error.keyPattern?.chest_no) {
@@ -171,17 +175,19 @@ export async function deletePortalStudent(studentId: string) {
   }
   await StudentModel.deleteOne({ id: studentId });
   await ProgramRegistrationModel.deleteMany({ studentId });
+  clearCache("students");
+  clearCache("registrations");
 
-  // Emit real-time event
+  // Emit real-time event (non-blocking)
   if (student?.team_id) {
-    const { emitStudentDeleted } = await import("./pusher");
-    await emitStudentDeleted(studentId, student.team_id);
+    import("./pusher")
+      .then(({ emitStudentDeleted }) => emitStudentDeleted(studentId, student.team_id))
+      .catch((err) => console.error("Pusher error:", err));
   }
 }
 
 export async function getProgramsWithLimits(): Promise<Program[]> {
-  await connectDB();
-  const programs = await ProgramModel.find().lean();
+  const programs = await getPrograms();
   const mapped = programs.map((program) => ({
     ...program,
     candidateLimit: program.candidateLimit ?? 1,
@@ -191,9 +197,12 @@ export async function getProgramsWithLimits(): Promise<Program[]> {
 }
 
 export async function getProgramRegistrations(): Promise<ProgramRegistration[]> {
+  const cached = getCached<ProgramRegistration[]>("registrations");
+  if (cached) return cached;
+
   await connectDB();
   const registrations = await ProgramRegistrationModel.find().lean();
-  return registrations.map((registration) => ({
+  const mapped = registrations.map((registration) => ({
     id: registration.id,
     programId: registration.programId,
     programName: registration.programName,
@@ -204,6 +213,7 @@ export async function getProgramRegistrations(): Promise<ProgramRegistration[]> 
     teamName: registration.teamName,
     timestamp: registration.timestamp,
   }));
+  return setCached("registrations", mapped);
 }
 
 export async function registerCandidate(entry: {
@@ -224,6 +234,7 @@ export async function registerCandidate(entry: {
 
   try {
     await ProgramRegistrationModel.create(record);
+    clearCache("registrations");
     return record;
   } catch (error: any) {
     // Handle MongoDB duplicate key error (code 11000) for programId + studentId unique index
@@ -238,31 +249,40 @@ export async function removeProgramRegistration(registrationId: string) {
   await connectDB();
   const registration = await ProgramRegistrationModel.findOne({ id: registrationId }).lean();
   await ProgramRegistrationModel.deleteOne({ id: registrationId });
+  clearCache("registrations");
 
-  // Emit real-time event
+  // Emit real-time event (non-blocking)
   if (registration) {
-    const { emitRegistrationDeleted } = await import("./pusher");
-    await emitRegistrationDeleted(registrationId, registration.programId, registration.teamId);
+    import("./pusher")
+      .then(({ emitRegistrationDeleted }) => {
+        emitRegistrationDeleted(registrationId, registration.programId, registration.teamId);
+      })
+      .catch((err) => console.error("Pusher error:", err));
   }
 }
 
 export async function removeRegistrationsByProgram(programId: string) {
   await connectDB();
   await ProgramRegistrationModel.deleteMany({ programId });
+  clearCache("registrations");
 }
 
 export async function getRegistrationSchedule(): Promise<RegistrationSchedule> {
+  const cached = getCached<RegistrationSchedule>("registrationSchedule");
+  if (cached) return cached;
+
   await connectDB();
   const doc = await RegistrationScheduleModel.findOne().lean();
   if (doc) {
-    return { startDateTime: doc.startDateTime, endDateTime: doc.endDateTime };
+    const schedule = { startDateTime: doc.startDateTime, endDateTime: doc.endDateTime };
+    return setCached("registrationSchedule", schedule);
   }
   const schedule = {
     startDateTime: new Date().toISOString(),
     endDateTime: new Date(Date.now() + 3600_000).toISOString(),
   };
   await RegistrationScheduleModel.create({ key: "global", ...schedule });
-  return schedule;
+  return setCached("registrationSchedule", schedule);
 }
 
 export async function updateRegistrationSchedule(schedule: RegistrationSchedule) {
@@ -272,6 +292,7 @@ export async function updateRegistrationSchedule(schedule: RegistrationSchedule)
     { $set: schedule, $setOnInsert: { key: "global" } },
     { upsert: true },
   );
+  clearCache("registrationSchedule");
 }
 
 export async function isRegistrationOpen(now: Date = new Date()): Promise<boolean> {
@@ -357,27 +378,34 @@ export function validateParticipationLimit(
 }
 
 export async function getReplacementRequests(teamId?: string): Promise<ReplacementRequest[]> {
-  await connectDB();
-  const query = teamId ? { teamId } : {};
-  const requests = await ReplacementRequestModel.find(query).lean().sort({ submittedAt: -1 });
-  return requests.map((request) => ({
-    id: request.id,
-    programId: request.programId,
-    programName: request.programName,
-    oldStudentId: request.oldStudentId,
-    oldStudentName: request.oldStudentName,
-    oldStudentChest: request.oldStudentChest,
-    newStudentId: request.newStudentId,
-    newStudentName: request.newStudentName,
-    newStudentChest: request.newStudentChest,
-    teamId: request.teamId,
-    teamName: request.teamName,
-    reason: request.reason,
-    status: request.status,
-    submittedAt: request.submittedAt,
-    reviewedAt: request.reviewedAt,
-    reviewedBy: request.reviewedBy,
-  }));
+  const cached = getCached<ReplacementRequest[]>("replacementRequests");
+  let requests: ReplacementRequest[];
+  if (cached) {
+    requests = cached;
+  } else {
+    await connectDB();
+    const docs = await ReplacementRequestModel.find({}).lean().sort({ submittedAt: -1 });
+    requests = docs.map((request) => ({
+      id: request.id,
+      programId: request.programId,
+      programName: request.programName,
+      oldStudentId: request.oldStudentId,
+      oldStudentName: request.oldStudentName,
+      oldStudentChest: request.oldStudentChest,
+      newStudentId: request.newStudentId,
+      newStudentName: request.newStudentName,
+      newStudentChest: request.newStudentChest,
+      teamId: request.teamId,
+      teamName: request.teamName,
+      reason: request.reason,
+      status: request.status,
+      submittedAt: request.submittedAt,
+      reviewedAt: request.reviewedAt,
+      reviewedBy: request.reviewedBy,
+    }));
+    setCached("replacementRequests", requests);
+  }
+  return teamId ? requests.filter((r) => r.teamId === teamId) : requests;
 }
 
 export async function createReplacementRequest(request: {
@@ -403,6 +431,7 @@ export async function createReplacementRequest(request: {
 
   try {
     await ReplacementRequestModel.create(record);
+    clearCache("replacementRequests");
     return record;
   } catch (error: any) {
     // Handle MongoDB duplicate key error (code 11000) for duplicate pending replacement requests
@@ -452,6 +481,8 @@ export async function approveReplacementRequest(
       },
     },
   );
+  clearCache("registrations");
+  clearCache("replacementRequests");
 }
 
 export async function rejectReplacementRequest(
@@ -469,4 +500,5 @@ export async function rejectReplacementRequest(
       },
     },
   );
+  clearCache("replacementRequests");
 }

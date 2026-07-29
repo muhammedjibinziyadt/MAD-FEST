@@ -15,6 +15,7 @@ import {
   StudentModel,
   TeamModel,
 } from "./models";
+import { clearCache } from "./data-cache";
 import type { PenaltyEntry, ResultEntry, ResultRecord } from "./types";
 
 type WinnerPayload = {
@@ -90,15 +91,19 @@ async function buildEntries(
 }
 
 async function applyEntryScores(entries: ResultEntry[], direction: 1 | -1) {
-  for (const entry of entries) {
-    const delta = entry.score * direction;
-    if (entry.student_id) {
-      await updateStudentScore(entry.student_id, delta);
-    }
-    if (entry.team_id) {
-      await updateLiveScore(entry.team_id, delta);
-    }
-  }
+  await Promise.all(
+    entries.map(async (entry) => {
+      const delta = entry.score * direction;
+      const promises: Promise<any>[] = [];
+      if (entry.student_id) {
+        promises.push(updateStudentScore(entry.student_id, delta));
+      }
+      if (entry.team_id) {
+        promises.push(updateLiveScore(entry.team_id, delta));
+      }
+      await Promise.all(promises);
+    })
+  );
 }
 
 async function buildPenaltyEntries(penalties?: PenaltyPayload[] | null) {
@@ -160,12 +165,14 @@ async function applyPenalties(
 ) {
   if (!penalties || penalties.length === 0) return;
 
-  for (const penalty of penalties) {
-    const delta = penalty.points * direction;
-    if (penalty.team_id) {
-      await updateLiveScore(penalty.team_id, -delta);
-    }
-  }
+  await Promise.all(
+    penalties.map(async (penalty) => {
+      const delta = penalty.points * direction;
+      if (penalty.team_id) {
+        await updateLiveScore(penalty.team_id, -delta);
+      }
+    })
+  );
 }
 
 export async function submitResultToPending({
@@ -224,10 +231,12 @@ export async function submitResultToPending({
   try {
     await PendingResultModel.create(record);
     await updateAssignmentStatus(program.id, jury.id, "submitted");
+    clearCache("pendingResults");
 
-    // Emit real-time event
-    const { emitResultSubmitted } = await import("./pusher");
-    await emitResultSubmitted(record.id, program.id, jury.id);
+    // Emit real-time event (non-blocking)
+    import("./pusher")
+      .then(({ emitResultSubmitted }) => emitResultSubmitted(record.id, program.id, jury.id))
+      .catch((err) => console.error("Pusher error:", err));
   } catch (error: any) {
     // Handle MongoDB duplicate key error (code 11000) for program_id unique index
     if (error.code === 11000 && error.keyPattern?.program_id) {
@@ -262,13 +271,21 @@ export async function approveResult(resultId: string) {
 
   await updateAssignmentStatus(record.program_id, record.jury_id, "completed");
 
+  // Invalidate caches
+  clearCache("pendingResults");
+  clearCache("approvedResults");
+  clearCache("liveScores");
+  clearCache("teams");
+  clearCache("students");
+
   // Create notification for all users
   const { createResultPublishedNotification } = await import("./notification-service");
   await createResultPublishedNotification(resultId, record.program_id);
 
-  // Emit real-time event
-  const { emitResultApproved } = await import("./pusher");
-  await emitResultApproved(resultId, record.program_id);
+  // Emit real-time event (non-blocking)
+  import("./pusher")
+    .then(({ emitResultApproved }) => emitResultApproved(resultId, record.program_id))
+    .catch((err) => console.error("Pusher error:", err));
 
   // Auto-evaluate predictions
   try {
@@ -292,10 +309,12 @@ export async function rejectResult(resultId: string) {
   if (!record) return;
   await PendingResultModel.deleteOne({ id: resultId });
   await updateAssignmentStatus(record.program_id, record.jury_id, "pending");
+  clearCache("pendingResults");
 
-  // Emit real-time event
-  const { emitResultRejected } = await import("./pusher");
-  await emitResultRejected(resultId, record.program_id);
+  // Emit real-time event (non-blocking)
+  import("./pusher")
+    .then(({ emitResultRejected }) => emitResultRejected(resultId, record.program_id))
+    .catch((err) => console.error("Pusher error:", err));
 
   revalidatePath("/admin/pending-results");
   revalidatePath("/jury/programs");
@@ -324,10 +343,12 @@ export async function updatePendingResultEntries(
       submitted_at: new Date().toISOString(),
     },
   );
+  clearCache("pendingResults");
 
-  // Emit real-time event for pending result update
-  const { emitResultSubmitted } = await import("./pusher");
-  await emitResultSubmitted(resultId, record.program_id, record.jury_id);
+  // Emit real-time event for pending result update (non-blocking)
+  import("./pusher")
+    .then(({ emitResultSubmitted }) => emitResultSubmitted(resultId, record.program_id, record.jury_id))
+    .catch((err) => console.error("Pusher error:", err));
 
   revalidatePath("/admin/pending-results");
 }
@@ -358,6 +379,12 @@ export async function updateApprovedResult(
   );
   await applyEntryScores(entries, 1);
   await applyPenalties(penalties, 1);
+  
+  clearCache("approvedResults");
+  clearCache("liveScores");
+  clearCache("teams");
+  clearCache("students");
+
   revalidatePath("/");
   revalidatePath("/scoreboard");
   revalidatePath("/results");
@@ -372,6 +399,12 @@ export async function deleteApprovedResult(resultId: string) {
   await applyPenalties(record.penalties, -1);
   await ApprovedResultModel.deleteOne({ id: resultId });
   await updateAssignmentStatus(record.program_id, record.jury_id, "submitted");
+
+  clearCache("approvedResults");
+  clearCache("liveScores");
+  clearCache("teams");
+  clearCache("students");
+
   revalidatePath("/");
   revalidatePath("/scoreboard");
   revalidatePath("/results");
