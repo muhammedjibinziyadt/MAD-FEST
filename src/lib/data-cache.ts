@@ -10,6 +10,7 @@ type CacheStore = {
   registrations: any[] | null;
   replacementRequests: any[] | null;
   registrationSchedule: any | null;
+  gallery: any[] | null;
 };
 
 declare global {
@@ -28,6 +29,7 @@ const cache: CacheStore = global.dataCacheStore ?? (global.dataCacheStore = {
   registrations: null,
   replacementRequests: null,
   registrationSchedule: null,
+  gallery: null,
 });
 
 export function getCached<T>(key: keyof CacheStore): T | null {

@@ -9,7 +9,7 @@ import {
   Trophy,
   BarChart3,
   Search,
-  Bot
+  Camera
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,7 +19,7 @@ const navItems = [
   { href: "/results", label: "Results", icon: Trophy },
   { href: "/scoreboard", label: "Scoreboard", icon: BarChart3 },
   { href: "/participant", label: "Find Participant", icon: Search },
-  { href: "/chatbot", label: "AI Assistant", icon: Bot },
+  { href: "/gallery", label: "Gallery", icon: Camera },
 ];
 
 export function VerticalNavSidebar() {

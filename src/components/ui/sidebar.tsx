@@ -19,6 +19,7 @@ import {
   Users,
   BarChart,
   Trophy,
+  Camera,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,7 @@ const ICONS = {
   settings: Settings,
   polls: BarChart,
   predictions: Trophy,
-
+  gallery: Camera,
 } satisfies Record<string, LucideIcon>;
 
 type IconName = keyof typeof ICONS;

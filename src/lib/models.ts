@@ -39,6 +39,7 @@ if (process.env.NODE_ENV !== "production") {
   delete models.PredictionEvent;
   delete models.Prediction;
   delete models.UserScore;
+  delete models.Gallery;
 }
 
 const TeamSchema = new Schema<Team>(
@@ -378,6 +379,19 @@ export const PredictionModel =
 export const UserScoreModel =
   (models.UserScore as Model<UserScore>) ??
   model<UserScore>("UserScore", UserScoreSchema);
+
+const GallerySchema = new Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    title: { type: String, required: true },
+    imageUrl: { type: String, required: true },
+    category: { type: String, default: "General" },
+  },
+  { timestamps: true },
+);
+
+export const GalleryModel =
+  (models.Gallery as Model<any>) ?? model("Gallery", GallerySchema);
 
 
 
