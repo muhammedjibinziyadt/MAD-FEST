@@ -327,11 +327,11 @@ export const ResultManager = React.memo(function ResultManager({
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 w-full sm:flex-row sm:flex-wrap sm:gap-3 xl:max-w-md">
-                  {result.entries.map((entry) => (
-                    <div
-                      key={entry.position}
-                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center"
-                    >
+              {result.entries.map((entry, index) => (
+                <div
+                  key={entry.student_id || entry.team_id || `${entry.position}-${index}`}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center"
+                >
                       <p className="text-xs text-white/50">
                         {entry.position === 1 ? "1st" : entry.position === 2 ? "2nd" : "3rd"}
                       </p>
@@ -502,13 +502,13 @@ export const ResultManager = React.memo(function ResultManager({
             </div>
             <div className="space-y-3">
               <p className="text-sm font-semibold text-white">Winners</p>
-              {viewResult.entries.map((entry) => {
+              {viewResult.entries.map((entry, index) => {
                 const winnerName = getWinnerName(entry);
                 const student = entry.student_id ? studentMap.get(entry.student_id) : undefined;
                 const team = entry.team_id ? teamMap.get(entry.team_id) : undefined;
                 return (
                   <div
-                    key={entry.position}
+                    key={entry.student_id || entry.team_id || `${entry.position}-${index}`}
                     className="rounded-xl border border-white/10 bg-white/5 p-4"
                   >
                     <p className="text-sm uppercase text-white/50">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -16,10 +16,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trophy, Award, AlertTriangle, Star } from "lucide-react";
+import { Trophy, Award, AlertTriangle, Star, Tag } from "lucide-react";
 import type { ParticipantProfile } from "@/lib/participant-service";
 import { QRCodeDisplay } from "./qr-code-display";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface ParticipantProfileProps {
   profile: ParticipantProfile;
@@ -34,15 +35,48 @@ const COLORS = {
   gradeC: "#F59E0B",
 };
 
-const STATUS_COLORS = {
-  completed: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800",
-  pending_result: "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800",
-  registered: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800",
-  no_result: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
-};
-
 export function ParticipantProfileDisplay({ profile }: ParticipantProfileProps) {
   const { student, team, registrations, totalPoints, stats } = profile;
+  const [programTab, setProgramTab] = useState<"all" | "won" | "lost" | "pending">("all");
+
+  // Filter registrations into Won, Unplaced (Lost), and Pending
+  const wonRegistrations = useMemo(() => {
+    return registrations.filter((reg) => {
+      if (!reg.result) return false;
+      const hasPos = reg.result.position && reg.result.position >= 1 && reg.result.position <= 3;
+      const hasGrade = reg.result.grade && reg.result.grade !== "none";
+      const hasPoints = reg.result.score > 0;
+      return hasPos || hasGrade || hasPoints;
+    });
+  }, [registrations]);
+
+  const lostRegistrations = useMemo(() => {
+    return registrations.filter((reg) => {
+      if (reg.status !== "completed") return false;
+      if (!reg.result) return true;
+      const hasPos = reg.result.position && reg.result.position >= 1 && reg.result.position <= 3;
+      const hasGrade = reg.result.grade && reg.result.grade !== "none";
+      const hasPoints = reg.result.score > 0;
+      return !hasPos && !hasGrade && !hasPoints;
+    });
+  }, [registrations]);
+
+  const pendingRegistrations = useMemo(() => {
+    return registrations.filter((reg) => reg.status === "registered" || reg.status === "pending_result");
+  }, [registrations]);
+
+  const displayedRegistrations = useMemo(() => {
+    switch (programTab) {
+      case "won":
+        return wonRegistrations;
+      case "lost":
+        return lostRegistrations;
+      case "pending":
+        return pendingRegistrations;
+      default:
+        return registrations;
+    }
+  }, [programTab, registrations, wonRegistrations, lostRegistrations, pendingRegistrations]);
 
   // Chart data for points breakdown
   const pointsChartData = useMemo(() => {
@@ -99,9 +133,17 @@ export function ParticipantProfileDisplay({ profile }: ParticipantProfileProps) 
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
             {student.name}
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 font-medium mb-4">
+          <p className="text-gray-500 dark:text-gray-400 font-medium mb-2">
             {student.chest_no} • {team.name}
           </p>
+
+          {/* Student Category Badge */}
+          <div className="mb-4">
+            <span className="inline-flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-300 px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide border border-amber-200 dark:border-amber-800 shadow-sm">
+              <Tag className="w-3.5 h-3.5" />
+              Category: {student.category || "GENERAL"}
+            </span>
+          </div>
 
           <div className="grid grid-cols-3 gap-3 w-full max-w-sm">
             <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800">
@@ -114,19 +156,19 @@ export function ParticipantProfileDisplay({ profile }: ParticipantProfileProps) 
             </div>
             <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800">
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider mb-1">Wins</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
                 {stats.wins.first + stats.wins.second + stats.wins.third}
               </p>
             </div>
           </div>
         </div>
-        <div className="flex justify-center pt-4">
-        <QRCodeDisplay chestNumber={student.chest_no} participantName={student.name} />
-      </div>
+        <div className="flex justify-center pt-4 pb-6 md:pb-0 md:pr-6">
+          <QRCodeDisplay chestNumber={student.chest_no} participantName={student.name} />
+        </div>
       </motion.div>
       
 
-      {/* Stats Grid - Mobile Optimized */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Points Chart */}
         <Card className="p-5 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 shadow-sm rounded-3xl">
@@ -199,81 +241,171 @@ export function ParticipantProfileDisplay({ profile }: ParticipantProfileProps) 
         </Card>
       </div>
 
-      {/* Programs List */}
-      <div className="space-y-3">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white px-1">Program History</h2>
+      {/* Programs Section with Won / Lost / Pending Tabs */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+            Program Results & History
+          </h2>
 
-        {registrations.length === 0 ? (
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar">
+            <button
+              onClick={() => setProgramTab("all")}
+              className={cn(
+                "px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border",
+                programTab === "all"
+                  ? "bg-[#8B4513] text-white border-[#8B4513]"
+                  : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-800 hover:bg-amber-50"
+              )}
+            >
+              All ({registrations.length})
+            </button>
+            <button
+              onClick={() => setProgramTab("won")}
+              className={cn(
+                "px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1 border",
+                programTab === "won"
+                  ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                  : "bg-white dark:bg-gray-900 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900 hover:bg-emerald-50"
+              )}
+            >
+              🏆 Won ({wonRegistrations.length})
+            </button>
+            <button
+              onClick={() => setProgramTab("lost")}
+              className={cn(
+                "px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1 border",
+                programTab === "lost"
+                  ? "bg-rose-600 text-white border-rose-600 shadow-sm"
+                  : "bg-white dark:bg-gray-900 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900 hover:bg-rose-50"
+              )}
+            >
+              ❌ Unplaced ({lostRegistrations.length})
+            </button>
+            {pendingRegistrations.length > 0 && (
+              <button
+                onClick={() => setProgramTab("pending")}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1 border",
+                  programTab === "pending"
+                    ? "bg-amber-600 text-white border-amber-600 shadow-sm"
+                    : "bg-white dark:bg-gray-900 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900 hover:bg-amber-50"
+                )}
+              >
+                ⏳ Pending ({pendingRegistrations.length})
+              </button>
+            )}
+          </div>
+        </div>
+
+        {displayedRegistrations.length === 0 ? (
           <Card className="p-8 text-center bg-white dark:bg-gray-900 border-dashed border-2 border-gray-200 dark:border-gray-800 rounded-3xl">
-            <p className="text-sm text-gray-500 dark:text-gray-400">No registrations found.</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              {programTab === "won" && "No prize-winning programs yet."}
+              {programTab === "lost" && "No unplaced programs."}
+              {programTab === "pending" && "No pending program results."}
+              {programTab === "all" && "No program registrations found."}
+            </p>
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-3">
-            {registrations.map((reg, index) => (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                key={reg.id}
-              >
-                <Card className="p-4 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 shadow-sm rounded-2xl">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-1 pr-2">
-                      {reg.program.name}
-                    </h3>
-                    <Badge className={`shrink-0 text-[10px] px-2 h-5 ${STATUS_COLORS[reg.status]} border`}>
-                      {reg.status === 'completed' ? 'Done' : reg.status.replace("_", " ")}
-                    </Badge>
-                  </div>
+            {displayedRegistrations.map((reg, index) => {
+              const isWon = reg.result && (
+                (reg.result.position && reg.result.position >= 1 && reg.result.position <= 3) ||
+                (reg.result.grade && reg.result.grade !== "none") ||
+                reg.result.score > 0
+              );
+              const isLost = reg.status === "completed" && !isWon;
 
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    <span className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-md">
-                      {reg.program.section}
-                    </span>
-                    {reg.program.category !== "none" && (
-                      <span className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-md">
-                        Cat {reg.program.category}
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  key={reg.id}
+                >
+                  <Card className={cn(
+                    "p-4 bg-white dark:bg-gray-900 border shadow-sm rounded-2xl transition-all",
+                    isWon ? "border-emerald-300 dark:border-emerald-900/50 bg-emerald-50/30" :
+                    isLost ? "border-gray-200 dark:border-gray-800 bg-gray-50/30" :
+                    "border-amber-200 dark:border-amber-900/50"
+                  )}>
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-gray-900 dark:text-white text-base">
+                          {reg.program.name}
+                        </h3>
+                      </div>
+                      
+                      {/* Status / Victory Badge */}
+                      {isWon ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                          🏆 WON PRIZE
+                        </span>
+                      ) : isLost ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 px-2.5 py-0.5 rounded-full border border-gray-200">
+                          ❌ Unplaced
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-200">
+                          ⏳ Result Pending
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      <span className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-md font-medium">
+                        Section: {reg.program.section}
                       </span>
-                    )}
-                  </div>
+                      <span className="text-[10px] bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-300 px-2 py-0.5 rounded-md font-bold uppercase">
+                        Category: {reg.program.category || student.category || "GENERAL"}
+                      </span>
+                    </div>
 
-                  {reg.result ? (
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
-                      <div className="flex items-center gap-3">
-                        {reg.result.position && (
-                          <div className="flex items-center gap-1">
-                            <Trophy className={`w-3.5 h-3.5 ${reg.result.position === 1 ? 'text-yellow-500' :
+                    {reg.result ? (
+                      <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center gap-3">
+                          {reg.result.position ? (
+                            <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-900/40">
+                              <Trophy className={`w-4 h-4 ${
+                                reg.result.position === 1 ? 'text-yellow-500' :
                                 reg.result.position === 2 ? 'text-gray-400' : 'text-amber-600'
                               }`} />
-                            <span className="font-bold text-sm text-gray-900 dark:text-white">
-                              {reg.result.position === 1 ? '1st' : reg.result.position === 2 ? '2nd' : '3rd'}
-                            </span>
-                          </div>
-                        )}
-                        {reg.result.grade && reg.result.grade !== "none" && (
-                          <div className="flex items-center gap-1">
-                            <Award className="w-3.5 h-3.5 text-green-500" />
-                            <span className="font-medium text-sm text-gray-700 dark:text-gray-300">{reg.result.grade}</span>
-                          </div>
-                        )}
-                      </div>
-                      <span className="font-bold text-sm text-purple-600 dark:text-purple-400">{reg.result.score} pts</span>
-                    </div>
-                  ) : (
-                    <div className="pt-2 border-t border-gray-100 dark:border-gray-800 text-[10px] text-gray-400 italic text-right">
-                      Result pending
-                    </div>
-                  )}
+                              <span className="font-extrabold text-sm text-gray-900 dark:text-white">
+                                {reg.result.position === 1 ? '🥇 1st Place' : reg.result.position === 2 ? '🥈 2nd Place' : '🥉 3rd Place'}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-500 italic">No Position</span>
+                          )}
 
-                  {reg.penalty && (
-                    <div className="mt-2 text-[10px] text-red-500 flex items-center gap-1 bg-red-50 dark:bg-red-900/20 p-1.5 rounded-lg">
-                      <AlertTriangle className="w-3 h-3" />
-                      <span>-{reg.penalty.points}: {reg.penalty.reason}</span>
-                    </div>
-                  )}
-                </Card>
-              </motion.div>
-            ))}
+                          {reg.result.grade && reg.result.grade !== "none" && (
+                            <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-900/40">
+                              <Award className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                              <span className="font-bold text-xs text-emerald-700 dark:text-emerald-300">Grade {reg.result.grade}</span>
+                            </div>
+                          )}
+                        </div>
+                        <span className="font-black text-base text-purple-600 dark:text-purple-400">{reg.result.score} pts</span>
+                      </div>
+                    ) : (
+                      <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs text-gray-400">
+                        <span className="italic">Result not yet published</span>
+                        <span className="font-bold">0 pts</span>
+                      </div>
+                    )}
+
+                    {reg.penalty && (
+                      <div className="mt-2 text-[10px] text-red-500 flex items-center gap-1 bg-red-50 dark:bg-red-900/20 p-1.5 rounded-lg">
+                        <AlertTriangle className="w-3 h-3" />
+                        <span>-{reg.penalty.points}: {reg.penalty.reason}</span>
+                      </div>
+                    )}
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>

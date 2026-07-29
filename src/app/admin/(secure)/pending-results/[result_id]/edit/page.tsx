@@ -19,24 +19,12 @@ interface EditPendingResultPageProps {
 }
 
 function buildInitialEntries(result: Awaited<ReturnType<typeof getPendingResultById>>) {
-  const initial: Partial<
-    Record<
-      1 | 2 | 3,
-      {
-        winnerId: string;
-        grade?: GradeType;
-      }
-    >
-  > = {};
-  result?.entries.forEach((entry) => {
-    const winnerId = entry.student_id ?? entry.team_id ?? "";
-    if (!winnerId) return;
-    initial[entry.position as 1 | 2 | 3] = {
-      winnerId,
-      grade: entry.grade,
-    };
-  });
-  return initial;
+  if (!result?.entries) return [];
+  return result.entries.map((entry) => ({
+    position: (entry.position >= 1 && entry.position <= 3 ? entry.position : 1) as 1 | 2 | 3,
+    winnerId: entry.student_id ?? entry.team_id ?? "",
+    grade: entry.grade,
+  }));
 }
 
 function buildInitialPenalties(result: Awaited<ReturnType<typeof getPendingResultById>>) {
@@ -109,18 +97,31 @@ export default async function EditPendingResultPage({
   async function updatePendingAction(formData: FormData) {
     "use server";
     try {
-      const winners = [1, 2, 3].map((position) => {
-        const value = String(formData.get(`winner_${position}`) ?? "").trim();
-        if (!value) {
-          throw new Error("All placements are required.");
+      const rowValue = String(formData.get("winner_rows") ?? "");
+      let rowIds = rowValue
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean);
+
+      if (rowIds.length === 0) {
+        rowIds = ["1", "2", "3"];
+      }
+
+      const winners: { position: 1 | 2 | 3; id: string; grade: GradeType }[] = [];
+      for (const rowId of rowIds) {
+        const value = String(formData.get(`winner_${rowId}`) ?? "").trim();
+        const posRaw = Number(formData.get(`position_${rowId}`) ?? rowId);
+        const position = (posRaw >= 1 && posRaw <= 3 ? posRaw : 1) as 1 | 2 | 3;
+        const grade = (formData.get(`grade_${rowId}`) ?? "none") as GradeType;
+
+        if (value) {
+          winners.push({ position, id: value, grade });
         }
-        const grade = String(formData.get(`grade_${position}`) ?? "none") as GradeType;
-        return {
-          position: position as 1 | 2 | 3,
-          id: value,
-          grade,
-        };
-      });
+      }
+
+      if (winners.length === 0) {
+        throw new Error("At least one placement winner is required.");
+      }
       const penaltyType = String(formData.get("penalty_type") ?? "none");
       const penaltyTarget = String(formData.get("penalty_target") ?? "").trim();
       const penaltyPointsRaw = String(formData.get("penalty_points") ?? "").trim();
@@ -164,7 +165,7 @@ export default async function EditPendingResultPage({
         registrations={registrations}
         action={updatePendingAction}
         lockProgram
-        initial={initial}
+        initialEntries={initial}
         initialPenalties={initialPenaltyList}
         submitLabel="Update Pending Result"
       />

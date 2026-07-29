@@ -11,9 +11,9 @@ import {
   Clock,
   Award,
   TrendingUp,
-  Activity
+  Activity,
 } from "lucide-react";
-import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getCurrentTeam } from "@/lib/auth";
@@ -23,18 +23,21 @@ import {
   getProgramsWithLimits,
   isRegistrationOpen
 } from "@/lib/team-data";
+import { getApprovedResults } from "@/lib/data";
 import { formatNumber } from "@/lib/utils";
+import { TeamResultsBreakdown, type TeamResultItem } from "@/components/team-results-breakdown";
 
 export default async function TeamDashboardPage() {
   const team = await getCurrentTeam();
   if (!team) {
     redirect("/team/login");
   }
-  const [students, registrations, programs, isOpen] = await Promise.all([
+  const [students, registrations, programs, isOpen, approvedResults] = await Promise.all([
     getPortalStudents(),
     getProgramRegistrations(),
     getProgramsWithLimits(),
     isRegistrationOpen(),
+    getApprovedResults(),
   ]);
   
   const teamStudents = students.filter((student) => student.teamId === team.id);
@@ -58,7 +61,100 @@ export default async function TeamDashboardPage() {
     const program = programMap.get(r.programId);
     return program?.section === "general";
   });
-  
+
+  // Process Team Results (Won, Unplaced/Lost, Pending)
+  const approvedResultMap = new Map(approvedResults.map((r) => [r.program_id, r]));
+
+  const teamResultItems: TeamResultItem[] = teamRegistrations.map((reg, idx) => {
+    const prog = programMap.get(reg.programId);
+    const approvedResult = approvedResultMap.get(reg.programId);
+    
+    let status: "won" | "lost" | "pending" = "pending";
+    let position: 1 | 2 | 3 | null = null;
+    let grade: string | undefined = undefined;
+    let score = 0;
+
+    if (approvedResult) {
+      const entry = approvedResult.entries.find(
+        (e) => e.student_id === reg.studentId || e.team_id === team.id
+      );
+
+      if (entry) {
+        score = entry.score;
+        if (entry.position >= 1 && entry.position <= 3) {
+          position = entry.position as 1 | 2 | 3;
+        }
+        if (entry.grade && entry.grade !== "none") {
+          grade = entry.grade;
+        }
+
+        const isWin = (position !== null) || (grade !== undefined) || (score > 0);
+        status = isWin ? "won" : "lost";
+      } else {
+        status = "lost";
+      }
+    } else {
+      status = "pending";
+    }
+
+    return {
+      id: reg.id || `${reg.programId}-${reg.studentId}-${idx}`,
+      registrationId: reg.id,
+      studentId: reg.studentId,
+      studentName: reg.studentName || "Team Entry",
+      studentChest: reg.studentChest || "",
+      programId: reg.programId,
+      programName: prog?.name || reg.programName || "Program",
+      category: prog?.category || "GENERAL",
+      section: prog?.section || "general",
+      status,
+      position,
+      grade,
+      score,
+    };
+  });
+
+  // Also include group results assigned directly to team.id
+  approvedResults.forEach((res) => {
+    const prog = programMap.get(res.program_id);
+    res.entries.forEach((entry, idx) => {
+      if (entry.team_id === team.id && !entry.student_id) {
+        const exists = teamResultItems.some((i) => i.programId === res.program_id && !i.studentId);
+        if (!exists) {
+          const pos = (entry.position >= 1 && entry.position <= 3) ? (entry.position as 1 | 2 | 3) : null;
+          const gr = entry.grade && entry.grade !== "none" ? entry.grade : undefined;
+          const isWin = pos !== null || gr !== undefined || entry.score > 0;
+          teamResultItems.push({
+            id: `group-${res.id}-${idx}`,
+            registrationId: `group-${res.id}`,
+            studentName: `${team.teamName} (Group Event)`,
+            studentChest: "",
+            programId: res.program_id,
+            programName: prog?.name || "Group Program",
+            category: prog?.category || "GENERAL",
+            section: prog?.section || "group",
+            status: isWin ? "won" : "lost",
+            position: pos,
+            grade: gr,
+            score: entry.score,
+          });
+        }
+      }
+    });
+  });
+
+  // Sort items: Won first, then Pending, then Unplaced, and by position/score
+  teamResultItems.sort((a, b) => {
+    const statusScore = { won: 1, pending: 2, lost: 3 };
+    if (statusScore[a.status] !== statusScore[b.status]) {
+      return statusScore[a.status] - statusScore[b.status];
+    }
+    const posA = a.position || 99;
+    const posB = b.position || 99;
+    if (posA !== posB) return posA - posB;
+    return b.score - a.score;
+  });
+
   // Get recent registrations (last 5)
   const recentRegistrations = teamRegistrations
     .slice()
@@ -181,6 +277,11 @@ export default async function TeamDashboardPage() {
               </Link>
             );
           })}
+        </div>
+
+        {/* Mobile Team Results Breakdown (Won, Unplaced, Pending) */}
+        <div>
+          <TeamResultsBreakdown items={teamResultItems} />
         </div>
 
         {/* Mobile Quick Actions */}
@@ -443,9 +544,13 @@ export default async function TeamDashboardPage() {
             </Card>
           </div>
 
-          {/* Right Column - Recent Registrations */}
-          <div className="col-span-8">
-            <Card className="border-white/10 bg-white/5 p-6 h-full">
+          {/* Right Column - Team Results Breakdown Component & Recent Registrations */}
+          <div className="col-span-8 space-y-6">
+            {/* Desktop Team Results Breakdown */}
+            <TeamResultsBreakdown items={teamResultItems} />
+
+            {/* Desktop Recent Registrations */}
+            <Card className="border-white/10 bg-white/5 p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-fuchsia-400" />

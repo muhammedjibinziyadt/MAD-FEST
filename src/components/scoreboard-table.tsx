@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Medal, ChevronRight, TrendingUp, ChevronDown, MinusCircle } from "lucide-react";
+import { Trophy, Medal, ChevronRight, ChevronDown, MinusCircle, Tag } from "lucide-react";
 import type { Team, Program, ResultRecord, ResultEntry, Student } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -141,7 +141,12 @@ function MobileScoreCard({
             <Trophy className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="font-semibold text-gray-900 text-sm">{program.name}</h4>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="font-semibold text-gray-900 text-sm">{program.name}</h4>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 uppercase">
+                {program.category || "GENERAL"}
+              </span>
+            </div>
           </div>
         </div>
         <ChevronDown className={cn("w-4 h-4 text-gray-400 transition-transform", isExpanded && "rotate-180")} />
@@ -209,9 +214,10 @@ export function ScoreboardTable({
   liveScores,
 }: ScoreboardTableProps) {
   const [activeTeam, setActiveTeam] = useState<string | null>(null);
-  const [expandedSection, setExpandedSection] = useState<string | null>("Single Programs"); // Default open one
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
   const [genderFilter, setGenderFilter] = useState<"boys" | "girls">("boys");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   const filteredTeams = useMemo(() => {
     if (genderFilter === "boys") return teams.filter(t => t.gender === "boys");
@@ -220,12 +226,41 @@ export function ScoreboardTable({
   }, [teams, genderFilter]);
 
   const teamNames = filteredTeams.map((t) => t.name);
-  const studentMap = new Map(students.map((s) => [s.id, s]));
+  const studentMap = useMemo(() => new Map(students.map((s) => [s.id, s])), [students]);
 
-  // Organize programs by section
-  const singlePrograms = programs.filter((p) => p.section === "single");
-  const groupPrograms = programs.filter((p) => p.section === "group");
-  const generalPrograms = programs.filter((p) => p.section === "general");
+  // Extract all distinct categories from programs
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>();
+    programs.forEach((p) => {
+      const cat = p.category || "GENERAL";
+      if (cat !== "none") set.add(cat);
+    });
+    return Array.from(set);
+  }, [programs]);
+
+  // Group programs by category
+  const groupedPrograms = useMemo(() => {
+    let filtered = programs;
+    if (categoryFilter !== "all") {
+      filtered = programs.filter((p) => (p.category || "GENERAL") === categoryFilter);
+    }
+
+    const categoryMap = new Map<string, Program[]>();
+    filtered.forEach((p) => {
+      const cat = p.category || "GENERAL";
+      if (!categoryMap.has(cat)) {
+        categoryMap.set(cat, []);
+      }
+      categoryMap.get(cat)!.push(p);
+    });
+
+    const result: { category: string; programs: Program[] }[] = [];
+    categoryMap.forEach((progs, cat) => {
+      result.push({ category: cat, programs: progs });
+    });
+
+    return result;
+  }, [programs, categoryFilter]);
 
   const getTotalPointsForTeam = (teamId: string): number => {
     return liveScores.get(teamId) ?? 0;
@@ -284,7 +319,7 @@ export function ScoreboardTable({
       }
       return { ...team, rank: currentRank };
     });
-  }, [filteredTeams, liveScores]); // Recalculate if scores change
+  }, [filteredTeams, liveScores]);
 
   const renderMobileView = () => (
     <div className="space-y-8 pb-10">
@@ -307,84 +342,81 @@ export function ScoreboardTable({
         </div>
       </div>
 
-      {/* Programs List */}
+      {/* Category Results List */}
       <div className="space-y-4">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider pl-1">Program Results</h2>
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider pl-1">Category Results</h2>
         <div className="space-y-3">
-          {[
-            { title: "Single Programs", programs: singlePrograms },
-            { title: "Group Programs", programs: groupPrograms },
-            { title: "General Programs", programs: generalPrograms },
-          ].map(({ title, programs: sectionPrograms }) => (
-            <div key={title} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-              <button
-                onClick={() => setExpandedSection(expandedSection === title ? null : title)}
-                className="w-full flex justify-between items-center p-4 bg-white hover:bg-gray-50/50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-1 h-6 bg-[#8B4513] rounded-full"></div>
-                  <span className="font-bold text-gray-800">{title}</span>
-                  <span className="text-xs font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{sectionPrograms.length}</span>
-                </div>
-                <ChevronRight
-                  className={cn(
-                    "w-5 h-5 text-gray-400 transition-transform duration-300",
-                    expandedSection === title ? "rotate-90" : ""
+          {groupedPrograms.map(({ category, programs: categoryPrograms }) => {
+            const isOpen = expandedCategory === category || categoryFilter !== "all";
+            return (
+              <div key={category} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                <button
+                  onClick={() => setExpandedCategory(expandedCategory === category ? null : category)}
+                  className="w-full flex justify-between items-center p-4 bg-white hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-[#8B4513] rounded-full"></div>
+                    <span className="font-bold text-gray-800 uppercase">{category} Category</span>
+                    <span className="text-xs font-medium text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full">{categoryPrograms.length}</span>
+                  </div>
+                  <ChevronRight
+                    className={cn(
+                      "w-5 h-5 text-gray-400 transition-transform duration-300",
+                      isOpen ? "rotate-90" : ""
+                    )}
+                  />
+                </button>
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: "auto" }}
+                      exit={{ height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden bg-gray-50/50"
+                    >
+                      <div className="p-3 space-y-3">
+                        {categoryPrograms.map((program) => {
+                          const programResults = results.filter((r) => r.program_id === program.id);
+                          if (programResults.length === 0) return null;
+                          return (
+                            <MobileScoreCard
+                              key={program.id}
+                              program={program}
+                              teamNames={teamNames}
+                              teams={filteredTeams}
+                              results={programResults}
+                              students={students}
+                              isExpanded={expandedProgram === program.id}
+                              onToggle={() => setExpandedProgram(expandedProgram === program.id ? null : program.id)}
+                            />
+                          );
+                        })}
+                        {categoryPrograms.every(p => results.filter(r => r.program_id === p.id).length === 0) && (
+                          <div className="text-center py-6 text-gray-400 text-sm">
+                            No results published in {category} category yet.
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
                   )}
-                />
-              </button>
-              <AnimatePresence>
-                {expandedSection === title && (
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: "auto" }}
-                    exit={{ height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden bg-gray-50/50"
-                  >
-                    <div className="p-3 space-y-3">
-                      {sectionPrograms.map((program) => {
-                        const programResults = results.filter((r) => r.program_id === program.id);
-                        if (programResults.length === 0) return null; // Or show empty state? usually only show with results
-                        return (
-                          <MobileScoreCard
-                            key={program.id}
-                            program={program}
-                            teamNames={teamNames}
-                            teams={filteredTeams}
-                            results={programResults}
-                            students={students}
-                            isExpanded={expandedProgram === program.id}
-                            onToggle={() => setExpandedProgram(expandedProgram === program.id ? null : program.id)}
-                          />
-                        );
-                      })}
-                      {sectionPrograms.every(p => results.filter(r => r.program_id === p.id).length === 0) && (
-                        <div className="text-center py-6 text-gray-400 text-sm">
-                          No results published in this section yet.
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
   );
 
   const renderDesktopView = () => {
-    const allPrograms = [...singlePrograms, ...groupPrograms, ...generalPrograms];
-
     return (
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-[#8B4513] text-white">
               <tr>
-                <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider whitespace-nowrap sticky top-0 bg-[#8B4513] z-10 w-1/4">Program</th>
+                <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider whitespace-nowrap sticky top-0 bg-[#8B4513] z-10 w-1/3">Program</th>
                 {teamNames.map((team) => (
                   <th key={team} className="px-4 py-4 text-center font-bold text-xs uppercase tracking-wider sticky top-0 bg-[#8B4513] z-10">
                     {team}
@@ -393,69 +425,93 @@ export function ScoreboardTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {allPrograms.map((program, idx) => {
-                const programResults = results.filter((r) => r.program_id === program.id);
-                return (
-                  <tr
-                    key={program.id}
-                    className={cn(
-                      "hover:bg-orange-50/30 transition-colors",
-                      idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"
-                    )}
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-1.5 rounded bg-orange-50 text-[#8B4513]">
-                          <Trophy className="w-3.5 h-3.5" />
-                        </div>
-                        <span className="font-semibold text-gray-900">{program.name}</span>
+              {groupedPrograms.map((group) => (
+                <Fragment key={group.category}>
+                  {/* Category Header Row */}
+                  <tr className="bg-amber-100/70 border-y border-amber-200/80">
+                    <td
+                      colSpan={teamNames.length + 1}
+                      className="px-6 py-2.5 font-black text-[#8B4513] text-xs uppercase tracking-wider bg-amber-100/60"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-3.5 h-3.5" />
+                        <span>{group.category} CATEGORY</span>
+                        <span className="text-[10px] font-normal text-amber-900/70 bg-amber-200/60 px-2 py-0.5 rounded-full">
+                          {group.programs.length} Programs
+                        </span>
                       </div>
                     </td>
-                    {filteredTeams.map((team) => {
-                      // Get ALL entries for this team in this program
-                      const teamEntries: Array<{ entry: ResultEntry; result: ResultRecord }> = [];
-                      programResults.forEach((result) => {
-                        result.entries.forEach((entry) => {
-                          const isTeamEntry = entry.team_id === team.id ||
-                            (entry.student_id && studentMap.get(entry.student_id)?.team_id === team.id);
-                          if (isTeamEntry) {
-                            teamEntries.push({ entry, result });
-                          }
-                        });
-                      });
-
-                      return (
-                        <td key={team.id} className="px-4 py-4 text-center align-middle">
-                          {teamEntries.length > 0 ? (
-                            <div className="flex flex-col items-center gap-1">
-                              {teamEntries.map(({ entry }, idx) => (
-                                <div key={idx} className="flex items-center justify-center gap-1.5 bg-white border border-gray-100 rounded-md px-1.5 py-0.5 shadow-sm">
-                                  <span className="font-bold text-gray-900">
-                                    {entry.score}
-                                  </span>
-                                  {entry.position <= 3 && (
-                                    <span className="text-base" role="img" aria-label="medal">
-                                      {entry.position === 1 ? "🥇" : entry.position === 2 ? "🥈" : "🥉"}
-                                    </span>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <span className="text-gray-300 text-xs font-light">—</span>
-                          )}
-                        </td>
-                      );
-                    })}
                   </tr>
-                );
-              })}
+
+                  {group.programs.map((program, idx) => {
+                    const programResults = results.filter((r) => r.program_id === program.id);
+                    return (
+                      <tr
+                        key={program.id}
+                        className={cn(
+                          "hover:bg-orange-50/30 transition-colors",
+                          idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"
+                        )}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-1.5 rounded bg-orange-50 text-[#8B4513] shrink-0">
+                              <Trophy className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-gray-900">{program.name}</span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900 uppercase">
+                                {program.category || "GENERAL"}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        {filteredTeams.map((team) => {
+                          const teamEntries: Array<{ entry: ResultEntry; result: ResultRecord }> = [];
+                          programResults.forEach((result) => {
+                            result.entries.forEach((entry) => {
+                              const isTeamEntry = entry.team_id === team.id ||
+                                (entry.student_id && studentMap.get(entry.student_id)?.team_id === team.id);
+                              if (isTeamEntry) {
+                                teamEntries.push({ entry, result });
+                              }
+                            });
+                          });
+
+                          return (
+                            <td key={team.id} className="px-4 py-4 text-center align-middle">
+                              {teamEntries.length > 0 ? (
+                                <div className="flex flex-col items-center gap-1">
+                                  {teamEntries.map(({ entry }, idx) => (
+                                    <div key={idx} className="flex items-center justify-center gap-1.5 bg-white border border-gray-100 rounded-md px-1.5 py-0.5 shadow-sm">
+                                      <span className="font-bold text-gray-900">
+                                        {entry.score}
+                                      </span>
+                                      {entry.position <= 3 && (
+                                        <span className="text-base" role="img" aria-label="medal">
+                                          {entry.position === 1 ? "🥇" : entry.position === 2 ? "🥈" : "🥉"}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-gray-300 text-xs font-light">—</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </Fragment>
+              ))}
 
               {/* Total Row */}
               <tr className="bg-[#8B4513]/5 border-t-2 border-[#8B4513]/10 font-bold text-base">
-                <td className="px-6 py-5 text-[#8B4513] uppercase tracking-wider">Total Score</td>
+                <td className="px-6 py-5 text-[#8B4513] uppercase tracking-wider font-black">Total Score</td>
                 {filteredTeams.map((team) => (
-                  <td key={team.id} className="px-4 py-5 text-center text-[#8B4513]">
+                  <td key={team.id} className="px-4 py-5 text-center text-[#8B4513] text-lg font-black">
                     {getTotalPointsForTeam(team.id)}
                   </td>
                 ))}
@@ -506,7 +562,7 @@ export function ScoreboardTable({
       </div>
 
       {/* Gender Standings Selector Tabs */}
-      <div className="flex justify-center mb-8">
+      <div className="flex justify-center mb-6">
         <div className="inline-flex p-1 bg-amber-50 rounded-2xl border border-amber-900/10 shadow-inner">
           <button
             onClick={() => setGenderFilter("boys")}
@@ -533,6 +589,37 @@ export function ScoreboardTable({
         </div>
       </div>
 
+      {/* Category Filter Pills */}
+      {availableCategories.length > 0 && (
+        <div className="flex items-center justify-start md:justify-center gap-2 mb-8 overflow-x-auto py-2 px-2 no-scrollbar">
+          <button
+            onClick={() => setCategoryFilter("all")}
+            className={cn(
+              "px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border",
+              categoryFilter === "all"
+                ? "bg-[#8B4513] text-white border-[#8B4513] shadow-sm"
+                : "bg-white text-gray-700 border-gray-200 hover:bg-amber-50"
+            )}
+          >
+            All Categories
+          </button>
+          {availableCategories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-bold transition-all uppercase whitespace-nowrap border",
+                categoryFilter === cat
+                  ? "bg-[#8B4513] text-white border-[#8B4513] shadow-sm"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-amber-50"
+              )}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+
       {!hasData ? (
         <NoDataMessage />
       ) : (
@@ -544,5 +631,3 @@ export function ScoreboardTable({
     </div>
   );
 }
-
-

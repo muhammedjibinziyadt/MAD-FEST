@@ -147,7 +147,7 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
           <div className="flex overflow-x-auto pb-6 gap-3 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-3 sm:gap-4 snap-x snap-mandatory scrollbar-hide">
             {data.result.entries
               .sort((a, b) => a.position - b.position)
-              .map((entry) => {
+              .map((entry, index) => {
                 const student = entry.student_id ? data.studentMap.get(entry.student_id) : undefined;
                 const team = entry.team_id ? data.teamMap.get(entry.team_id) : (student ? data.teamMap.get(student.team_id) : undefined);
 
@@ -155,7 +155,7 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
 
                 return (
                   <div
-                    key={`${data.result!.id}-${entry.position}`}
+                    key={`${data.result!.id}-${entry.student_id || entry.team_id || entry.position}-${index}`}
                     className={cn(
                       "min-w-[280px] sm:min-w-0 snap-center rounded-xl p-4 sm:p-5 flex flex-col justify-between transition-all relative overflow-hidden",
                       isFirst

@@ -57,34 +57,39 @@ async function submitResultAction(formData: FormData) {
       }
     }
 
-    // Collect winners and validate
-    const winners = [];
-    for (const { key, gradeKey, position } of [
-      { key: "winner_1", gradeKey: "grade_1", position: 1 as const },
-      { key: "winner_2", gradeKey: "grade_2", position: 2 as const },
-      { key: "winner_3", gradeKey: "grade_3", position: 3 as const },
-    ]) {
-      const value = String(formData.get(key) ?? "");
-      if (!value) {
-        redirectWithToast("/admin/add-result", "All placements are required", "error");
-        return;
-      }
-      winners.push({
-        position,
-        id: value,
-        grade: String(formData.get(gradeKey) ?? "none") as
-          | "A"
-          | "B"
-          | "C"
-          | "none",
-      });
+    // Collect winners dynamically from form data
+    const rowValue = String(formData.get("winner_rows") ?? "");
+    let rowIds = rowValue
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    if (rowIds.length === 0) {
+      rowIds = ["1", "2", "3"];
     }
 
-    // Validate that all three positions have different candidates
-    const winnerIds = winners.map(w => w.id);
+    const winners: { position: 1 | 2 | 3; id: string; grade: "A" | "B" | "C" | "none" }[] = [];
+    for (const rowId of rowIds) {
+      const value = String(formData.get(`winner_${rowId}`) ?? "").trim();
+      const posRaw = Number(formData.get(`position_${rowId}`) ?? rowId);
+      const position = (posRaw >= 1 && posRaw <= 3 ? posRaw : 1) as 1 | 2 | 3;
+      const grade = (formData.get(`grade_${rowId}`) ?? "none") as "A" | "B" | "C" | "none";
+
+      if (value) {
+        winners.push({ position, id: value, grade });
+      }
+    }
+
+    if (winners.length === 0) {
+      redirectWithToast("/admin/add-result", "At least one placement is required", "error");
+      return;
+    }
+
+    // Validate that candidates are distinct
+    const winnerIds = winners.map((w) => w.id);
     const uniqueWinnerIds = new Set(winnerIds);
-    if (uniqueWinnerIds.size !== 3) {
-      redirectWithToast("/admin/add-result", "1st, 2nd, and 3rd place must have different candidates.", "error");
+    if (uniqueWinnerIds.size !== winnerIds.length) {
+      redirectWithToast("/admin/add-result", "Placements must have different candidates.", "error");
       return;
     }
 

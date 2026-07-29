@@ -533,15 +533,15 @@ const GROUP_GENERAL_GRADE_BONUS: Record<Exclude<import("./types").GradeType, "no
 };
 
 const GROUP_SCORES: Record<1 | 2 | 3, number> = {
-  1: 10,
-  2: 6,
-  3: 2,
+  1: 20,
+  2: 10,
+  3: 6,
 };
 
 const GENERAL_SCORES: Record<1 | 2 | 3, number> = {
-  1: 10,
-  2: 6,
-  3: 2,
+  1: 20,
+  2: 10,
+  3: 6,
 };
 
 export function calculateScore(

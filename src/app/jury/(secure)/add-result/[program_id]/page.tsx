@@ -48,29 +48,36 @@ async function jurySubmitResultAction(formData: FormData) {
     redirect("/jury/login");
   }
   const programId = String(formData.get("program_id") ?? "");
-  const winners = ([
-    { key: "winner_1", gradeKey: "grade_1", position: 1 as const },
-    { key: "winner_2", gradeKey: "grade_2", position: 2 as const },
-    { key: "winner_3", gradeKey: "grade_3", position: 3 as const },
-  ] as const).map(({ key, gradeKey, position }) => {
-    const value = String(formData.get(key) ?? "");
-    if (!value) throw new Error("All placements are required");
-    return {
-      position,
-      id: value,
-      grade: String(formData.get(gradeKey) ?? "none") as
-        | "A"
-        | "B"
-        | "C"
-        | "none",
-    };
-  });
+  const rowValue = String(formData.get("winner_rows") ?? "");
+  let rowIds = rowValue
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean);
 
-  // Validate that all three positions have different candidates
-  const winnerIds = winners.map(w => w.id);
+  if (rowIds.length === 0) {
+    rowIds = ["1", "2", "3"];
+  }
+
+  const winners: { position: 1 | 2 | 3; id: string; grade: "A" | "B" | "C" | "none" }[] = [];
+  for (const rowId of rowIds) {
+    const value = String(formData.get(`winner_${rowId}`) ?? "").trim();
+    const posRaw = Number(formData.get(`position_${rowId}`) ?? rowId);
+    const position = (posRaw >= 1 && posRaw <= 3 ? posRaw : 1) as 1 | 2 | 3;
+    const grade = (formData.get(`grade_${rowId}`) ?? "none") as "A" | "B" | "C" | "none";
+
+    if (value) {
+      winners.push({ position, id: value, grade });
+    }
+  }
+
+  if (winners.length === 0) {
+    throw new Error("At least one placement winner is required.");
+  }
+
+  const winnerIds = winners.map((w) => w.id);
   const uniqueWinnerIds = new Set(winnerIds);
-  if (uniqueWinnerIds.size !== 3) {
-    throw new Error("1st, 2nd, and 3rd place must have different candidates.");
+  if (uniqueWinnerIds.size !== winnerIds.length) {
+    throw new Error("Placements must have different candidates.");
   }
 
   const penalties = parsePenaltyPayloads(formData);
