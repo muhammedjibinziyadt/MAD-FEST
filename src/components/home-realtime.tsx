@@ -80,7 +80,7 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
               Busthanul Uloom <br /> Higher Secondary Madrasa
             </h1>
 
-            {/* Subtitle - MLURenuka Font */}
+            {/* Subtitle - Anek Font */}
             <h2 className="text-black text-xl sm:text-xl md:text-3xl font-sans mb-6 font-semibold tracking-tight">
               ഇസ്‌ലാമിക കലയുടെയും സംസ്‌കാരത്തിന്റെയും മഹാമേള
             </h2>
