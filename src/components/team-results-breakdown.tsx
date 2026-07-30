@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Trophy, Award, Search, CheckCircle2, Clock, XCircle, Tag, Filter } from "lucide-react";
+import { Trophy, Award, Search, CheckCircle2, Clock, XCircle, Tag, Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ export interface TeamResultItem {
   position: 1 | 2 | 3 | null;
   grade?: string;
   score: number;
+  groupMembers?: { name: string; chest: string }[];
 }
 
 interface TeamResultsBreakdownProps {
@@ -33,6 +34,14 @@ export function TeamResultsBreakdown({ items, onCloseLink }: TeamResultsBreakdow
   const [filter, setFilter] = useState<"all" | "won" | "lost" | "pending">("all");
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [expandedGroups, setExpandedGroups] = useState<{ [id: string]: boolean }>({});
+
+  const toggleGroup = (id: string) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -243,114 +252,157 @@ export function TeamResultsBreakdown({ items, onCloseLink }: TeamResultsBreakdow
 
               {/* Items in this category */}
               <div className="space-y-3">
-                {catItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className={cn(
-                      "rounded-2xl border p-4 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3",
-                      item.status === "won"
-                        ? "bg-emerald-500/10 border-emerald-500/30 hover:border-emerald-500/50"
-                        : item.status === "lost"
-                        ? "bg-white/5 border-white/10 hover:border-white/20"
-                        : "bg-amber-500/5 border-amber-500/20 hover:border-amber-500/30"
-                    )}
-                  >
-                    {/* Student & Program Info */}
-                    <div className="flex items-start gap-3 min-w-0 flex-1">
-                      <div className="text-2xl shrink-0 mt-0.5">
-                        {item.position === 1
-                          ? "🥇"
-                          : item.position === 2
-                          ? "🥈"
-                          : item.position === 3
-                          ? "🥉"
-                          : item.status === "won"
-                          ? "🏆"
+                {catItems.map((item) => {
+                  const isExpanded = !!expandedGroups[item.id];
+                  const hasMembers = item.groupMembers && item.groupMembers.length > 0;
+                  
+                  return (
+                    <div
+                      key={item.id}
+                      className={cn(
+                        "rounded-2xl border p-4 transition-all flex flex-col gap-3",
+                        item.status === "won"
+                          ? "bg-emerald-500/10 border-emerald-500/30 hover:border-emerald-500/50"
                           : item.status === "lost"
-                          ? "❌"
-                          : "⏳"}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {item.studentChest ? (
-                            <Link
-                              href={`/participant/${item.studentChest}`}
-                              className="font-bold text-white text-base hover:text-cyan-300 hover:underline transition-colors"
-                            >
-                              {item.studentName}
-                            </Link>
-                          ) : (
-                            <span className="font-bold text-white text-base">{item.studentName}</span>
-                          )}
-
-                          {item.studentChest && (
-                            <span className="font-mono text-xs text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
-                              #{item.studentChest}
-                            </span>
-                          )}
-
-                          {/* Status Badge */}
-                          {item.status === "won" ? (
-                            <span className="text-[10px] font-black bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/40 uppercase">
-                              🏆 WON PRIZE
-                            </span>
-                          ) : item.status === "lost" ? (
-                            <span className="text-[10px] font-semibold bg-white/10 text-white/60 px-2 py-0.5 rounded-full border border-white/10 uppercase">
-                              ❌ Unplaced
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-semibold bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/30 uppercase">
-                              ⏳ Result Pending
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Program Details */}
-                        <div className="flex items-center gap-2 mt-1.5 text-xs text-white/70 flex-wrap">
-                          <span className="font-semibold text-white/90 text-sm">{item.programName}</span>
-                          <span>•</span>
-                          <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase border border-amber-500/30">
-                            Cat: {item.category}
-                          </span>
-                          <span className="bg-white/10 text-white/70 text-[10px] font-medium px-2 py-0.5 rounded uppercase">
-                            {item.section}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Score & Medals / Grades */}
-                    <div className="flex items-center md:flex-col items-end justify-between md:justify-center border-t md:border-t-0 border-white/10 pt-2 md:pt-0 shrink-0">
-                      <div className="flex items-center gap-2">
-                        {item.position && (
-                          <span className="font-extrabold text-sm text-amber-300 bg-amber-500/20 px-2.5 py-1 rounded-xl border border-amber-500/40">
+                          ? "bg-white/5 border-white/10 hover:border-white/20"
+                          : "bg-amber-500/5 border-amber-500/20 hover:border-amber-500/30"
+                      )}
+                    >
+                      {/* Main Row */}
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 w-full">
+                        {/* Student & Program Info */}
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          <div className="text-2xl shrink-0 mt-0.5">
                             {item.position === 1
-                              ? "🥇 1st Place"
+                              ? "🥇"
                               : item.position === 2
-                              ? "🥈 2nd Place"
-                              : "🥉 3rd Place"}
-                          </span>
-                        )}
+                              ? "🥈"
+                              : item.position === 3
+                              ? "🥉"
+                              : item.status === "won"
+                              ? "🏆"
+                              : item.status === "lost"
+                              ? "❌"
+                              : "⏳"}
+                          </div>
 
-                        {item.grade && (
-                          <span className="font-bold text-xs text-emerald-300 bg-emerald-500/20 px-2.5 py-1 rounded-xl border border-emerald-500/40">
-                            Grade {item.grade}
-                          </span>
-                        )}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {item.studentChest ? (
+                                <Link
+                                  href={`/participant/${item.studentChest}`}
+                                  className="font-bold text-white text-base hover:text-cyan-300 hover:underline transition-colors"
+                                >
+                                  {item.studentName}
+                                </Link>
+                              ) : (
+                                <span className="font-bold text-white text-base">{item.studentName}</span>
+                              )}
+
+                              {item.studentChest && (
+                                <span className="font-mono text-xs text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
+                                  #{item.studentChest}
+                                </span>
+                              )}
+
+                              {/* Status Badge */}
+                              {item.status === "won" ? (
+                                <span className="text-[10px] font-black bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/40 uppercase">
+                                  🏆 WON PRIZE
+                                </span>
+                              ) : item.status === "lost" ? (
+                                <span className="text-[10px] font-semibold bg-white/10 text-white/60 px-2 py-0.5 rounded-full border border-white/10 uppercase">
+                                  ❌ Unplaced
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-semibold bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/30 uppercase">
+                                  ⏳ Result Pending
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Program Details */}
+                            <div className="flex items-center gap-2 mt-1.5 text-xs text-white/70 flex-wrap">
+                              <span className="font-semibold text-white/90 text-sm">{item.programName}</span>
+                              <span>•</span>
+                              <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase border border-amber-500/30">
+                                Cat: {item.category}
+                              </span>
+                              <span className="bg-white/10 text-white/70 text-[10px] font-medium px-2 py-0.5 rounded uppercase">
+                                {item.section}
+                              </span>
+                              {hasMembers && (
+                                <button
+                                  onClick={() => toggleGroup(item.id)}
+                                  className="ml-2 text-cyan-300 hover:text-cyan-200 text-[10px] font-bold flex items-center gap-1 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20 active:scale-95 transition-all cursor-pointer"
+                                >
+                                  {isExpanded ? "Hide Members" : "Show Members"}
+                                  {isExpanded ? (
+                                    <ChevronUp className="h-3 w-3" />
+                                  ) : (
+                                    <ChevronDown className="h-3 w-3" />
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Score & Medals / Grades */}
+                        <div className="flex items-center md:flex-col items-end justify-between md:justify-center border-t md:border-t-0 border-white/10 pt-2 md:pt-0 shrink-0">
+                          <div className="flex items-center gap-2">
+                            {item.position && (
+                              <span className="font-extrabold text-sm text-amber-300 bg-amber-500/20 px-2.5 py-1 rounded-xl border border-amber-500/40">
+                                {item.position === 1
+                                  ? "🥇 1st Place"
+                                  : item.position === 2
+                                  ? "🥈 2nd Place"
+                                  : "🥉 3rd Place"}
+                              </span>
+                            )}
+
+                            {item.grade && (
+                              <span className="font-bold text-xs text-emerald-300 bg-emerald-500/20 px-2.5 py-1 rounded-xl border border-emerald-500/40">
+                                Grade {item.grade}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="mt-1">
+                            <span className={cn(
+                              "font-black text-lg",
+                              item.score > 0 ? "text-emerald-400" : "text-white/40"
+                            )}>
+                              {item.score} pts
+                            </span>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="mt-1">
-                        <span className={cn(
-                          "font-black text-lg",
-                          item.score > 0 ? "text-emerald-400" : "text-white/40"
-                        )}>
-                          {item.score} pts
-                        </span>
-                      </div>
+                      {/* Expandable Group Members Details */}
+                      {hasMembers && isExpanded && (
+                        <div className="mt-1 pt-3 border-t border-white/10 bg-slate-950/40 rounded-xl p-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                          <p className="text-[11px] font-bold text-cyan-400/80 uppercase tracking-wider">
+                            Participating Students ({item.groupMembers?.length})
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                            {item.groupMembers?.map((member, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center justify-between bg-white/5 border border-white/5 rounded-lg p-2.5 text-xs"
+                              >
+                                <span className="font-semibold text-white truncate">{member.name}</span>
+                                <span className="font-mono text-[10px] text-cyan-300 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/10 ml-2">
+                                  #{member.chest}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}

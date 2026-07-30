@@ -262,16 +262,15 @@ export const ResultManager = React.memo(function ResultManager({
                   <div className="w-full xl:flex-1">
                     <p className="text-xs text-white/40 font-mono mb-1">#{result.id.slice(0, 8)}</p>
                     <p className="text-xl font-bold text-white mb-2">{program?.name ?? "Unknown Program"}</p>
-                    
+
                     {/* Gender, Category, and Section Badges */}
                     <div className="flex flex-wrap items-center gap-2 mb-3">
-                      <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
-                        gender === "BOYS" 
-                          ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" 
-                          : gender === "GIRLS" 
-                          ? "bg-pink-500/20 text-pink-300 border-pink-500/40" 
-                          : "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                      }`}>
+                      <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${gender === "BOYS"
+                          ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                          : gender === "GIRLS"
+                            ? "bg-pink-500/20 text-pink-300 border-pink-500/40"
+                            : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                        }`}>
                         {gender === "BOYS" ? "👦 BOYS" : gender === "GIRLS" ? "👧 GIRLS" : "👥 MIXED"}
                       </span>
 
@@ -419,70 +418,96 @@ export const ResultManager = React.memo(function ResultManager({
           open={!!viewResult}
           title={`Result Details • ${programMap.get(viewResult.program_id)?.name ?? "Program"}`}
           onClose={() => setViewResult(null)}
+          size="xl"
         >
-          <div className="space-y-5">
-            {/* Overview Card */}
-            <div className="grid gap-3 rounded-2xl border border-white/10 bg-slate-900/80 p-5">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <div>
-                  <p className="text-xs text-white/50 uppercase tracking-wider font-semibold">Program Name</p>
-                  <p className="text-xl font-bold text-white mt-0.5">
-                    {programMap.get(viewResult.program_id)?.name ?? "Unknown"}
-                  </p>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Overview and Penalties */}
+            <div className="lg:col-span-5 space-y-5">
+              {/* Overview Card */}
+              <div className="grid gap-3 rounded-2xl border border-white/10 bg-slate-900/80 p-5">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div>
+                    <p className="text-xs text-white/50 uppercase tracking-wider font-semibold">Program Name</p>
+                    <p className="text-xl font-bold text-white mt-0.5">
+                      {programMap.get(viewResult.program_id)?.name ?? "Unknown"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const gender = getResultGender(viewResult);
+                      const prog = programMap.get(viewResult.program_id);
+                      return (
+                        <>
+                          <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border ${gender === "BOYS"
+                              ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                              : gender === "GIRLS"
+                                ? "bg-pink-500/20 text-pink-300 border-pink-500/40"
+                                : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                            }`}>
+                            {gender === "BOYS" ? "👦 BOYS" : gender === "GIRLS" ? "👧 GIRLS" : "👥 MIXED"}
+                          </span>
+                          <span className="text-xs font-bold px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 uppercase">
+                            🏷️ {prog?.category || "GENERAL"}
+                          </span>
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {(() => {
-                    const gender = getResultGender(viewResult);
-                    const prog = programMap.get(viewResult.program_id);
-                    return (
-                      <>
-                        <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border ${
-                          gender === "BOYS" 
-                            ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" 
-                            : gender === "GIRLS" 
-                            ? "bg-pink-500/20 text-pink-300 border-pink-500/40" 
-                            : "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                        }`}>
-                          {gender === "BOYS" ? "👦 BOYS" : gender === "GIRLS" ? "👧 GIRLS" : "👥 MIXED"}
-                        </span>
-                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 uppercase">
-                          🏷️ {prog?.category || "GENERAL"}
-                        </span>
-                      </>
-                    );
-                  })()}
+
+                <div className="grid grid-cols-2 gap-4 pt-2 text-sm">
+                  <div>
+                    <p className="text-xs text-white/50">Evaluated By Jury</p>
+                    <p className="font-semibold text-white mt-0.5">
+                      {juryMap.get(viewResult.jury_id)?.name ?? "Admin"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-white/50">Submitted Time</p>
+                    <p className="font-semibold text-white mt-0.5">
+                      {new Date(viewResult.submitted_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-white/50">Event Section</p>
+                    <p className="font-semibold text-emerald-400 capitalize mt-0.5">
+                      {programMap.get(viewResult.program_id)?.section || "single"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-white/50">Total Awarded Points</p>
+                    <p className="text-xl font-bold text-emerald-300 mt-0.5">{getTotalScore(viewResult)} pts</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-2 text-sm">
-                <div>
-                  <p className="text-xs text-white/50">Evaluated By Jury</p>
-                  <p className="font-semibold text-white mt-0.5">
-                    {juryMap.get(viewResult.jury_id)?.name ?? "Admin"}
-                  </p>
+              {/* Penalties inside modal */}
+              {(viewResult.penalties?.length ?? 0) > 0 && (
+                <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 space-y-2">
+                  <p className="text-sm font-bold text-red-200">No-Show Deductions / Penalties</p>
+                  {viewResult.penalties?.map((penalty, index) => {
+                    const student = penalty.student_id ? studentMap.get(penalty.student_id) : undefined;
+                    const team = penalty.team_id ? teamMap.get(penalty.team_id) : undefined;
+                    return (
+                      <div key={`${penalty.team_id ?? penalty.student_id ?? index}`} className="text-sm text-white/80">
+                        <p className="font-semibold text-red-300">
+                          {student?.name ?? team?.name ?? "Unknown"} · -{penalty.points} pts
+                        </p>
+                        {student && (
+                          <p className="text-xs text-white/50">
+                            Chest #{student.chest_no} · Team {teamMap.get(student.team_id)?.name ?? "Unknown"}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-                <div>
-                  <p className="text-xs text-white/50">Submitted Time</p>
-                  <p className="font-semibold text-white mt-0.5">
-                    {new Date(viewResult.submitted_at).toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/50">Event Section</p>
-                  <p className="font-semibold text-emerald-400 capitalize mt-0.5">
-                    {programMap.get(viewResult.program_id)?.section || "single"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/50">Total Awarded Points</p>
-                  <p className="text-xl font-bold text-emerald-300 mt-0.5">{getTotalScore(viewResult)} pts</p>
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Winners & Team Members Breakdown */}
-            <div className="space-y-4">
-              <p className="text-base font-bold text-white flex items-center gap-2">
+            {/* Right Column: Winners & Team Members Breakdown */}
+            <div className="lg:col-span-7 space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+              <p className="text-base font-bold text-white flex items-center gap-2 sticky top-0 bg-slate-950 py-2 z-10">
                 <Award className="w-5 h-5 text-amber-400" />
                 Winner Placements & Team Members
               </p>
@@ -497,9 +522,11 @@ export const ResultManager = React.memo(function ResultManager({
                 const programRegs = registrations.filter(
                   (r) => r.programId === viewResult.program_id && (r.teamId === teamId || r.studentId === student?.id)
                 );
-                
-                // All members of team
-                const teamMembers = students.filter((s) => s.team_id === teamId);
+
+                // Only members of the team who participated in this program
+                const teamMembers = students.filter(
+                  (s) => s.team_id === teamId && programRegs.some((r) => r.studentId === s.id)
+                );
 
                 return (
                   <div
@@ -538,27 +565,17 @@ export const ResultManager = React.memo(function ResultManager({
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
                             <Users className="w-3.5 h-3.5" />
-                            {team.name} Team Members ({teamMembers.length})
+                            {team.name} Participated Members ({teamMembers.length})
                           </p>
-                          {programRegs.length > 0 && (
-                            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30 font-medium">
-                              {programRegs.length} Registered for this event
-                            </span>
-                          )}
                         </div>
 
                         {teamMembers.length > 0 ? (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                             {teamMembers.map((member) => {
-                              const isParticipant = programRegs.some((r) => r.studentId === member.id);
                               return (
                                 <div
                                   key={member.id}
-                                  className={`rounded-lg p-2 text-xs border ${
-                                    isParticipant
-                                      ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-100"
-                                      : "bg-white/5 border-white/5 text-white/80"
-                                  }`}
+                                  className="bg-cyan-500/10 border-cyan-500/30 text-cyan-100 rounded-lg p-2 text-xs border"
                                 >
                                   <div className="flex items-center justify-between">
                                     <p className="font-semibold truncate">{member.name}</p>
@@ -566,7 +583,6 @@ export const ResultManager = React.memo(function ResultManager({
                                   </div>
                                   <div className="flex items-center justify-between text-[10px] opacity-60 mt-1">
                                     <span>{member.category}</span>
-                                    {isParticipant && <span className="text-cyan-300 font-bold">Event Participant</span>}
                                   </div>
                                 </div>
                               );
@@ -580,29 +596,6 @@ export const ResultManager = React.memo(function ResultManager({
                   </div>
                 );
               })}
-
-              {/* Penalties inside modal */}
-              {(viewResult.penalties?.length ?? 0) > 0 && (
-                <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 space-y-2">
-                  <p className="text-sm font-bold text-red-200">No-Show Deductions / Penalties</p>
-                  {viewResult.penalties?.map((penalty, index) => {
-                    const student = penalty.student_id ? studentMap.get(penalty.student_id) : undefined;
-                    const team = penalty.team_id ? teamMap.get(penalty.team_id) : undefined;
-                    return (
-                      <div key={`${penalty.team_id ?? penalty.student_id ?? index}`} className="text-sm text-white/80">
-                        <p className="font-semibold text-red-300">
-                          {student?.name ?? team?.name ?? "Unknown"} · -{penalty.points} pts
-                        </p>
-                        {student && (
-                          <p className="text-xs text-white/50">
-                            Chest #{student.chest_no} · Team {teamMap.get(student.team_id)?.name ?? "Unknown"}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </div>
         </Modal>
