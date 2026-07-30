@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
+import { Button, SubmitButton } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SearchSelect } from "@/components/ui/search-select";
@@ -456,9 +456,9 @@ export default async function StudentsPage() {
               className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:border-fuchsia-400 focus:outline-none file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-fuchsia-500/20 file:text-fuchsia-400 hover:file:bg-fuchsia-500/30 file:cursor-pointer"
             />
           </div>
-          <Button type="submit" className="md:col-span-2">
+          <SubmitButton className="md:col-span-2">
             Save Student
-          </Button>
+          </SubmitButton>
         </form>
         <p className="mt-2 text-xs text-white/60">
           Chest number will be auto-generated based on team name (e.g., {teams[0]?.name.slice(0, 2).toUpperCase()}001)

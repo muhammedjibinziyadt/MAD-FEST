@@ -41,6 +41,8 @@ const buttonVariants = cva(
   },
 );
 
+import { useFormStatus } from "react-dom";
+
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
@@ -89,5 +91,18 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 Button.displayName = "Button";
 
-export { Button, buttonVariants };
+const SubmitButton = React.forwardRef<
+  HTMLButtonElement,
+  Omit<ButtonProps, "loading">
+>(({ children, ...props }, ref) => {
+  const { pending } = useFormStatus();
+  return (
+    <Button ref={ref} type="submit" loading={pending} {...props}>
+      {children}
+    </Button>
+  );
+});
+SubmitButton.displayName = "SubmitButton";
+
+export { Button, buttonVariants, SubmitButton };
 

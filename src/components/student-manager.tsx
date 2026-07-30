@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { CheckCircle2, Eye, Pencil, Search, Trash2, Download, FileText, FileSpreadsheet, User } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, SubmitButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { SearchSelect } from "@/components/ui/search-select";
@@ -521,10 +521,10 @@ export const StudentManager = React.memo(function StudentManager({
                   </Button>
                   <form action={deleteAction}>
                     <input type="hidden" name="id" value={student.id} />
-                    <Button type="submit" variant="danger" size="sm" className="gap-2">
+                    <SubmitButton variant="danger" size="sm" className="gap-2">
                       <Trash2 className="h-4 w-4" />
                       Delete
-                    </Button>
+                    </SubmitButton>
                   </form>
                 </div>
               </div>
@@ -597,9 +597,9 @@ export const StudentManager = React.memo(function StudentManager({
                     />
                   </div>
                   <div className="flex items-center gap-3 md:col-span-3">
-                    <Button type="submit" className="flex-1">
+                    <SubmitButton className="flex-1">
                       Save changes
-                    </Button>
+                    </SubmitButton>
                     <Button
                       type="button"
                       variant="secondary"
@@ -712,9 +712,9 @@ export const StudentManager = React.memo(function StudentManager({
         </p>
         <form action={bulkDeleteAction} className="space-y-4">
           <input type="hidden" name="student_ids" value={selectedIdsValue} />
-          <Button type="submit" variant="danger" className="w-full" disabled={!hasSelection}>
+          <SubmitButton variant="danger" className="w-full" disabled={!hasSelection}>
             Delete {selected.size} student{selected.size === 1 ? "" : "s"}
-          </Button>
+          </SubmitButton>
         </form>
       </Modal>
     </div>
