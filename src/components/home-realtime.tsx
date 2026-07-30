@@ -8,6 +8,7 @@ import { Music2, ArrowRight } from "lucide-react"; // Added Music2, ArrowRight
 import { LiveScorePulse } from "@/components/live-score-pulse";
 import { HomeEngagementSection } from "@/components/HomeEngagementSection";
 import { AboutSection } from "@/components/AboutSection";
+import { TeamLeadersShowcase } from "@/components/TeamLeadersShowcase";
 
 import { useScoreboardUpdates } from "@/hooks/use-realtime";
 import { useRouter } from "next/navigation";
@@ -190,6 +191,8 @@ export function HomeRealtime({ teams: initialTeams, liveScores: initialLiveScore
       <HomeEngagementSection />
 
       {/* Team Leaders Section */}
+      <TeamLeadersShowcase />
+
       {/* About Ishal Rabeeh Section */}
       <AboutSection />
 

@@ -27,7 +27,13 @@ import { getApprovedResults } from "@/lib/data";
 import { formatNumber } from "@/lib/utils";
 import { TeamResultsBreakdown, type TeamResultItem } from "@/components/team-results-breakdown";
 
-export default async function TeamDashboardPage() {
+interface PageProps {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function TeamDashboardPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const showResults = params?.view === "results";
   const team = await getCurrentTeam();
   if (!team) {
     redirect("/team/login");
@@ -198,7 +204,7 @@ export default async function TeamDashboardPage() {
       color: "from-amber-500 to-orange-600",
       bgColor: "bg-amber-500/10",
       borderColor: "border-amber-500/30",
-      link: "/team/dashboard",
+      link: "/team/dashboard?view=results",
     },
   ];
 
@@ -280,9 +286,11 @@ export default async function TeamDashboardPage() {
         </div>
 
         {/* Mobile Team Results Breakdown (Won, Unplaced, Pending) */}
-        <div>
-          <TeamResultsBreakdown items={teamResultItems} />
-        </div>
+        {showResults && (
+          <div>
+            <TeamResultsBreakdown items={teamResultItems} onCloseLink="/team/dashboard" />
+          </div>
+        )}
 
         {/* Mobile Quick Actions */}
         <div>
@@ -547,7 +555,9 @@ export default async function TeamDashboardPage() {
           {/* Right Column - Team Results Breakdown Component & Recent Registrations */}
           <div className="col-span-8 space-y-6">
             {/* Desktop Team Results Breakdown */}
-            <TeamResultsBreakdown items={teamResultItems} />
+            {showResults && (
+              <TeamResultsBreakdown items={teamResultItems} onCloseLink="/team/dashboard" />
+            )}
 
             {/* Desktop Recent Registrations */}
             <Card className="border-white/10 bg-white/5 p-6">
