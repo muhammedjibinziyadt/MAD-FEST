@@ -72,6 +72,28 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
   const [registrationTeamFilter, setRegistrationTeamFilter] = useState<string>("");
   const [isPending, startTransition] = useTransition();
 
+  const handleUpdateTeam = (formData: FormData) => {
+    startTransition(async () => {
+      try {
+        await updateAction(formData);
+        setEditingTeam(null);
+      } catch (error) {
+        console.error("Failed to update team:", error);
+      }
+    });
+  };
+
+  const handleDeleteTeam = (formData: FormData) => {
+    startTransition(async () => {
+      try {
+        await deleteAction(formData);
+        setDeleteConfirm(null);
+      } catch (error) {
+        console.error("Failed to delete team:", error);
+      }
+    });
+  };
+
   const filteredTeams = useMemo(() => {
     if (!activeView || activeView !== "teams") return [];
     return teams.filter((team) =>
@@ -591,7 +613,7 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
         }
       >
         {editingTeam && (
-          <form action={updateAction} className="space-y-4">
+          <form action={handleUpdateTeam} className="space-y-4">
             <input type="hidden" name="id" value={editingTeam.id} />
             <div>
               <label className="text-sm font-semibold text-white/70 mb-2 block">
@@ -648,13 +670,7 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
               name="themeColor"
               defaultValue={editingTeam.themeColor || "#E11D48"}
             />
-            <SubmitButton
-              onClick={() => {
-                startTransition(() => {
-                  setTimeout(() => setEditingTeam(null), 100);
-                });
-              }}
-            >
+            <SubmitButton>
               Save Changes
             </SubmitButton>
           </form>
@@ -750,7 +766,7 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
             <p className="text-sm text-white/70">
               Are you sure you want to delete this team? This action cannot be undone. This will also delete all students and registrations associated with this team.
             </p>
-            <form action={deleteAction}>
+            <form action={handleDeleteTeam}>
               <input type="hidden" name="teamId" value={deleteConfirm} />
               <div className="flex gap-2">
                 <Button

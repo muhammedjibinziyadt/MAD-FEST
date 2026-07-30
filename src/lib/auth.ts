@@ -127,32 +127,47 @@ export async function getCurrentJury(): Promise<Jury | undefined> {
 
 export async function authenticateTeam(teamName: string, password: string): Promise<PortalTeam | undefined> {
   await connectDB();
-  const lower = teamName.trim().toLowerCase();
+  let nameQuery = teamName.trim();
+  let genderFilter: string | null = null;
 
-  // Find team by name (case-insensitive)
-  // We use regex for case-insensitive match on 'name'
-  const teamDoc = await TeamModel.findOne({
-    name: { $regex: new RegExp(`^${lower}$`, "i") }
-  }).lean();
+  // Check if name ends with "(boys)" or "(girls)" or "(mixed)" case-insensitively
+  const genderRegex = /\s*\((boys|girls|mixed)\)$/i;
+  const match = nameQuery.match(genderRegex);
+  if (match) {
+    genderFilter = match[1].toLowerCase();
+    nameQuery = nameQuery.replace(genderRegex, "").trim();
+  }
 
-  if (!teamDoc) return undefined;
-
-  const team: PortalTeam = {
-    id: teamDoc.id,
-    teamName: teamDoc.name,
-    password: teamDoc.portal_password ?? "", // This is now hashed
-    leaderName: teamDoc.leader,
-    themeColor: teamDoc.color,
-    gender: (teamDoc as any).gender ?? "mixed",
+  const query: any = {
+    name: { $regex: new RegExp(`^${nameQuery.toLowerCase()}$`, "i") }
   };
+  if (genderFilter) {
+    query.gender = genderFilter;
+  }
 
-  const isHashed = team.password.startsWith("$2");
-  if (isHashed) {
-    if (await verifyPassword(password, team.password)) {
+  const teamDocs = await TeamModel.find(query).lean();
+
+  for (const teamDoc of teamDocs) {
+    const team: PortalTeam = {
+      id: teamDoc.id,
+      teamName: teamDoc.name,
+      password: teamDoc.portal_password ?? "",
+      leaderName: teamDoc.leader,
+      themeColor: teamDoc.color,
+      gender: (teamDoc as any).gender ?? "mixed",
+    };
+
+    const isHashed = team.password.startsWith("$2");
+    let isValid = false;
+    if (isHashed) {
+      isValid = await verifyPassword(password, team.password);
+    } else {
+      isValid = team.password === password;
+    }
+
+    if (isValid) {
       return team;
     }
-  } else {
-    if (team.password === password) return team;
   }
 
   return undefined;
