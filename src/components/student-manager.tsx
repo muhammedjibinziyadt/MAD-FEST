@@ -38,10 +38,28 @@ export const StudentManager = React.memo(function StudentManager({
   bulkDeleteAction,
 }: StudentManagerProps) {
   const teamOptions = useMemo(
-    () => [{ value: "", label: "All Teams" }, ...teams.map((team) => ({ value: team.id, label: team.name }))],
+    () => [
+      { value: "", label: "All Teams" },
+      ...teams.map((team) => ({
+        value: team.id,
+        label: team.gender && team.gender !== "mixed"
+          ? `${team.name} (${team.gender === "boys" ? "Boys" : "Girls"})`
+          : team.name,
+      })),
+    ],
     [teams],
   );
-  const teamMap = useMemo(() => new Map(teams.map((team) => [team.id, team.name])), [teams]);
+  const teamMap = useMemo(
+    () => new Map(
+      teams.map((team) => [
+        team.id,
+        team.gender && team.gender !== "mixed"
+          ? `${team.name} (${team.gender === "boys" ? "Boys" : "Girls"})`
+          : team.name,
+      ])
+    ),
+    [teams]
+  );
   
   const programOptions = useMemo(
     () => [
@@ -532,7 +550,12 @@ export const StudentManager = React.memo(function StudentManager({
                     <SearchSelect
                       name="team_id"
                       defaultValue={student.team_id}
-                      options={teams.map((team) => ({ value: team.id, label: team.name }))}
+                      options={teams.map((team) => ({
+                        value: team.id,
+                        label: team.gender && team.gender !== "mixed"
+                          ? `${team.name} (${team.gender === "boys" ? "Boys" : "Girls"})`
+                          : team.name,
+                      }))}
                       placeholder="Select team"
                     />
                   </div>

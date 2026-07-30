@@ -412,7 +412,12 @@ export default async function StudentsPage() {
               name="team_id"
               defaultValue={teams[0]?.id}
               required
-              options={teams.map((team) => ({ value: team.id, label: team.name }))}
+              options={teams.map((team) => ({
+                value: team.id,
+                label: team.gender && team.gender !== "mixed"
+                  ? `${team.name} (${team.gender === "boys" ? "Boys" : "Girls"})`
+                  : team.name,
+              }))}
               placeholder="Select team"
             />
           </div>

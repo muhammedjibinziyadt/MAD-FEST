@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Eye, Pencil, Search, Trash2, Calendar, User, Users, Award, FileText, Layers } from "lucide-react";
+import { CheckCircle2, Eye, Pencil, Search, Trash2, Calendar, User, Users, Award, FileText, Layers, Download, FileSpreadsheet } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,7 @@ export const ResultManager = React.memo(function ResultManager({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(Number(pageSizeOptions[0].value));
   const [viewResult, setViewResult] = useState<ResultRecord | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   useEffect(() => {
     setPage(1);
@@ -174,8 +175,233 @@ export const ResultManager = React.memo(function ResultManager({
     return result.penalties?.reduce((sum, p) => sum + p.points, 0) ?? 0;
   };
 
+  const getWinnerChest = (entry: ResultRecord["entries"][number]) => {
+    if (entry.student_id) {
+      const student = studentMap.get(entry.student_id);
+      return student?.chest_no ?? "";
+    }
+    return "";
+  };
+
+  const getWinnerTeam = (entry: ResultRecord["entries"][number]) => {
+    if (entry.student_id) {
+      const student = studentMap.get(entry.student_id);
+      if (student?.team_id) {
+        const team = teamMap.get(student.team_id);
+        return team?.name ?? "Unknown Team";
+      }
+    }
+    if (entry.team_id) {
+      const team = teamMap.get(entry.team_id);
+      return team?.name ?? "Unknown Team";
+    }
+    return "";
+  };
+
+  const exportToCSV = () => {
+    const headers = [
+      "Result ID",
+      "Program Name",
+      "Category",
+      "Section",
+      "Gender",
+      "Jury",
+      "1st Place Winner",
+      "1st Place Chest",
+      "1st Place Team",
+      "1st Place Score",
+      "2nd Place Winner",
+      "2nd Place Chest",
+      "2nd Place Team",
+      "2nd Place Score",
+      "3rd Place Winner",
+      "3rd Place Chest",
+      "3rd Place Team",
+      "3rd Place Score",
+      "Penalties",
+      "Total Score",
+      "Submitted At"
+    ];
+
+    const rows = sortedResults.map((result) => {
+      const program = programMap.get(result.program_id);
+      const jury = juryMap.get(result.jury_id);
+      const totalScore = getTotalScore(result);
+      const gender = getResultGender(result);
+
+      const first = result.entries.find((e) => e.position === 1);
+      const second = result.entries.find((e) => e.position === 2);
+      const third = result.entries.find((e) => e.position === 3);
+
+      return [
+        result.id,
+        program?.name ?? "",
+        program?.category ?? "",
+        program?.section ?? "",
+        gender,
+        jury?.name ?? "",
+        first ? getWinnerName(first) : "",
+        first ? getWinnerChest(first) : "",
+        first ? getWinnerTeam(first) : "",
+        first ? first.score.toString() : "",
+        second ? getWinnerName(second) : "",
+        second ? getWinnerChest(second) : "",
+        second ? getWinnerTeam(second) : "",
+        second ? second.score.toString() : "",
+        third ? getWinnerName(third) : "",
+        third ? getWinnerChest(third) : "",
+        third ? getWinnerTeam(third) : "",
+        third ? third.score.toString() : "",
+        getPenaltyTotal(result).toString(),
+        totalScore.toString(),
+        new Date(result.submitted_at).toISOString()
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `results_report_${isPending ? "pending" : "approved"}_${new Date().toISOString().split("T")[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = async () => {
+    try {
+      const { jsPDF } = await import("jspdf");
+      const { default: autoTable } = await import("jspdf-autotable") as any;
+      const doc = new jsPDF("landscape");
+
+      doc.setFontSize(20);
+      doc.setTextColor(15, 23, 42);
+      doc.text(isPending ? "Funoon Fiesta - Pending Results Report" : "Funoon Fiesta - Approved Results Ledger", 14, 20);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Generated on: ${new Date().toLocaleString()} | Filtered: ${filteredResults.length} records`, 14, 27);
+
+      const tableData = sortedResults.map((result) => {
+        const program = programMap.get(result.program_id);
+        const jury = juryMap.get(result.jury_id);
+        const totalScore = getTotalScore(result);
+        const gender = getResultGender(result);
+
+        const winnersStr = result.entries
+          .map((e) => {
+            const posStr = e.position === 1 ? "1st" : e.position === 2 ? "2nd" : "3rd";
+            const chestStr = getWinnerChest(e) ? ` (#${getWinnerChest(e)})` : "";
+            return `${posStr}: ${getWinnerName(e)}${chestStr} - ${getWinnerTeam(e)} [${e.score} pts]`;
+          })
+          .join("\n");
+
+        return [
+          result.id.slice(0, 8),
+          program?.name ?? "",
+          `${gender} / ${program?.category ?? ""} / ${program?.section ?? ""}`,
+          jury?.name ?? "",
+          winnersStr,
+          getPenaltyTotal(result) > 0 ? `-${getPenaltyTotal(result)} pts` : "0",
+          `${totalScore} pts`,
+        ];
+      });
+
+      autoTable(doc, {
+        startY: 32,
+        head: [["ID", "Program Name", "Target Details", "Jury", "Winners & Teams Breakdown", "Penalty", "Total Score"]],
+        body: tableData,
+        theme: "striped",
+        headStyles: { fillColor: [15, 23, 42] },
+        styles: { fontSize: 9, cellPadding: 3 },
+        columnStyles: {
+          4: { cellWidth: 100 }
+        }
+      });
+
+      doc.save(`results_report_${isPending ? "pending" : "approved"}_${new Date().toISOString().split("T")[0]}.pdf`);
+    } catch (error) {
+      console.error("PDF export failed:", error);
+      alert("PDF export failed. Make sure you are connected to the internet to load libraries.");
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Premium Title & Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-[0_20px_60px_rgba(8,47,73,0.35)]">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-cyan-400 font-bold">Results Registry</p>
+          <h2 className="text-2xl font-bold text-white mt-1">
+            {isPending ? "Pending Results List" : "Approved Results Ledger"}
+          </h2>
+          <p className="text-sm text-white/60 mt-1">
+            {isPending
+              ? "Review, approve, or reject recently submitted results from juries."
+              : "Search, filter, view details, or delete finalized program results."}
+          </p>
+        </div>
+        <div className="flex gap-2 self-start sm:self-auto">
+          <div className="relative">
+            <Button
+              type="button"
+              variant="secondary"
+              className="gap-2 bg-white/5 border border-white/10 text-white hover:bg-white/10"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+            >
+              <Download className="h-4 w-4 text-cyan-400" />
+              <span>Export Reports</span>
+            </Button>
+            {showExportMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowExportMenu(false)}
+                />
+                <div className="absolute right-0 top-full mt-2 z-50">
+                  <div className="rounded-2xl border border-white/10 bg-slate-950/95 backdrop-blur-xl shadow-2xl p-2 min-w-[190px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportToCSV();
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 rounded-xl px-4 py-2.5 text-left text-sm text-white transition hover:bg-white/5 cursor-pointer"
+                    >
+                      <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
+                      <div>
+                        <p className="font-semibold text-white">Export as CSV</p>
+                        <p className="text-xs text-white/50">Spreadsheet format</p>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await exportToPDF();
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 rounded-xl px-4 py-2.5 text-left text-sm text-white transition hover:bg-white/5 cursor-pointer"
+                    >
+                      <FileText className="h-4 w-4 text-cyan-400" />
+                      <div>
+                        <p className="font-semibold text-white">Export as PDF</p>
+                        <p className="text-xs text-white/50">Landscape report</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Search and Filters */}
       <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md md:flex-row md:items-center md:justify-between">
         <div className="relative flex-1">

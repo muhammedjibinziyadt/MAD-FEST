@@ -391,7 +391,9 @@ export function ParticipantProfileDisplay({ profile }: ParticipantProfileProps) 
                       </div>
                     ) : (
                       <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs text-gray-400">
-                        <span className="italic">Result not yet published</span>
+                        <span className="italic">
+                          {reg.status === "completed" ? "No placement" : "Result not yet published"}
+                        </span>
                         <span className="font-bold">0 pts</span>
                       </div>
                     )}

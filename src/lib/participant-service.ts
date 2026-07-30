@@ -155,7 +155,11 @@ export async function getParticipantProfile(
 
     if (result) {
       // Find entry for this student
-      const entry = result.entries.find((e) => e.student_id === student.id);
+      let entry = result.entries.find((e) => e.student_id === student.id);
+      if (!entry && (program.section === "group" || program.section === "general")) {
+        entry = result.entries.find((e) => e.team_id === student.team_id);
+      }
+
       if (entry) {
         resultEntry = {
           position: entry.position,
@@ -165,7 +169,11 @@ export async function getParticipantProfile(
       }
 
       // Find penalty for this student
-      const penalty = result.penalties?.find((p) => p.student_id === student.id);
+      let penalty = result.penalties?.find((p) => p.student_id === student.id);
+      if (!penalty && (program.section === "group" || program.section === "general")) {
+        penalty = result.penalties?.find((p) => p.team_id === student.team_id);
+      }
+
       if (penalty) {
         penaltyEntry = {
           points: penalty.points,
