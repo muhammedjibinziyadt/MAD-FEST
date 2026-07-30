@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, QrCode, Loader2, ChevronRight, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { QRScanner } from "./qr-scanner";
 import { motion, AnimatePresence } from "framer-motion";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface SearchResult {
     id: string;
@@ -24,6 +25,8 @@ export function ParticipantSearch() {
     const [isSearching, setIsSearching] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
     const [isPending, startTransition] = useTransition();
+
+    const debouncedQuery = useDebounce(query, 300);
 
     const handleSearch = async (searchQuery: string) => {
         if (!searchQuery.trim()) {
@@ -48,13 +51,16 @@ export function ParticipantSearch() {
         }
     };
 
-    const handleInputChange = (value: string) => {
-        setQuery(value);
-        if (value.trim().length >= 2) {
-            handleSearch(value);
+    useEffect(() => {
+        if (debouncedQuery.trim().length >= 2) {
+            handleSearch(debouncedQuery);
         } else {
             setResults([]);
         }
+    }, [debouncedQuery]);
+
+    const handleInputChange = (value: string) => {
+        setQuery(value);
     };
 
     const handleSelectParticipant = (chestNumber: string) => {

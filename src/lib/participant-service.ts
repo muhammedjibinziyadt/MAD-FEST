@@ -75,6 +75,7 @@ export async function searchParticipant(
       { name: { $regex: searchTerm, $options: "i" } },
     ],
   })
+    .select("-avatar")
     .limit(20)
     .lean<Student[]>();
 
