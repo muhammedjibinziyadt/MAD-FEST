@@ -5,6 +5,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SearchSelect } from "@/components/ui/search-select";
 import { StudentManager } from "@/components/student-manager";
+import { Download } from "lucide-react";
 import {
   createStudent,
   deleteStudentById,
@@ -343,12 +344,27 @@ async function importStudentsAction(formData: FormData) {
     
     // Add to batch tracking
     importBatchChestNumbers.add(chest_no);
+
+    let gender: "boy" | "girl" | undefined = undefined;
+    const genderRaw = parsed.data.gender?.trim().toLowerCase();
+    if (genderRaw === "boy" || genderRaw === "girl" || genderRaw === "male" || genderRaw === "female") {
+      gender = (genderRaw === "boy" || genderRaw === "male") ? "boy" : "girl";
+    }
+
+    let category: import("@/lib/types").CategoryType | undefined = undefined;
+    const categoryRaw = parsed.data.category?.trim().toUpperCase();
+    const validCategories = ["KIDDIES", "SUB-JUNIOR", "JUNIOR", "SENIOR", "SUPER-SENIOR", "GENERAL", "none"];
+    if (categoryRaw && validCategories.includes(categoryRaw)) {
+      category = categoryRaw as import("@/lib/types").CategoryType;
+    }
     
     try {
       await createStudent({
         name: parsed.data.name,
         team_id: resolvedTeamId,
         chest_no,
+        gender,
+        category,
       });
       
       // Add to existing set to prevent duplicates in subsequent rows of the same import
@@ -464,33 +480,54 @@ export default async function StudentsPage() {
           Chest number will be auto-generated based on team name (e.g., {teams[0]?.name.slice(0, 2).toUpperCase()}001)
         </p>
       </Card>
-      <Card className="h-full">
-        <CardTitle>Bulk Import Students (CSV)</CardTitle>
-        <CardDescription className="mt-2">
-          Required columns: <code>name</code> and either <code>team_id</code> or <code>team_name</code>
-          <br />
-          <span className="text-xs text-white/50">
-            Chest numbers will be auto-generated. Use registered team names or team IDs.
-          </span>
-        </CardDescription>
-        <form
-          action={importStudentsAction}
-          className="mt-6 flex flex-col gap-4 md:flex-row md:items-end"
-        >
-          <div className="flex-1">
-            <label className="text-sm font-semibold text-white/70">
-              CSV File
-            </label>
-            <input
-              type="file"
-              name="file"
-              accept=".csv,text/csv"
-              required
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:border-fuchsia-400 focus:outline-none"
-            />
+      <Card className="h-full flex flex-col justify-between">
+        <div>
+          <CardTitle>Bulk Import Students (CSV)</CardTitle>
+          <CardDescription className="mt-2">
+            Required columns: <code>name</code> and either <code>team_id</code> or <code>team_name</code>.
+            <br />
+            Optional columns: <code>gender</code> (boy/girl), <code>category</code> (KIDDIES, SUB-JUNIOR, etc.), and <code>chest_no</code>.
+            <br />
+            <span className="text-xs text-white/50 block mt-1">
+              <strong>Example Format:</strong>
+              <code className="block mt-1 p-2 bg-black/30 rounded text-cyan-300 font-mono text-[11px] whitespace-pre">
+                {`name,team_name,gender,category,chest_no\nMuhammed Anshid,Thazmiyya,boy,SUB-JUNIOR,TH033\nAisha Mariyam,Razmiyya,girl,JUNIOR,RA045`}
+              </code>
+            </span>
+          </CardDescription>
+        </div>
+        <div>
+          <div className="mt-4">
+            <a
+              href={`data:text/csv;charset=utf-8,${encodeURIComponent(
+                "name,team_name,gender,category,chest_no\nMuhammed Anshid,Thazmiyya,boy,SUB-JUNIOR,TH033\nAisha Mariyam,Razmiyya,girl,JUNIOR,RA045\n"
+              )}`}
+              download="students_import_template.csv"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-fuchsia-400 hover:text-fuchsia-300 transition-colors bg-fuchsia-500/10 border border-fuchsia-500/20 px-3.5 py-2 rounded-xl"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Download Sample CSV Template
+            </a>
           </div>
-          <Button type="submit">Import CSV</Button>
-        </form>
+          <form
+            action={importStudentsAction}
+            className="mt-4 flex flex-col gap-4 md:flex-row md:items-end"
+          >
+            <div className="flex-1">
+              <label className="text-sm font-semibold text-white/70">
+                CSV File
+              </label>
+              <input
+                type="file"
+                name="file"
+                accept=".csv,text/csv"
+                required
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:border-fuchsia-400 focus:outline-none"
+              />
+            </div>
+            <SubmitButton>Import CSV</SubmitButton>
+          </form>
+        </div>
       </Card>
       </div>
 
