@@ -65,26 +65,26 @@ export async function uploadFile(file: File, type: "image" | "audio"): Promise<s
   const buffer = Buffer.from(await file.arrayBuffer());
 
   if (isCloudinaryConfigured) {
-    if (type === "image") {
-      const processedBuffer = await sharp(buffer)
-        .resize(400, 400, { fit: "inside", withoutEnlargement: true })
-        .webp({ quality: 80 })
-        .toBuffer();
-      
-      return await uploadToCloudinary(processedBuffer, "students");
-    } else {
-      const base64Str = `data:audio/mpeg;base64,${buffer.toString("base64")}`;
-      try {
+    try {
+      if (type === "image") {
+        const processedBuffer = await sharp(buffer)
+          .resize(400, 400, { fit: "inside", withoutEnlargement: true })
+          .webp({ quality: 80 })
+          .toBuffer();
+        
+        return await uploadToCloudinary(processedBuffer, "students");
+      } else {
+        const base64Str = `data:audio/mpeg;base64,${buffer.toString("base64")}`;
         const result = await cloudinary.uploader.upload(base64Str, {
           folder: "students",
           resource_type: "auto",
           timeout: 120000
         });
         return result.secure_url;
-      } catch (error) {
-        console.error("Cloudinary audio upload error:", error);
-        throw error;
       }
+    } catch (cloudinaryError) {
+      const errMsg = cloudinaryError instanceof Error ? cloudinaryError.message : String(cloudinaryError);
+      console.warn("⚠️ Cloudinary upload failed, falling back to local disk storage:", errMsg);
     }
   }
 
@@ -131,12 +131,17 @@ export async function uploadGalleryImage(file: File): Promise<string> {
   const buffer = Buffer.from(await file.arrayBuffer());
 
   if (isCloudinaryConfigured) {
-    const processedBuffer = await sharp(buffer)
-      .resize(800, 600, { fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 75 })
-      .toBuffer();
-    
-    return await uploadToCloudinary(processedBuffer, "gallery");
+    try {
+      const processedBuffer = await sharp(buffer)
+        .resize(800, 600, { fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 75 })
+        .toBuffer();
+      
+      return await uploadToCloudinary(processedBuffer, "gallery");
+    } catch (cloudinaryError) {
+      const errMsg = cloudinaryError instanceof Error ? cloudinaryError.message : String(cloudinaryError);
+      console.warn("⚠️ Cloudinary gallery upload failed, falling back to local disk storage:", errMsg);
+    }
   }
 
   await mkdir(GALLERY_UPLOAD_DIR, { recursive: true });
