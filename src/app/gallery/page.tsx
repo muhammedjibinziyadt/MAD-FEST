@@ -1,6 +1,8 @@
 import { getGalleryItems } from "@/lib/gallery-service";
 import { GalleryView } from "@/components/gallery-view";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Photo Gallery | Ishal Rabeeh",
   description: "View the beautiful photo highlights, performances, and art exhibitions from the Ishal Rabeeh fest.",

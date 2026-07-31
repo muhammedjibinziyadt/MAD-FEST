@@ -1,4 +1,3 @@
-"use client";
 
 import { LeaderboardTable } from "@/components/predictions/LeaderboardTable";
 import { Button } from "@/components/ui/button";

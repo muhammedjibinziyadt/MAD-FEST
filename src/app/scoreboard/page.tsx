@@ -1,6 +1,8 @@
 import { getApprovedResults, getLiveScores, getPrograms, getStudents, getTeams } from "@/lib/data";
 import { ScoreboardRealtime } from "@/components/scoreboard-realtime";
 
+export const dynamic = "force-dynamic";
+
 async function getScoreboardData() {
   const [teams, programs, results, students, liveScores] = await Promise.all([
     getTeams(),

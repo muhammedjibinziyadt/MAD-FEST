@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Activity, Medal, TrendingUp, TrendingDown, Minus, ArrowUpRight, BarChart3, PieChart, LineChart } from "lucide-react";
@@ -86,9 +87,11 @@ function TeamCard({ team, index, rank, maxPoints }: TeamCardProps) {
                   boxShadow: `0 4px 14px ${primaryColor}40`,
                 }}
               >
-                <img
+                <Image
                   src={team.gender === "boys" ? "/img/assets/islamic_boy.png" : "/img/assets/islamic_girl.png"}
                   alt={team.gender === "boys" ? "Islamic Boy" : "Islamic Girl"}
+                  width={48}
+                  height={48}
                   className="w-full h-full object-cover"
                 />
               </div>

@@ -9,7 +9,11 @@ export async function POST(request: Request) {
     try {
         const { eventId, correctOptionId } = await request.json();
 
-        const event = await PredictionEventModel.findOne({ id: eventId });
+        const [event, correctPredictions] = await Promise.all([
+            PredictionEventModel.findOne({ id: eventId }),
+            PredictionModel.find({ eventId, selectedOptionId: correctOptionId }) as Promise<Prediction[]>
+        ]);
+
         if (!event) {
             return NextResponse.json({ error: "Event not found" }, { status: 404 });
         }
@@ -19,28 +23,26 @@ export async function POST(request: Request) {
         }
 
         // Update event
-        event.status = "evaluated";
-        event.correctOptionId = correctOptionId;
-        await event.save();
-
-        // Find correct predictions
-        const correctPredictions = await PredictionModel.find({
-            eventId,
-            selectedOptionId: correctOptionId
-        }) as Prediction[];
+        await PredictionEventModel.updateOne(
+            { id: eventId },
+            { $set: { status: "evaluated", correctOptionId } }
+        );
 
         const points = event.points || 10;
 
         // Bulk update scores
-        for (const pred of correctPredictions) {
-            await UserScoreModel.updateOne(
-                { userId: pred.userId },
-                {
-                    $set: { userName: pred.userName }, // Ensure name is up to date
-                    $inc: { score: points }
-                },
-                { upsert: true }
-            );
+        if (correctPredictions.length > 0) {
+            const updates = correctPredictions.map((pred) => ({
+                updateOne: {
+                    filter: { userId: pred.userId },
+                    update: {
+                        $set: { userName: pred.userName },
+                        $inc: { score: points }
+                    },
+                    upsert: true
+                }
+            }));
+            await UserScoreModel.bulkWrite(updates);
         }
 
         await emitPredictionClosed(eventId);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, Fragment } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Medal, ChevronRight, ChevronDown, MinusCircle, Tag } from "lucide-react";
 import type { Team, Program, ResultRecord, ResultEntry, Student } from "@/lib/types";
@@ -43,9 +44,11 @@ function TeamCard({ team, totalPoints, medals, penaltyPoints, isActive, onClick,
           <div className="flex items-center gap-3">
             {team.gender === "boys" || team.gender === "girls" ? (
               <div className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-200 shrink-0">
-                <img
+                <Image
                   src={team.gender === "boys" ? "/img/assets/islamic_boy.png" : "/img/assets/islamic_girl.png"}
                   alt={team.gender === "boys" ? "Boys Team" : "Girls Team"}
+                  width={32}
+                  height={32}
                   className="w-full h-full object-cover"
                 />
               </div>

@@ -375,39 +375,39 @@ export function validateParticipationLimit(
   }
 
   return { allowed: true };
-}
-
-export async function getReplacementRequests(teamId?: string): Promise<ReplacementRequest[]> {
+}export async function getReplacementRequests(teamId?: string): Promise<ReplacementRequest[]> {
   const cached = getCached<ReplacementRequest[]>("replacementRequests");
-  let requests: ReplacementRequest[];
   if (cached) {
-    requests = cached;
-  } else {
-    await connectDB();
-    const docs = await ReplacementRequestModel.find({}).lean().sort({ submittedAt: -1 });
-    requests = docs.map((request) => ({
-      id: request.id,
-      programId: request.programId,
-      programName: request.programName,
-      oldStudentId: request.oldStudentId,
-      oldStudentName: request.oldStudentName,
-      oldStudentChest: request.oldStudentChest,
-      newStudentId: request.newStudentId,
-      newStudentName: request.newStudentName,
-      newStudentChest: request.newStudentChest,
-      teamId: request.teamId,
-      teamName: request.teamName,
-      reason: request.reason,
-      status: request.status,
-      submittedAt: request.submittedAt,
-      reviewedAt: request.reviewedAt,
-      reviewedBy: request.reviewedBy,
-    }));
+    return teamId ? cached.filter((r) => r.teamId === teamId) : cached;
+  }
+
+  await connectDB();
+  const query = teamId ? { teamId } : {};
+  const docs = await ReplacementRequestModel.find(query).lean().sort({ submittedAt: -1 });
+  const requests = docs.map((request) => ({
+    id: request.id,
+    programId: request.programId,
+    programName: request.programName,
+    oldStudentId: request.oldStudentId,
+    oldStudentName: request.oldStudentName,
+    oldStudentChest: request.oldStudentChest,
+    newStudentId: request.newStudentId,
+    newStudentName: request.newStudentName,
+    newStudentChest: request.newStudentChest,
+    teamId: request.teamId,
+    teamName: request.teamName,
+    reason: request.reason,
+    status: request.status,
+    submittedAt: request.submittedAt,
+    reviewedAt: request.reviewedAt,
+    reviewedBy: request.reviewedBy,
+  }));
+  
+  if (!teamId) {
     setCached("replacementRequests", requests);
   }
-  return teamId ? requests.filter((r) => r.teamId === teamId) : requests;
+  return requests;
 }
-
 export async function createReplacementRequest(request: {
   programId: string;
   programName: string;

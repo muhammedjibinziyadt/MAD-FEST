@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Maximize2, Tag, Calendar } from "lucide-react";
 import type { GalleryItem } from "@/lib/gallery-service";
@@ -104,10 +105,11 @@ export function GalleryView({ items }: GalleryViewProps) {
                 className="group relative aspect-[3/2] cursor-pointer overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:shadow-xl"
               >
                 {/* Image */}
-                <img
+                <Image
                   src={item.imageUrl}
                   alt={item.title}
-                  loading="lazy"
+                  width={300}
+                  height={200}
                   className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                 />
 

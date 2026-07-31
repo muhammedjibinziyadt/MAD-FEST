@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Trash2, Plus, UploadCloud, Tag, Heading, Image as ImageIcon } from "lucide-react";
 import type { GalleryItem } from "@/lib/gallery-service";
 import { Button } from "@/components/ui/button";
@@ -142,9 +143,11 @@ export function GalleryManager({ items, createAction, deleteAction }: GalleryMan
                 className="group relative aspect-[3/2] overflow-hidden rounded-2xl border border-white/10 bg-white/5"
               >
                 {/* Image */}
-                <img
+                <Image
                   src={item.imageUrl}
                   alt={item.title}
+                  width={300}
+                  height={200}
                   className="h-full w-full object-cover opacity-90 transition-transform duration-300 group-hover:scale-105"
                 />
 

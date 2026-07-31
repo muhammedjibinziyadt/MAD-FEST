@@ -3,13 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Trophy } from "lucide-react";
+import { cache } from "react";
+import { connectDB } from "@/lib/db";
 import {
-  getApprovedResults,
-  getJuries,
-  getPrograms,
-  getStudents,
-  getTeams,
-} from "@/lib/data";
+  ProgramModel,
+  ApprovedResultModel,
+  StudentModel,
+  TeamModel,
+  JuryModel,
+} from "@/lib/models";
 import { formatNumber, cn } from "@/lib/utils";
 import { ResultPosterPreview } from "@/components/result-poster-preview";
 
@@ -17,39 +19,68 @@ interface ProgramDetailPageProps {
   params: Promise<{ program_id: string }>;
 }
 
-async function getProgramDetail(programId: string) {
-  const [results, programs, students, teams, juries] = await Promise.all([
-    getApprovedResults(),
-    getPrograms(),
-    getStudents(),
-    getTeams(),
-    getJuries(),
+const getProgramDetail = cache(async (programId: string) => {
+  await connectDB();
+
+  // 1. Fetch program and its approved result in parallel
+  const [program, result] = await Promise.all([
+    ProgramModel.findOne({ id: programId }).lean(),
+    ApprovedResultModel.findOne({ program_id: programId }).lean(),
   ]);
 
-  const program = programs.find((p) => p.id === programId);
-  const programResults = results.filter((r) => r.program_id === programId);
+  if (!program || !result) {
+    return {
+      program: program || null,
+      result: null,
+      programMap: new Map(),
+      studentMap: new Map(),
+      teamMap: new Map(),
+      juryMap: new Map(),
+    };
+  }
 
-  const programMap = new Map(programs.map((p) => [p.id, p]));
+  // 2. Extract specific student IDs and team IDs from result entries/penalties
+  const studentIds = new Set<string>();
+  const teamIds = new Set<string>();
+
+  result.entries.forEach((entry) => {
+    if (entry.student_id) studentIds.add(entry.student_id);
+    if (entry.team_id) teamIds.add(entry.team_id);
+  });
+
+  result.penalties?.forEach((penalty) => {
+    if (penalty.student_id) studentIds.add(penalty.student_id);
+    if (penalty.team_id) teamIds.add(penalty.team_id);
+  });
+
+  // 3. Fetch ONLY the required students, teams, and juries in parallel
+  const [students, teams, jury] = await Promise.all([
+    studentIds.size > 0 ? StudentModel.find({ id: { $in: Array.from(studentIds) } }).lean() : [],
+    teamIds.size > 0 ? TeamModel.find({ id: { $in: Array.from(teamIds) } }).lean() : [],
+    result.jury_id ? JuryModel.findOne({ id: result.jury_id }).lean() : null,
+  ]);
+
+  // 4. Construct maps
+  const programMap = new Map([[program.id, program]]);
   const studentMap = new Map(students.map((s) => [s.id, s]));
   const teamMap = new Map(teams.map((t) => [t.id, t]));
-  const juryMap = new Map(juries.map((j) => [j.id, j]));
+  const juryMap = jury ? new Map([[jury.id, jury]]) : new Map();
 
   return {
     program,
-    result: programResults[0], // Get the first (and should be only) result for this program
+    result,
     programMap,
     studentMap,
     teamMap,
     juryMap,
   };
-}
+});
 
 export async function generateMetadata({ params }: ProgramDetailPageProps) {
   const { program_id } = await params;
-  const programs = await getPrograms();
-  const program = programs.find((p) => p.id === program_id);
+  const data = await getProgramDetail(program_id);
 
-  if (!program) {
+  if (!data.program) {
     return {
       title: "Program Not Found",
       description: "The requested program result could not be found.",
@@ -57,8 +88,8 @@ export async function generateMetadata({ params }: ProgramDetailPageProps) {
   }
 
   return {
-    title: `${program.name} Results - Ishal Rabeeh`,
-    description: `View the winners and full results for ${program.name} (${program.category}) at Ishal Rabeeh.`,
+    title: `${data.program.name} Results - Ishal Rabeeh`,
+    description: `View the winners and full results for ${data.program.name} (${data.program.category}) at Ishal Rabeeh.`,
   };
 }
 

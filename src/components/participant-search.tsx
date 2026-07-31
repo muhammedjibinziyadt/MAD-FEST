@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { QRScanner } from "./qr-scanner";
+import dynamic from "next/dynamic";
+const QRScanner = dynamic(() => import("./qr-scanner").then(mod => mod.QRScanner), {
+    ssr: false
+});
 import { motion, AnimatePresence } from "framer-motion";
 import { useDebounce } from "@/hooks/use-debounce";
 

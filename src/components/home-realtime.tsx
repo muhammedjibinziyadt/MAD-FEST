@@ -5,7 +5,10 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Music2, ArrowRight } from "lucide-react"; // Added Music2, ArrowRight
-import { LiveScorePulse } from "@/components/live-score-pulse";
+import dynamic from "next/dynamic";
+const LiveScorePulse = dynamic(() => import("@/components/live-score-pulse").then(mod => mod.LiveScorePulse), {
+  ssr: false,
+});
 import { HomeEngagementSection } from "@/components/HomeEngagementSection";
 import { AboutSection } from "@/components/AboutSection";
 import { TeamLeadersShowcase } from "@/components/TeamLeadersShowcase";

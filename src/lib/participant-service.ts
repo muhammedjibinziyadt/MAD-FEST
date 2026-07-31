@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { connectDB } from "./db";
 import {
   StudentModel,
@@ -85,9 +86,9 @@ export async function searchParticipant(
 /**
  * Get complete participant profile by student ID or chest number
  */
-export async function getParticipantProfile(
+export const getParticipantProfile = cache(async (
   identifier: string,
-): Promise<ParticipantProfile | null> {
+): Promise<ParticipantProfile | null> => {
   await connectDB();
 
   // Find student by ID or chest number
@@ -106,15 +107,16 @@ export async function getParticipantProfile(
     studentId: student.id,
   }).lean<ProgramRegistration[]>();
 
-  // Get all programs
-  const programs = await ProgramModel.find().lean<Program[]>();
+  const programIds = registrations.map((reg) => reg.programId);
+
+  // Get only required programs and results in parallel
+  const [programs, approvedResults, pendingResults] = await Promise.all([
+    ProgramModel.find({ id: { $in: programIds } }).lean<Program[]>(),
+    ApprovedResultModel.find({ program_id: { $in: programIds } }).lean<ResultRecord[]>(),
+    PendingResultModel.find({ program_id: { $in: programIds } }).lean<ResultRecord[]>(),
+  ]);
+
   const programMap = new Map(programs.map((p) => [p.id, p]));
-
-  // Get all approved results
-  const approvedResults = await ApprovedResultModel.find().lean<ResultRecord[]>();
-
-  // Get pending results (for status checking)
-  const pendingResults = await PendingResultModel.find().lean<ResultRecord[]>();
 
   // Create a map of program_id -> result
   const resultMap = new Map<string, ResultRecord>();
@@ -241,5 +243,5 @@ export async function getParticipantProfile(
 
   // Serialize the entire profile to plain objects (strips Mongoose _id Buffer, __v, etc.)
   return JSON.parse(JSON.stringify(rawProfile)) as ParticipantProfile;
-}
+});
 

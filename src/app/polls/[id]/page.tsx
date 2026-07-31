@@ -1,42 +1,20 @@
-"use client";
-
-import { useEffect, useState, use } from "react";
-import { Poll } from "@/lib/types";
 import { PollCard } from "@/components/polls/PollCard";
-import { Loader2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { connectDB } from "@/lib/db";
+import { PollModel } from "@/lib/models";
+import { notFound } from "next/navigation";
 
-export default function SinglePollPage({ params }: { params: Promise<{ id: string }> }) {
-    const paramsUnwrapped = use(params);
-    const [poll, setPoll] = useState<Poll | null>(null);
-    const [loading, setLoading] = useState(true);
+export default async function SinglePollPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    await connectDB();
+    const rawPoll = await PollModel.findOne({ id }).lean();
 
-    useEffect(() => {
-        fetch(`/api/polls/${paramsUnwrapped.id}`)
-            .then((res) => {
-                if (!res.ok) throw new Error("Poll not found");
-                return res.json();
-            })
-            .then((data) => {
-                setPoll(data);
-                setLoading(false);
-            })
-            .catch((error) => {
-                setLoading(false);
-            });
-    }, [paramsUnwrapped.id]);
-
-    if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;
-
-    if (!poll) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-                <h2 className="text-xl font-bold">Poll not found</h2>
-            </div>
-        );
+    if (!rawPoll) {
+        notFound();
     }
+
+    const poll = JSON.parse(JSON.stringify(rawPoll));
 
     return (
         <div className="container mx-auto px-4 py-8 flex flex-col items-center">

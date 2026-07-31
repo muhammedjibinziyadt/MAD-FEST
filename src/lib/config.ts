@@ -1,6 +1,6 @@
 export const ADMIN_CREDENTIALS = {
   username: "admin",
-  password: "admin123",
+  password: "ishalrabeeh2026",
 };
 
 export const ADMIN_COOKIE = "fest_admin_token";

@@ -37,10 +37,12 @@ export async function POST(
         // We combine IP + UA + Language to create a fingerprint
         const fingerprintString = `${ip}-${userAgent}-${acceptLanguage}`;
         const voterHash = crypto.createHash('sha256').update(fingerprintString).digest('hex');
-
         // SECURITY CHECK
         // This catches users who use Incognito (No Cookie) but are on the same network/device
-        const voteByHash = await VoteModel.findOne({ pollId: id, voterHash });
+        const [voteByHash, poll] = await Promise.all([
+            VoteModel.findOne({ pollId: id, voterHash }),
+            PollModel.findOne({ id }) as Promise<Poll | null>
+        ]);
 
         if (voteByHash) {
             return NextResponse.json(
@@ -48,9 +50,6 @@ export async function POST(
                 { status: 403 }
             );
         }
-
-        // Check if poll exists and is active
-        const poll = await PollModel.findOne({ id }) as Poll | null;
         if (!poll || !poll.active) {
             return NextResponse.json(
                 { error: "Poll not found or inactive" },

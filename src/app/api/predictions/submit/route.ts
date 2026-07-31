@@ -14,8 +14,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
-        // Check event status and deadline
-        const event = await PredictionEventModel.findOne({ id: eventId }) as PredictionEvent | null;
+        // Check event status/deadline and existing prediction in parallel
+        const [event, existing] = await Promise.all([
+            PredictionEventModel.findOne({ id: eventId }) as Promise<PredictionEvent | null>,
+            PredictionModel.findOne({ eventId, userId })
+        ]);
+
         if (!event) {
             return NextResponse.json({ error: "Event not found" }, { status: 404 });
         }
@@ -30,8 +34,6 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Deadline has passed" }, { status: 400 });
         }
 
-        // Check existing prediction
-        const existing = await PredictionModel.findOne({ eventId, userId });
         if (existing) {
             // Optional: Allow update? Requirements said "submit predictions", usually implies once.
             // Let's allow update if open? Or block. Block is safer for "one shot".

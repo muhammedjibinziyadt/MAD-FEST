@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
+import Image from "next/image";
 import { CheckCircle2, Eye, Pencil, Search, Trash2, Download, FileText, FileSpreadsheet, User } from "lucide-react";
 
 import { Button, SubmitButton } from "@/components/ui/button";
@@ -460,9 +461,11 @@ export const StudentManager = React.memo(function StudentManager({
                   />
                   {student.avatar ? (
                     <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-fuchsia-500/30">
-                      <img
+                      <Image
                         src={student.avatar}
                         alt={student.name}
+                        width={40}
+                        height={40}
                         className="h-full w-full object-cover"
                       />
                     </div>
@@ -671,9 +674,11 @@ export const StudentManager = React.memo(function StudentManager({
             {viewStudent.avatar && (
               <div className="flex justify-center">
                 <div className="relative h-32 w-32 overflow-hidden rounded-full border-4 border-fuchsia-500/30">
-                  <img
+                  <Image
                     src={viewStudent.avatar}
                     alt={viewStudent.name}
+                    width={128}
+                    height={128}
                     className="h-full w-full object-cover"
                   />
                 </div>

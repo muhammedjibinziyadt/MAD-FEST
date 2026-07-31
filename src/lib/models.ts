@@ -78,6 +78,8 @@ const StudentSchema = new Schema<Student>(
 );
 // Unique index for chest numbers to prevent duplicates globally
 StudentSchema.index({ chest_no: 1 }, { unique: true });
+StudentSchema.index({ name: 1 });
+StudentSchema.index({ team_id: 1 });
 
 const ProgramSchema = new Schema<Program>(
   {
@@ -131,6 +133,7 @@ const ProgramRegistrationSchema = new Schema<ProgramRegistration>(
 );
 // Unique index to prevent duplicate program registrations (same student in same program)
 ProgramRegistrationSchema.index({ programId: 1, studentId: 1 }, { unique: true });
+ProgramRegistrationSchema.index({ studentId: 1 });
 
 const RegistrationScheduleSchema = new Schema<RegistrationSchedule & { key: string }>(
   {
@@ -339,6 +342,7 @@ const PredictionEventSchema = new Schema<PredictionEvent>(
   },
   { timestamps: true },
 );
+PredictionEventSchema.index({ programId: 1 });
 
 const PredictionSchema = new Schema<Prediction>(
   {
@@ -352,6 +356,7 @@ const PredictionSchema = new Schema<Prediction>(
   { timestamps: true },
 );
 PredictionSchema.index({ eventId: 1, userId: 1 }, { unique: true });
+PredictionSchema.index({ eventId: 1, selectedOptionId: 1 });
 
 const UserScoreSchema = new Schema<UserScore>(
   {
@@ -361,6 +366,7 @@ const UserScoreSchema = new Schema<UserScore>(
   },
   { timestamps: true },
 );
+UserScoreSchema.index({ score: -1 });
 
 export const PollModel =
   (models.Poll as Model<Poll>) ?? model<Poll>("Poll", PollSchema);
