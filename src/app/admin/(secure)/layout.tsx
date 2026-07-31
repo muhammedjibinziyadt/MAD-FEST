@@ -6,6 +6,8 @@ import Sidenavbar, {
 } from "@/components/ui/sidebar";
 import { ADMIN_COOKIE } from "@/lib/config";
 
+export const dynamic = "force-dynamic";
+
 const adminNav: SidebarItem[] = [
   { href: "/admin/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/admin/programs", label: "Programs", icon: "programs" },

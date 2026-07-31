@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { getCurrentJury } from "@/lib/auth";
 import { JURY_COOKIE } from "@/lib/config";
 
+export const dynamic = "force-dynamic";
+
 async function logoutAction() {
   "use server";
   const store = await cookies();

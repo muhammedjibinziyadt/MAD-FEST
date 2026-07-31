@@ -19,6 +19,8 @@ export const CHANNELS = {
   REGISTRATIONS: "registrations",
   STUDENTS: "students",
   SCOREBOARD: "scoreboard",
+  POLLS: "polls",
+  PREDICTIONS: "predictions",
 } as const;
 
 // Event names (same as server)
@@ -35,6 +37,10 @@ export const EVENTS = {
   STUDENT_UPDATED: "student-updated",
   STUDENT_DELETED: "student-deleted",
   SCOREBOARD_UPDATED: "scoreboard-updated",
+  POLL_UPDATED: "poll-updated",
+  PREDICTION_OPENED: "prediction-opened",
+  PREDICTION_CLOSED: "prediction-closed",
+  LEADERBOARD_UPDATED: "leaderboard-updated",
 } as const;
 
 

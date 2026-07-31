@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { UserScore } from "@/lib/types";
-import { pusherClient } from "@/lib/pusher-client";
-import { CHANNELS, EVENTS } from "@/lib/pusher";
+import { pusherClient, CHANNELS, EVENTS } from "@/lib/pusher-client";
 import { Crown, Medal, TrendingUp, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
