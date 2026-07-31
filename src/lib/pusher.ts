@@ -1,3 +1,4 @@
+import "server-only";
 import Pusher from "pusher";
 
 // Server-side Pusher instance
@@ -40,22 +41,36 @@ export const EVENTS = {
   LEADERBOARD_UPDATED: "leaderboard-updated",
 } as const;
 
+async function safeTrigger(channel: string, event: string, data: any) {
+  if (!process.env.PUSHER_APP_ID || !process.env.PUSHER_SECRET) {
+    return;
+  }
+  try {
+    const triggerPromise = pusherServer.trigger(channel, event, data);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Pusher trigger timeout")), 4000)
+    );
+    await Promise.race([triggerPromise, timeoutPromise]);
+  } catch (error) {
+    console.warn(`⚠️ Pusher trigger error (${channel}/${event}):`, error instanceof Error ? error.message : error);
+  }
+}
+
 // Helper functions to emit events
 export async function emitResultApproved(resultId: string, programId: string) {
-  await pusherServer.trigger(CHANNELS.RESULTS, EVENTS.RESULT_APPROVED, {
+  await safeTrigger(CHANNELS.RESULTS, EVENTS.RESULT_APPROVED, {
     resultId,
     programId,
     timestamp: new Date().toISOString(),
   });
 
-  // Also update scoreboard
-  await pusherServer.trigger(CHANNELS.SCOREBOARD, EVENTS.SCOREBOARD_UPDATED, {
+  await safeTrigger(CHANNELS.SCOREBOARD, EVENTS.SCOREBOARD_UPDATED, {
     timestamp: new Date().toISOString(),
   });
 }
 
 export async function emitResultRejected(resultId: string, programId: string) {
-  await pusherServer.trigger(CHANNELS.RESULTS, EVENTS.RESULT_REJECTED, {
+  await safeTrigger(CHANNELS.RESULTS, EVENTS.RESULT_REJECTED, {
     resultId,
     programId,
     timestamp: new Date().toISOString(),
@@ -63,7 +78,7 @@ export async function emitResultRejected(resultId: string, programId: string) {
 }
 
 export async function emitResultSubmitted(resultId: string, programId: string, juryId: string) {
-  await pusherServer.trigger(CHANNELS.RESULTS, EVENTS.RESULT_SUBMITTED, {
+  await safeTrigger(CHANNELS.RESULTS, EVENTS.RESULT_SUBMITTED, {
     resultId,
     programId,
     juryId,
@@ -72,19 +87,19 @@ export async function emitResultSubmitted(resultId: string, programId: string, j
 }
 
 export async function emitResultUpdated(resultId: string, programId: string) {
-  await pusherServer.trigger(CHANNELS.RESULTS, EVENTS.RESULT_UPDATED, {
+  await safeTrigger(CHANNELS.RESULTS, EVENTS.RESULT_UPDATED, {
     resultId,
     programId,
     timestamp: new Date().toISOString(),
   });
 
-  await pusherServer.trigger(CHANNELS.SCOREBOARD, EVENTS.SCOREBOARD_UPDATED, {
+  await safeTrigger(CHANNELS.SCOREBOARD, EVENTS.SCOREBOARD_UPDATED, {
     timestamp: new Date().toISOString(),
   });
 }
 
 export async function emitAssignmentCreated(programId: string, juryId: string) {
-  await pusherServer.trigger(CHANNELS.ASSIGNMENTS, EVENTS.ASSIGNMENT_CREATED, {
+  await safeTrigger(CHANNELS.ASSIGNMENTS, EVENTS.ASSIGNMENT_CREATED, {
     programId,
     juryId,
     timestamp: new Date().toISOString(),
@@ -92,7 +107,7 @@ export async function emitAssignmentCreated(programId: string, juryId: string) {
 }
 
 export async function emitAssignmentDeleted(programId: string, juryId: string) {
-  await pusherServer.trigger(CHANNELS.ASSIGNMENTS, EVENTS.ASSIGNMENT_DELETED, {
+  await safeTrigger(CHANNELS.ASSIGNMENTS, EVENTS.ASSIGNMENT_DELETED, {
     programId,
     juryId,
     timestamp: new Date().toISOString(),
@@ -100,7 +115,7 @@ export async function emitAssignmentDeleted(programId: string, juryId: string) {
 }
 
 export async function emitRegistrationCreated(registrationId: string, programId: string, teamId: string) {
-  await pusherServer.trigger(CHANNELS.REGISTRATIONS, EVENTS.REGISTRATION_CREATED, {
+  await safeTrigger(CHANNELS.REGISTRATIONS, EVENTS.REGISTRATION_CREATED, {
     registrationId,
     programId,
     teamId,
@@ -109,7 +124,7 @@ export async function emitRegistrationCreated(registrationId: string, programId:
 }
 
 export async function emitRegistrationDeleted(registrationId: string, programId: string, teamId: string) {
-  await pusherServer.trigger(CHANNELS.REGISTRATIONS, EVENTS.REGISTRATION_DELETED, {
+  await safeTrigger(CHANNELS.REGISTRATIONS, EVENTS.REGISTRATION_DELETED, {
     registrationId,
     programId,
     teamId,
@@ -118,7 +133,7 @@ export async function emitRegistrationDeleted(registrationId: string, programId:
 }
 
 export async function emitStudentCreated(studentId: string, teamId: string) {
-  await pusherServer.trigger(CHANNELS.STUDENTS, EVENTS.STUDENT_CREATED, {
+  await safeTrigger(CHANNELS.STUDENTS, EVENTS.STUDENT_CREATED, {
     studentId,
     teamId,
     timestamp: new Date().toISOString(),
@@ -126,7 +141,7 @@ export async function emitStudentCreated(studentId: string, teamId: string) {
 }
 
 export async function emitStudentUpdated(studentId: string, teamId: string) {
-  await pusherServer.trigger(CHANNELS.STUDENTS, EVENTS.STUDENT_UPDATED, {
+  await safeTrigger(CHANNELS.STUDENTS, EVENTS.STUDENT_UPDATED, {
     studentId,
     teamId,
     timestamp: new Date().toISOString(),
@@ -134,7 +149,7 @@ export async function emitStudentUpdated(studentId: string, teamId: string) {
 }
 
 export async function emitStudentDeleted(studentId: string, teamId: string) {
-  await pusherServer.trigger(CHANNELS.STUDENTS, EVENTS.STUDENT_DELETED, {
+  await safeTrigger(CHANNELS.STUDENTS, EVENTS.STUDENT_DELETED, {
     studentId,
     teamId,
     timestamp: new Date().toISOString(),
@@ -151,35 +166,35 @@ export async function emitNotificationCreated(notification: {
   resultId: string;
   createdAt: string;
 }) {
-  await pusherServer.trigger(CHANNELS.RESULTS, "notification-created", {
+  await safeTrigger(CHANNELS.RESULTS, "notification-created", {
     notification,
     timestamp: new Date().toISOString(),
   });
 }
 
 export async function emitPollUpdated(pollId: string) {
-  await pusherServer.trigger(CHANNELS.POLLS, EVENTS.POLL_UPDATED, {
+  await safeTrigger(CHANNELS.POLLS, EVENTS.POLL_UPDATED, {
     pollId,
     timestamp: new Date().toISOString(),
   });
 }
 
 export async function emitPredictionOpened(predictionId: string) {
-  await pusherServer.trigger(CHANNELS.PREDICTIONS, EVENTS.PREDICTION_OPENED, {
+  await safeTrigger(CHANNELS.PREDICTIONS, EVENTS.PREDICTION_OPENED, {
     predictionId,
     timestamp: new Date().toISOString(),
   });
 }
 
 export async function emitPredictionClosed(predictionId: string) {
-  await pusherServer.trigger(CHANNELS.PREDICTIONS, EVENTS.PREDICTION_CLOSED, {
+  await safeTrigger(CHANNELS.PREDICTIONS, EVENTS.PREDICTION_CLOSED, {
     predictionId,
     timestamp: new Date().toISOString(),
   });
 }
 
 export async function emitLeaderboardUpdated() {
-  await pusherServer.trigger(CHANNELS.PREDICTIONS, EVENTS.LEADERBOARD_UPDATED, {
+  await safeTrigger(CHANNELS.PREDICTIONS, EVENTS.LEADERBOARD_UPDATED, {
     timestamp: new Date().toISOString(),
   });
 }

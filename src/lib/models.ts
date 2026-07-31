@@ -19,28 +19,7 @@ import type {
   UserScore,
 } from "./types";
 
-// Force new schema in dev
-if (process.env.NODE_ENV !== "production") {
-  delete models.Team;
-  delete models.Student;
-  delete models.Program;
-  delete models.Jury;
-  delete models.AssignedProgram;
-  delete models.PendingResult;
-  delete models.ApprovedResult;
-  delete models.LiveScore;
-  delete models.ProgramRegistration;
-  delete models.RegistrationSchedule;
-  delete models.ReplacementRequest;
-  delete models.Notification;
-  delete models.AdminSettings;
-  delete models.Poll;
-  delete models.Vote;
-  delete models.PredictionEvent;
-  delete models.Prediction;
-  delete models.UserScore;
-  delete models.Gallery;
-}
+
 
 const TeamSchema = new Schema<Team>(
   {

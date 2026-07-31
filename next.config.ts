@@ -2,7 +2,17 @@ import type { NextConfig } from "next";
 import withPWA from "@ducanh2912/next-pwa";
 
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
+  serverExternalPackages: [
+    "sharp",
+    "mongoose",
+    "cloudinary",
+    "pusher",
+    "bcryptjs",
+    "nodemailer",
+    "mongodb",
+    "@google/generative-ai",
+  ],
   experimental: {
     serverActions: {
       bodySizeLimit: "50mb",

@@ -1,3 +1,4 @@
+import "server-only";
 import { v2 as cloudinary } from "cloudinary";
 import { writeFile, mkdir, unlink } from "fs/promises";
 import path from "path";
@@ -23,16 +24,25 @@ if (isCloudinaryConfigured) {
 
 async function uploadToCloudinary(buffer: Buffer, folder: string): Promise<string> {
   const base64Str = `data:image/webp;base64,${buffer.toString("base64")}`;
-  try {
-    const result = await cloudinary.uploader.upload(base64Str, { 
-      folder,
-      timeout: 120000
-    });
-    return result.secure_url;
-  } catch (error) {
-    console.error("Cloudinary upload error:", error);
-    throw error;
+  const maxAttempts = 3;
+  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const result = await cloudinary.uploader.upload(base64Str, {
+        folder,
+        timeout: 120000,
+      });
+      return result.secure_url;
+    } catch (error) {
+      console.warn(`Cloudinary upload attempt ${attempt} failed:`, error);
+      if (attempt === maxAttempts) {
+        console.error("All Cloudinary upload attempts failed.");
+        throw error;
+      }
+      await delay(500 * Math.pow(2, attempt - 1));
+    }
   }
+  throw new Error("Cloudinary upload failed after retries");
 }
 
 function getPublicIdFromUrl(url: string): string | null {
@@ -71,7 +81,7 @@ export async function uploadFile(file: File, type: "image" | "audio"): Promise<s
           .resize(400, 400, { fit: "inside", withoutEnlargement: true })
           .webp({ quality: 80 })
           .toBuffer();
-        
+
         return await uploadToCloudinary(processedBuffer, "students");
       } else {
         const base64Str = `data:audio/mpeg;base64,${buffer.toString("base64")}`;
@@ -136,7 +146,7 @@ export async function uploadGalleryImage(file: File): Promise<string> {
         .resize(800, 600, { fit: "inside", withoutEnlargement: true })
         .webp({ quality: 75 })
         .toBuffer();
-      
+
       return await uploadToCloudinary(processedBuffer, "gallery");
     } catch (cloudinaryError) {
       const errMsg = cloudinaryError instanceof Error ? cloudinaryError.message : String(cloudinaryError);

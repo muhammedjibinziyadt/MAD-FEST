@@ -5,7 +5,6 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { TeamStudentList } from "@/components/team-student-list";
 import { ChestNumberPreview } from "@/components/chest-number-preview";
-import { StudentPhotoInput } from "@/components/student-photo-input";
 import { getCurrentTeam } from "@/lib/auth";
 import {
   deletePortalStudent,
@@ -59,18 +58,6 @@ async function createStudentAction(formData: FormData) {
     redirectWithMessage("Student name is required.");
   }
 
-  const avatarFile = formData.get("avatar") as File | null;
-  let avatarUrl: string | undefined = undefined;
-  if (avatarFile && avatarFile.size > 0) {
-    try {
-      const { uploadFile } = await import("@/lib/upload");
-      avatarUrl = await uploadFile(avatarFile, "image");
-    } catch (uploadError) {
-      console.error("Avatar upload failed in createStudentAction:", uploadError);
-      redirectWithMessage("Failed to upload student image. Make sure it's a valid image file.");
-    }
-  }
-
   const students = await getPortalStudents();
   const chestNumber = generateNextChestNumber(team.teamName, students);
 
@@ -104,7 +91,6 @@ async function createStudentAction(formData: FormData) {
       name,
       chestNumber,
       teamId: team.id,
-      avatar: avatarUrl,
       gender,
       category,
     });
@@ -129,18 +115,6 @@ async function updateStudentAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const chestNumber = String(formData.get("chestNumber") ?? "").trim().toUpperCase();
   if (!studentId) redirectWithMessage("Missing student ID.");
-
-  const avatarFile = formData.get("avatar") as File | null;
-  let avatarUrl: string | undefined = undefined;
-  if (avatarFile && avatarFile.size > 0) {
-    try {
-      const { uploadFile } = await import("@/lib/upload");
-      avatarUrl = await uploadFile(avatarFile, "image");
-    } catch (uploadError) {
-      console.error("Avatar upload failed in updateStudentAction:", uploadError);
-      redirectWithMessage("Failed to upload student image. Make sure it's a valid image file.");
-    }
-  }
 
   let gender: "boy" | "girl" | undefined = undefined;
   if (team.gender === "boys") {
@@ -170,7 +144,7 @@ async function updateStudentAction(formData: FormData) {
       name,
       chestNumber,
       teamId: team.id,
-      avatar: avatarUrl,
+      avatar: undefined,
       gender,
       category,
     });
@@ -321,10 +295,6 @@ export default async function RegisterStudentsPage({
                   <option value="SUPER-SENIOR">SUPER-SENIOR</option>
                   <option value="GENERAL">GENERAL</option>
                 </select>
-              </div>
-              <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <label className="text-sm font-medium text-white/70">Student Photo (Optional)</label>
-                <StudentPhotoInput />
               </div>
               <Button type="submit" className="sm:col-span-2 w-full mt-2 h-10">
                 Add Student

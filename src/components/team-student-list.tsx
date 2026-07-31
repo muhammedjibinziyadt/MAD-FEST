@@ -72,10 +72,6 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
   };
 
   const handleSave = async (studentId: string) => {
-    if (editAvatarError) {
-      alert(editAvatarError);
-      return;
-    }
     const formData = new FormData();
     formData.append("studentId", studentId);
     formData.append("name", editName.trim());
@@ -83,9 +79,6 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
     const finalGender = teamGender === "boys" ? "boy" : teamGender === "girls" ? "girl" : editGender;
     formData.append("gender", finalGender);
     formData.append("category", editCategory);
-    if (editAvatar) {
-      formData.append("avatar", editAvatar);
-    }
     await updateAction(formData);
     setEditingId(null);
     setEditName("");
