@@ -1,7 +1,7 @@
 # Polling & Prediction Features - Integration & Usage Guide
 
 ## Overview
-We have successfully implemented the **Polling System** and **Prediction Feature**. These systems are integrated with MongoDB for data persistence and Pusher for real-time updates.
+We have successfully implemenp98uj0po9j0ted the **Polling System** and **Prediction Feature**. These systems are integrated with MongoDB for data persistence and Pusher for real-time updates.
 
 ## New Features
 
