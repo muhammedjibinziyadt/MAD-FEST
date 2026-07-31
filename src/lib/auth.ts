@@ -41,6 +41,7 @@ export async function verifySessionToken<T>(token: string): Promise<T | null> {
  * Ensures admin credentials exist in DB headers (hashed).
  * Does NOT return the password.
  */
+
 async function ensureAdminUser() {
   await connectDB();
   let settings = await AdminSettingsModel.findOne();
@@ -50,6 +51,17 @@ async function ensureAdminUser() {
       username: ADMIN_CREDENTIALS.username,
       password: hashedPassword,
     });
+  } else {
+    const matches = await verifyPassword(ADMIN_CREDENTIALS.password, settings.password);
+    if (!matches || settings.username !== ADMIN_CREDENTIALS.username) {
+      const hashedPassword = await hashPassword(ADMIN_CREDENTIALS.password);
+      await AdminSettingsModel.updateOne(
+        { _id: settings._id },
+        { $set: { username: ADMIN_CREDENTIALS.username, password: hashedPassword } }
+      );
+      settings.username = ADMIN_CREDENTIALS.username;
+      settings.password = hashedPassword;
+    }
   }
   return settings;
 }
