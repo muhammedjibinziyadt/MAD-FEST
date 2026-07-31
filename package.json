@@ -29,6 +29,7 @@
     "@yudiel/react-qr-scanner": "^2.4.1",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
+    "cloudinary": "^2.10.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.24",
     "geist": "^1.5.1",

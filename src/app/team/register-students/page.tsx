@@ -66,6 +66,7 @@ async function createStudentAction(formData: FormData) {
       const { uploadFile } = await import("@/lib/upload");
       avatarUrl = await uploadFile(avatarFile, "image");
     } catch (uploadError) {
+      console.error("Avatar upload failed in createStudentAction:", uploadError);
       redirectWithMessage("Failed to upload student image. Make sure it's a valid image file.");
     }
   }
@@ -136,6 +137,7 @@ async function updateStudentAction(formData: FormData) {
       const { uploadFile } = await import("@/lib/upload");
       avatarUrl = await uploadFile(avatarFile, "image");
     } catch (uploadError) {
+      console.error("Avatar upload failed in updateStudentAction:", uploadError);
       redirectWithMessage("Failed to upload student image. Make sure it's a valid image file.");
     }
   }

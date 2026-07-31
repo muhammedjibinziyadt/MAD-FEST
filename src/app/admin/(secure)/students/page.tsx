@@ -90,6 +90,7 @@ async function upsertStudent(formData: FormData, mode: "create" | "update") {
       const { uploadFile } = await import("@/lib/upload");
       avatarUrl = await uploadFile(avatarFile, "image");
     } catch (uploadError) {
+      console.error("Avatar upload failed:", uploadError);
       throw new Error("Failed to upload student image. Make sure it's a valid image file.");
     }
   }

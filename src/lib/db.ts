@@ -35,13 +35,16 @@ export async function connectDB() {
       return mongooseInstance;
     });
   }
-
   try {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    console.error("\n❌ MONGODB CONNECTION ERROR!");
+    console.error("👉 Please verify: ");
+    console.error("   1. You are connected to the Internet.");
+    console.error("   2. Your current IP address is whitelisted in MongoDB Atlas Network Access (Settings -> Network Access -> Add IP -> Allow Access From Anywhere).");
+    console.error("   3. Your MONGODB_URI in the .env file is correct.\n");
     throw e;
   }
-
   return cached.conn;
 }
