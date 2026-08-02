@@ -128,6 +128,8 @@ export async function getStudents(): Promise<Student[]> {
   if (cached) return cached;
 
   await ensureSeedData();
+  const { migrateChestNumbers } = await import("./chest-db");
+  await migrateChestNumbers();
   const students = await StudentModel.find().lean<Student[]>();
   return setCached("students", normalize(students));
 }
@@ -272,6 +274,15 @@ export async function createStudent(input: Omit<Student, "id" | "total_points">)
       total_points: 0,
     });
     clearCache("students");
+
+    if (input.gender) {
+      const { parseChestNumber } = await import("./chest-utils");
+      const { updateChestCounterDB } = await import("./chest-db");
+      const parsed = parseChestNumber(normalizedChestNo);
+      if (parsed?.number) {
+        await updateChestCounterDB(input.team_id, input.gender as "boy" | "girl", parsed.number);
+      }
+    }
 
     // Emit real-time event (non-blocking)
     import("./pusher")

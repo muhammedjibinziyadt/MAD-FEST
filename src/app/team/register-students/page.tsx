@@ -13,33 +13,11 @@ import {
   isRegistrationOpen,
 } from "@/lib/team-data";
 
-function redirectWithMessage(message: string, type: "error" | "success" = "error") {
+import { getNextChestNumberDB } from "@/lib/chest-db";
+
+function redirectWithMessage(message: string, type: "error" | "success" = "error"): never {
   const params = new URLSearchParams({ [type]: message });
   redirect(`/team/register-students?${params.toString()}`);
-}
-
-function generateNextChestNumber(teamName: string, existingStudents: Array<{ chestNumber: string }>): string {
-  const prefix = teamName.slice(0, 2).toUpperCase();
-  const teamStudents = existingStudents.filter((student) => {
-    const chest = student.chestNumber.toUpperCase();
-    return chest.startsWith(prefix) && /^\d{3}$/.test(chest.slice(2));
-  });
-
-  if (teamStudents.length === 0) {
-    return `${prefix}001`;
-  }
-
-  const numbers = teamStudents
-    .map((student) => {
-      const numStr = student.chestNumber.toUpperCase().slice(2);
-      const num = parseInt(numStr, 10);
-      return isNaN(num) ? 0 : num;
-    })
-    .filter((num) => num > 0);
-
-  const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
-  const nextNumber = maxNumber + 1;
-  return `${prefix}${String(nextNumber).padStart(3, "0")}`;
 }
 
 async function createStudentAction(formData: FormData) {
@@ -59,11 +37,6 @@ async function createStudentAction(formData: FormData) {
   }
 
   const students = await getPortalStudents();
-  const chestNumber = generateNextChestNumber(team.teamName, students);
-
-  if (students.some((student) => student.chestNumber.toUpperCase() === chestNumber)) {
-    redirectWithMessage("Chest number already registered.");
-  }
   if (
     students.some(
       (student) =>
@@ -72,6 +45,7 @@ async function createStudentAction(formData: FormData) {
   ) {
     redirectWithMessage("Student name already exists for this team.");
   }
+
   let gender: "boy" | "girl" | undefined = undefined;
   if (team.gender === "boys") {
     gender = "boy";
@@ -81,6 +55,12 @@ async function createStudentAction(formData: FormData) {
     const genderRaw = String(formData.get("gender") ?? "").trim().toLowerCase();
     gender = genderRaw === "boy" || genderRaw === "girl" ? (genderRaw as "boy" | "girl") : undefined;
   }
+
+  if (!gender) {
+    redirectWithMessage("Please select a gender.");
+  }
+
+  const chestNumber = await getNextChestNumberDB(team.id, team.teamName, gender);
 
   const categoryRaw = String(formData.get("category") ?? "").trim().toUpperCase();
   const validCategories = ["KIDDIES", "SUB-JUNIOR", "JUNIOR", "SENIOR", "SUPER-SENIOR", "GENERAL", "none"];
@@ -245,7 +225,11 @@ export default async function RegisterStudentsPage({
         </CardDescription>
         {isOpen ? (
           <>
-            <ChestNumberPreview teamName={team.teamName} teamStudents={teamStudents} />
+            <ChestNumberPreview
+              teamName={team.teamName}
+              teamStudents={teamStudents}
+              defaultGender={team.gender === "boys" ? "boy" : team.gender === "girls" ? "girl" : undefined}
+            />
             <form
               action={createStudentAction}
               className="mt-4 grid gap-4 sm:grid-cols-2"

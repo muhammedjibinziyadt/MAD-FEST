@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -25,6 +27,7 @@ function SubmitButton() {
 
 export function JuryLoginForm({ action }: JuryLoginFormProps) {
   const [state, formAction] = useActionState(action, initialState);
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <form
@@ -43,12 +46,27 @@ export function JuryLoginForm({ action }: JuryLoginFormProps) {
       </div>
       <div>
         <label className="text-sm font-semibold text-white/80">Password</label>
-        <Input
-          name="password"
-          type="password"
-          className="mt-2"
-          required
-        />
+        <div className="relative mt-2">
+          <Input
+            name="password"
+            type={showPassword ? "text" : "password"}
+            className="pr-10"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors p-1"
+            tabIndex={-1}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        </div>
       </div>
       {state.error && (
         <p className="text-sm text-rose-400">{state.error}</p>
@@ -57,4 +75,3 @@ export function JuryLoginForm({ action }: JuryLoginFormProps) {
     </form>
   );
 }
-

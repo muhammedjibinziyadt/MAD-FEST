@@ -17,6 +17,7 @@ import type {
   Prediction,
   Vote,
   UserScore,
+  ChestCounter,
 } from "./types";
 
 
@@ -171,33 +172,46 @@ const LiveScoreSchema = new Schema<LiveScore>(
 );
 
 export const TeamModel =
-  (models.Team as Model<Team>) ?? model<Team>("Team", TeamSchema);
+  (models?.Team as Model<Team>) ?? model<Team>("Team", TeamSchema);
 export const StudentModel =
-  (models.Student as Model<Student>) ?? model<Student>("Student", StudentSchema);
+  (models?.Student as Model<Student>) ?? model<Student>("Student", StudentSchema);
 export const ProgramModel =
-  (models.Program as Model<Program>) ?? model<Program>("Program", ProgramSchema);
+  (models?.Program as Model<Program>) ?? model<Program>("Program", ProgramSchema);
 export const JuryModel =
-  (models.Jury as Model<Jury>) ?? model<Jury>("Jury", JurySchema);
+  (models?.Jury as Model<Jury>) ?? model<Jury>("Jury", JurySchema);
 export const AssignedProgramModel =
-  (models.AssignedProgram as Model<AssignedProgram>) ??
+  (models?.AssignedProgram as Model<AssignedProgram>) ??
   model<AssignedProgram>("AssignedProgram", AssignedProgramSchema);
 export const PendingResultModel =
-  (models.PendingResult as Model<ResultRecord>) ??
+  (models?.PendingResult as Model<ResultRecord>) ??
   model<ResultRecord>("PendingResult", ResultSchema, "results_pending");
 export const ApprovedResultModel =
-  (models.ApprovedResult as Model<ResultRecord>) ??
+  (models?.ApprovedResult as Model<ResultRecord>) ??
   model<ResultRecord>("ApprovedResult", ResultSchema, "results_approved");
 export const LiveScoreModel =
-  (models.LiveScore as Model<LiveScore>) ?? model<LiveScore>("LiveScore", LiveScoreSchema);
+  (models?.LiveScore as Model<LiveScore>) ?? model<LiveScore>("LiveScore", LiveScoreSchema);
 export const ProgramRegistrationModel =
-  (models.ProgramRegistration as Model<ProgramRegistration>) ??
+  (models?.ProgramRegistration as Model<ProgramRegistration>) ??
   model<ProgramRegistration>("ProgramRegistration", ProgramRegistrationSchema);
 export const RegistrationScheduleModel =
-  (models.RegistrationSchedule as Model<RegistrationSchedule & { key: string }>) ??
+  (models?.RegistrationSchedule as Model<RegistrationSchedule & { key: string }>) ??
   model<RegistrationSchedule & { key: string }>(
     "RegistrationSchedule",
     RegistrationScheduleSchema,
   );
+const ChestCounterSchema = new Schema<ChestCounter>(
+  {
+    team_id: { type: String, required: true },
+    gender: { type: String, enum: ["boy", "girl"], required: true },
+    last_number: { type: Number, required: true, default: 0 },
+  },
+  { timestamps: true },
+);
+ChestCounterSchema.index({ team_id: 1, gender: 1 }, { unique: true });
+
+export const ChestCounterModel =
+  (models?.ChestCounter as Model<ChestCounter>) ??
+  model<ChestCounter>("ChestCounter", ChestCounterSchema);
 
 const ReplacementRequestSchema = new Schema<ReplacementRequest>(
   {

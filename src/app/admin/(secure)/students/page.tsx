@@ -17,29 +17,8 @@ import {
 import { getProgramRegistrations } from "@/lib/team-data";
 import { redirectWithToast } from "@/lib/actions";
 
-function generateNextChestNumber(teamName: string, existingStudents: Array<{ chest_no: string }>): string {
-  const prefix = teamName.slice(0, 2).toUpperCase();
-  const teamStudents = existingStudents.filter((student) => {
-    const chest = student.chest_no.toUpperCase();
-    return chest.startsWith(prefix) && /^\d{3}$/.test(chest.slice(2));
-  });
-
-  if (teamStudents.length === 0) {
-    return `${prefix}001`;
-  }
-
-  const numbers = teamStudents
-    .map((student) => {
-      const numStr = student.chest_no.toUpperCase().slice(2);
-      const num = parseInt(numStr, 10);
-      return isNaN(num) ? 0 : num;
-    })
-    .filter((num) => num > 0);
-
-  const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
-  const nextNumber = maxNumber + 1;
-  return `${prefix}${String(nextNumber).padStart(3, "0")}`;
-}
+import { generateNextChestNumberSync } from "@/lib/chest-utils";
+import { getNextChestNumberDB } from "@/lib/chest-db";
 
 const studentSchema = z.object({
   id: z.string().optional(),
@@ -86,12 +65,13 @@ async function upsertStudent(formData: FormData, mode: "create" | "update") {
   let chest_no = payload.chest_no;
   
   if (mode === "create" && !chest_no) {
-    const [students, teams] = await Promise.all([getStudents(), getTeams()]);
+    const teams = await getTeams();
     const team = teams.find((t) => t.id === payload.team_id);
     if (!team) {
       throw new Error("Team not found");
     }
-    chest_no = generateNextChestNumber(team.name, students);
+    const genderToUse = payload.gender || (team.gender === "girls" ? "girl" : "boy");
+    chest_no = await getNextChestNumberDB(team.id, team.name, genderToUse);
   } else if (mode === "update" && !chest_no) {
     const students = await getStudents();
     const current = students.find((s) => s.id === payload.id);
@@ -311,8 +291,20 @@ async function importStudentsAction(formData: FormData) {
       return;
     }
     
+    let gender: "boy" | "girl" | undefined = undefined;
+    const genderRaw = parsed.data.gender?.trim().toLowerCase();
+    if (genderRaw === "boy" || genderRaw === "girl" || genderRaw === "male" || genderRaw === "female") {
+      gender = (genderRaw === "boy" || genderRaw === "male") ? "boy" : "girl";
+    } else if (team.gender === "girls") {
+      gender = "girl";
+    } else if (team.gender === "boys") {
+      gender = "boy";
+    } else {
+      gender = "boy";
+    }
+
     // Generate or use provided chest number, normalized to uppercase
-    const chest_no = parsed.data.chest_no?.trim().toUpperCase() || generateNextChestNumber(team.name, existingStudents);
+    const chest_no = parsed.data.chest_no?.trim().toUpperCase() || generateNextChestNumberSync(team.name, gender, existingStudents);
     
     // Check for duplicate chest number in existing database
     if (existingChestNumbers.has(chest_no)) {
@@ -332,12 +324,6 @@ async function importStudentsAction(formData: FormData) {
     // Add to batch tracking
     importBatchChestNumbers.add(chest_no);
 
-    let gender: "boy" | "girl" | undefined = undefined;
-    const genderRaw = parsed.data.gender?.trim().toLowerCase();
-    if (genderRaw === "boy" || genderRaw === "girl" || genderRaw === "male" || genderRaw === "female") {
-      gender = (genderRaw === "boy" || genderRaw === "male") ? "boy" : "girl";
-    }
-
     let category: import("@/lib/types").CategoryType | undefined = undefined;
     const categoryRaw = parsed.data.category?.trim().toUpperCase();
     const validCategories = ["KIDDIES", "SUB-JUNIOR", "JUNIOR", "SENIOR", "SUPER-SENIOR", "GENERAL", "none"];
@@ -354,8 +340,16 @@ async function importStudentsAction(formData: FormData) {
         category,
       });
       
-      // Add to existing set to prevent duplicates in subsequent rows of the same import
+      // Add to existing set and array to prevent duplicates in subsequent rows of the same import
       existingChestNumbers.add(chest_no);
+      existingStudents.push({
+        id: `batch_${entry.row}`,
+        name: parsed.data.name,
+        team_id: resolvedTeamId,
+        chest_no,
+        total_points: 0,
+        gender,
+      });
     } catch (error: any) {
       // Provide user-friendly error message
       if (error.message.includes("Chest number")) {

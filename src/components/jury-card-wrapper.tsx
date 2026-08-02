@@ -5,6 +5,7 @@ import { ProfileCard } from "@/components/ui/profile-card";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Eye, EyeOff } from "lucide-react";
 import type { Jury } from "@/lib/types";
 
 interface JuryCardWrapperProps {
@@ -23,6 +24,7 @@ export function JuryCardWrapper({
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Use jury's avatar or fallback to default
   const avatarUrl = jury.avatar || "/img/jury.webp";
@@ -84,7 +86,29 @@ export function JuryCardWrapper({
             <label className="block text-sm font-medium text-white/70 mb-2">
               Password
             </label>
-            <Input name="password" type="password" defaultValue={jury.password} required minLength={4} />
+            <div className="relative">
+              <Input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                defaultValue={jury.password}
+                className="pr-10"
+                required
+                minLength={4}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors p-1"
+                tabIndex={-1}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
         </form>
       </Modal>

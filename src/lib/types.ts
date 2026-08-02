@@ -30,7 +30,11 @@ export interface Student {
   category?: CategoryType;
 }
 
-// ... existing types ...
+export interface ChestCounter {
+  team_id: string;
+  gender: "boy" | "girl";
+  last_number: number;
+}
 
 
 

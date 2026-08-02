@@ -148,6 +148,15 @@ export async function upsertPortalStudent(input: {
     );
     clearCache("students");
 
+    if (input.gender) {
+      const { parseChestNumber } = await import("./chest-utils");
+      const { updateChestCounterDB } = await import("./chest-db");
+      const parsed = parseChestNumber(chestNumber);
+      if (parsed?.number) {
+        await updateChestCounterDB(input.teamId, input.gender as "boy" | "girl", parsed.number);
+      }
+    }
+
     // Emit real-time event (non-blocking)
     import("./pusher")
       .then(({ emitStudentCreated, emitStudentUpdated }) => {
