@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useFormStatus } from "react-dom";
-import { CheckCircle2, LayoutList, Search, Trash2, Eye, Pencil } from "lucide-react";
+import { CheckCircle2, LayoutList, Search, Trash2, Eye, Pencil, Printer } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toast";
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { SearchSelect } from "@/components/ui/search-select";
 import { Modal } from "@/components/ui/modal";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { Jury, Program } from "@/lib/types";
+import { ReportPrintModal } from "@/components/ui/report-print-modal";
 
 interface ProgramManagerProps {
   programs: Program[];
@@ -157,6 +158,25 @@ export const ProgramManager = React.memo(function ProgramManager({
     return list;
   }, [filteredPrograms, sort]);
 
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  const reportTitle = categoryFilter ? `${categoryFilter} PROGRAMS` : "PROGRAMS LIST";
+  const reportSubtitle = sectionFilter ? `${sectionFilter.toUpperCase()} SECTION` : "All Fest Programs";
+
+  const reportConfig = useMemo(() => ({
+    title: reportTitle,
+    subtitle: reportSubtitle,
+    columns: [
+      { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "60px" },
+      { header: "Program Name", render: (p: Program) => p.name, align: "left" as const },
+      { header: "Category", render: (p: Program) => p.category || "GENERAL", align: "center" as const, width: "130px" },
+      { header: "Section", render: (p: Program) => (p.section || "single").toUpperCase(), align: "center" as const, width: "110px" },
+      { header: "Limit", render: (p: Program) => p.candidateLimit ?? 1, align: "center" as const, width: "80px" },
+    ],
+    data: sortedPrograms,
+    filename: `${reportTitle.toLowerCase().replace(/\s+/g, "_")}_report`,
+  }), [reportTitle, reportSubtitle, sortedPrograms]);
+
   useEffect(() => {
     const available = new Set(sortedPrograms.map((program) => program.id));
     setSelected((prev) => {
@@ -218,7 +238,14 @@ export const ProgramManager = React.memo(function ProgramManager({
             Search, filter, and bulk-select programs before assigning juries.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            type="button"
+            onClick={() => setShowReportModal(true)}
+            className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg"
+          >
+            <Printer className="h-4 w-4" /> Download / Print Report
+          </Button>
           <Button
             type="button"
             variant="secondary"
@@ -588,6 +615,12 @@ export const ProgramManager = React.memo(function ProgramManager({
           <BulkDeleteSubmitButton count={selected.size} />
         </form>
       </Modal>
+
+      <ReportPrintModal
+        open={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        config={reportConfig}
+      />
     </div>
   );
 });

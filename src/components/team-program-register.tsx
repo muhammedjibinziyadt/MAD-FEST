@@ -2,12 +2,14 @@
 
 import { useMemo, useState } from "react";
 import type { Program, ProgramRegistration, PortalStudent } from "@/lib/types";
+import { Printer } from "lucide-react";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchSelect } from "@/components/ui/search-select";
 import { showError, showWarning } from "@/lib/toast";
+import { ReportPrintModal } from "@/components/ui/report-print-modal";
 
 interface ProgramWithLimit extends Program {
   candidateLimit: number;
@@ -466,12 +468,47 @@ export function TeamProgramRegister({
     return programs.filter((program) => program.name.toLowerCase().includes(q));
   }, [programs, query]);
 
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  const teamName = teamStudents[0]?.teamName || "TEAM";
+
+  const reportConfig = useMemo(() => ({
+    title: `${teamName.toUpperCase()} - PROGRAM REGISTRATIONS`,
+    subtitle: "Enrolled Candidates Roster",
+    columns: [
+      { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "60px" },
+      { header: "Program Name", render: (reg: ProgramRegistration) => reg.programName, align: "left" as const },
+      { header: "Student Name", render: (reg: ProgramRegistration) => reg.studentName, align: "left" as const },
+      { header: "Chest", render: (reg: ProgramRegistration) => reg.studentChest, align: "center" as const, width: "100px" },
+      { header: "Category", render: (reg: ProgramRegistration) => {
+        const prog = allPrograms.find((p) => p.id === reg.programId);
+        return prog?.category || "GENERAL";
+      }, align: "center" as const, width: "120px" },
+    ],
+    data: teamRegistrations,
+    filename: `${teamName.toLowerCase()}_program_registrations_report`,
+  }), [teamName, teamRegistrations, allPrograms]);
+
   return (
     <div className="space-y-4">
+      <ReportPrintModal
+        open={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        config={reportConfig}
+      />
       <div className="rounded-3xl border border-white/10 bg-white/5 p-4 text-white">
-        <p className="text-sm text-white/70">
-          Registration window: {isOpen ? "Open" : "Closed"} (controls {isOpen ? "enabled" : "disabled"})
-        </p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <p className="text-sm text-white/70">
+            Registration window: {isOpen ? "Open" : "Closed"} (controls {isOpen ? "enabled" : "disabled"})
+          </p>
+          <Button
+            type="button"
+            onClick={() => setShowReportModal(true)}
+            className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shrink-0"
+          >
+            <Printer className="h-4 w-4" /> Download / Print Report
+          </Button>
+        </div>
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -488,7 +525,7 @@ export function TeamProgramRegister({
           const isNotRegistered = !registrations.some((registration) => registration.studentId === student.id);
           let categoryMatch = true;
           if (program.category && program.category !== "none" && program.category !== "GENERAL") {
-            if (student.category && student.category !== "none") {
+            if (student.category && student.category !== "none" && student.category !== "GENERAL") {
               categoryMatch = student.category === program.category;
             }
           }

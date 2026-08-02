@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { SearchSelect } from "@/components/ui/search-select";
-import { Plus, Trash2, Trophy } from "lucide-react";
+import { Plus, Trash2, Trophy, Users, Sparkles, Printer } from "lucide-react";
+import { ReportPrintModal } from "@/components/ui/report-print-modal";
 import type {
   GradeType,
   Jury,
@@ -141,6 +142,58 @@ export function AddResultForm({
     () => programs.find((program) => program.id === programId) ?? programs[0],
     [programId, programs],
   );
+
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  const scoringMatrixReportData = useMemo(() => [
+    {
+      no: 1,
+      type: "Single Item (Podium Points)",
+      scope: "All Categories (Kiddies, Sub-Junior, Junior, Senior, Super-Senior)",
+      p1: "10 Points",
+      p2: "6 Points",
+      p3: "2 Points",
+    },
+    {
+      no: 2,
+      type: "Single Item (Grade Bonus)",
+      scope: "All Categories",
+      p1: "Grade A (+10 Pts)",
+      p2: "Grade B (+6 Pts)",
+      p3: "Grade C (+2 Pts)",
+    },
+    {
+      no: 3,
+      type: "Group Item (Podium Points)",
+      scope: "All Categories",
+      p1: "20 Points",
+      p2: "10 Points",
+      p3: "6 Points",
+    },
+    {
+      no: 4,
+      type: "General Item (Podium Points)",
+      scope: "All Categories / Open",
+      p1: "20 Points",
+      p2: "10 Points",
+      p3: "6 Points",
+    },
+  ], []);
+
+  const scoringReportConfig = useMemo(() => ({
+    title: "FEST SCORING MATRIX & GRADE MANUAL",
+    subtitle: "Official Competition Point System & Grade Bonus Guide",
+    columns: [
+      { header: "no", render: (r: any) => r.no, align: "center" as const, width: "50px" },
+      { header: "Event Type", render: (r: any) => r.type, align: "left" as const },
+      { header: "Category Scope", render: (r: any) => r.scope, align: "left" as const },
+      { header: "1st Place / Grade A", render: (r: any) => r.p1, align: "center" as const, width: "160px" },
+      { header: "2nd Place / Grade B", render: (r: any) => r.p2, align: "center" as const, width: "160px" },
+      { header: "3rd Place / Grade C", render: (r: any) => r.p3, align: "center" as const, width: "160px" },
+    ],
+    data: scoringMatrixReportData,
+    filename: "scoring_matrix_and_grade_manual_report",
+  }), [scoringMatrixReportData]);
 
   // Reset winners when program changes
   useEffect(() => {
@@ -626,31 +679,97 @@ export function AddResultForm({
         <Modal
           open={showRules}
           onClose={() => setShowRules(false)}
-          title="Scoring Matrix"
+          title="Scoring Matrix & Grade Manual"
+          size="lg"
           actions={
-            <Button type="button" variant="secondary" onClick={() => setShowRules(false)}>
-              Close
-            </Button>
+            <div className="flex items-center gap-3 w-full justify-between sm:justify-end">
+              <Button
+                type="button"
+                onClick={() => setShowReportModal(true)}
+                className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg"
+              >
+                <Printer className="h-4 w-4" /> Download / Print Manual
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => setShowRules(false)}>
+                Close
+              </Button>
+            </div>
           }
         >
-          <div className="space-y-4 text-sm">
-            <p>Single events add grade bonus on top of podium points.</p>
-            <div className="grid gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
-              <p className="font-semibold text-white">Single · Podium</p>
-              <p className="text-xs text-white/70">ALL CATEGORIES: 10 / 6 / 2</p>
-              <p className="font-semibold text-white">Grade Bonus</p>
-              <p className="text-emerald-400 font-bold">A +10 · B +6 · C +2</p>
+          <div className="space-y-5 text-sm text-white">
+            <p className="text-xs text-white/70">
+              Official scoring scheme for single, group, and general fest items. Single items earn additional Grade Bonus points on top of podium placements.
+            </p>
+
+            {/* Single Events Card */}
+            <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-900/30 via-slate-900 to-amber-950/40 p-5 shadow-lg space-y-3">
+              <div className="flex items-center justify-between border-b border-amber-500/20 pb-3">
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-amber-400" />
+                  <h3 className="font-bold text-white text-base">Single Items (Individual)</h3>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  Podium + Grade Bonus
+                </span>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4 pt-1">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3.5 space-y-1.5">
+                  <p className="text-xs font-semibold text-white/70 uppercase tracking-wider">Podium Points</p>
+                  <div className="flex items-center justify-between text-xs font-medium">
+                    <span className="text-amber-300">🥇 1st Place: <strong>10 Pts</strong></span>
+                    <span className="text-slate-300">🥈 2nd Place: <strong>6 Pts</strong></span>
+                    <span className="text-amber-600">🥉 3rd Place: <strong>2 Pts</strong></span>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-3.5 space-y-1.5">
+                  <p className="text-xs font-semibold text-emerald-300 uppercase tracking-wider">Grade Bonus (Added on top)</p>
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-emerald-400">Grade A: +10</span>
+                    <span className="text-emerald-300">Grade B: +6</span>
+                    <span className="text-emerald-200">Grade C: +2</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="grid gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
-              <p className="font-semibold text-white">Single Items</p>
-              <p>1st 10 · 2nd 6 · 3rd 2</p>
-              <p className="font-semibold text-white">Group Items</p>
-              <p className="text-amber-400 font-bold">1st 20 · 2nd 10 · 3rd 6</p>
-              <p className="font-semibold text-white">General Items</p>
-              <p className="text-amber-400 font-bold">1st 20 · 2nd 10 · 3rd 6</p>
+
+            {/* Group & General Events Card */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="rounded-2xl border border-sky-500/20 bg-gradient-to-br from-sky-900/30 via-slate-900 to-sky-950/40 p-4 space-y-2">
+                <div className="flex items-center gap-2 border-b border-sky-500/20 pb-2">
+                  <Users className="h-4 w-4 text-sky-400" />
+                  <h4 className="font-bold text-white text-sm">Group Items</h4>
+                </div>
+                <p className="text-xs text-white/60">Team performance entries.</p>
+                <div className="text-xs font-semibold space-y-1 pt-1">
+                  <div className="flex justify-between text-sky-300"><span>🥇 1st Place:</span> <strong>20 Pts</strong></div>
+                  <div className="flex justify-between text-sky-200"><span>🥈 2nd Place:</span> <strong>10 Pts</strong></div>
+                  <div className="flex justify-between text-sky-100"><span>🥉 3rd Place:</span> <strong>6 Pts</strong></div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-900/30 via-slate-900 to-purple-950/40 p-4 space-y-2">
+                <div className="flex items-center gap-2 border-b border-purple-500/20 pb-2">
+                  <Sparkles className="h-4 w-4 text-purple-400" />
+                  <h4 className="font-bold text-white text-sm">General Items</h4>
+                </div>
+                <p className="text-xs text-white/60">Open for all category students.</p>
+                <div className="text-xs font-semibold space-y-1 pt-1">
+                  <div className="flex justify-between text-purple-300"><span>🥇 1st Place:</span> <strong>20 Pts</strong></div>
+                  <div className="flex justify-between text-purple-200"><span>🥈 2nd Place:</span> <strong>10 Pts</strong></div>
+                  <div className="flex justify-between text-purple-100"><span>🥉 3rd Place:</span> <strong>6 Pts</strong></div>
+                </div>
+              </div>
             </div>
           </div>
         </Modal>
+
+        <ReportPrintModal
+          open={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          config={scoringReportConfig}
+        />
 
         {/* Published Program Modal */}
         <Modal

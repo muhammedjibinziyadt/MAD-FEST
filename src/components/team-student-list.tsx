@@ -13,9 +13,11 @@ import {
   User,
   Hash,
   Search,
-  Lock
+  Lock,
+  Printer
 } from "lucide-react";
 import type { PortalStudent } from "@/lib/types";
+import { ReportPrintModal } from "@/components/ui/report-print-modal";
 
 interface Props {
   students: PortalStudent[];
@@ -106,29 +108,61 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
     );
   }
 
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  const teamName = students[0]?.teamName || "TEAM REPORT";
+  const subtitle = teamGender === "boys" ? "Boys" : teamGender === "girls" ? "Girls" : "Boys & Girls";
+
+  const reportConfig = useMemo(() => ({
+    title: teamName.toUpperCase(),
+    subtitle: subtitle,
+    columns: [
+      { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "60px" },
+      { header: "Students name", render: (student: PortalStudent) => student.name, align: "left" as const },
+      { header: "Chest number", render: (student: PortalStudent) => student.chestNumber, align: "center" as const, width: "140px" },
+      { header: "Category", render: (student: PortalStudent) => student.category || "GENERAL", align: "center" as const, width: "160px" },
+    ],
+    data: filteredStudents,
+    filename: `${teamName}_students_report`,
+  }), [teamName, subtitle, filteredStudents]);
+
   return (
     <div className="space-y-4">
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-        <Input
-          type="text"
-          placeholder="Search by name, chest number, or team..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50"
-        />
-        {searchQuery && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSearchQuery("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-white/10"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
+      {/* Search Bar & Download Report Button */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+          <Input
+            type="text"
+            placeholder="Search by name, chest number, or team..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-white/10"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        <Button
+          onClick={() => setShowReportModal(true)}
+          className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shrink-0"
+        >
+          <Printer className="h-4 w-4" /> Download / Print Report
+        </Button>
       </div>
+
+      <ReportPrintModal
+        open={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        config={reportConfig}
+      />
 
       {/* Search Results Info */}
       {searchQuery && (

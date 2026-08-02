@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useTransition, useCallback } from "react";
 import { useFormStatus } from "react-dom";
-import { Search, Users, UserCheck, FileText, Trash2, Pencil, Eye, TrendingUp, LayoutGrid, Filter } from "lucide-react";
+import { Search, Users, UserCheck, FileText, Trash2, Pencil, Eye, TrendingUp, LayoutGrid, Filter, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchSelect } from "@/components/ui/search-select";
@@ -10,6 +10,7 @@ import { Modal } from "@/components/ui/modal";
 import { ColorSelectorInput } from "@/components/ui/color-selector-input";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { PortalTeam } from "@/lib/types";
+import { ReportPrintModal, type ReportConfig } from "@/components/ui/report-print-modal";
 
 interface PortalStudent {
   id: string;
@@ -103,6 +104,24 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
     );
   }, [teams, debouncedSearchQuery, activeView]);
 
+  const [activeReportConfig, setActiveReportConfig] = useState<ReportConfig | null>(null);
+
+  const teamReportConfig = useMemo(() => ({
+    title: "TEAMS LIST REPORT",
+    subtitle: "Registered Madrasa Fest Teams",
+    columns: [
+      { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "60px" },
+      { header: "Team Name", render: (t: PortalTeam) => t.teamName, align: "left" as const },
+      { header: "Leader Name", render: (t: PortalTeam) => t.leaderName || "N/A", align: "left" as const },
+      { header: "Gender / Type", render: (t: PortalTeam) => (t.gender || "mixed").toUpperCase(), align: "center" as const, width: "120px" },
+      { header: "Students", render: (t: PortalTeam) => students.filter((s) => s.teamId === t.id).length, align: "center" as const, width: "90px" },
+    ],
+    data: teams,
+    filename: "teams_list_report",
+  }), [teams, students]);
+
+
+
   const filteredStudents = useMemo(() => {
     if (!activeView || activeView !== "students") return [];
     return students.filter((student) =>
@@ -156,6 +175,33 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
 
     return filtered;
   }, [registrations, debouncedSearchQuery, activeView, registrationTeamFilter]);
+
+  const studentsReportConfig = useMemo(() => ({
+    title: "STUDENTS ROSTER REPORT",
+    subtitle: "All Registered Team Members",
+    columns: [
+      { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "60px" },
+      { header: "Students name", render: (s: PortalStudent) => s.name, align: "left" as const },
+      { header: "Chest number", render: (s: PortalStudent) => s.chestNumber, align: "center" as const, width: "130px" },
+      { header: "Team Name", render: (s: PortalStudent) => teams.find((t) => t.id === s.teamId)?.teamName || s.teamId, align: "left" as const },
+    ],
+    data: filteredStudents.length > 0 ? filteredStudents : students,
+    filename: "students_roster_report",
+  }), [students, filteredStudents, teams]);
+
+  const registrationsReportConfig = useMemo(() => ({
+    title: "PROGRAM REGISTRATIONS REPORT",
+    subtitle: "Madrasa Fest Event Registrations",
+    columns: [
+      { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "60px" },
+      { header: "Student Name", render: (r: ProgramRegistration) => r.studentName, align: "left" as const },
+      { header: "Chest", render: (r: ProgramRegistration) => r.studentChest, align: "center" as const, width: "100px" },
+      { header: "Program Name", render: (r: ProgramRegistration) => r.programName, align: "left" as const },
+      { header: "Team Name", render: (r: ProgramRegistration) => r.teamName || r.teamId, align: "left" as const },
+    ],
+    data: filteredRegistrations.length > 0 ? filteredRegistrations : registrations,
+    filename: "program_registrations_report",
+  }), [registrations, filteredRegistrations]);
 
   const groupedRegistrations = useMemo(() => {
     if (registrationGroupBy === "program") {
@@ -276,9 +322,18 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
         title="Teams"
         size="xl"
         actions={
-          <Button variant="secondary" onClick={closeView}>
-            Close
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              onClick={() => setActiveReportConfig(teamReportConfig)}
+              className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg"
+            >
+              <Printer className="h-4 w-4" /> Download / Print Report
+            </Button>
+            <Button variant="secondary" onClick={closeView}>
+              Close
+            </Button>
+          </div>
         }
       >
         <div className="space-y-4">
@@ -367,9 +422,18 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
         title="Students"
         size="xl"
         actions={
-          <Button variant="secondary" onClick={closeView}>
-            Close
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              onClick={() => setActiveReportConfig(studentsReportConfig)}
+              className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg"
+            >
+              <Printer className="h-4 w-4" /> Download / Print Report
+            </Button>
+            <Button variant="secondary" onClick={closeView}>
+              Close
+            </Button>
+          </div>
         }
       >
         <div className="space-y-4">
@@ -417,9 +481,18 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
         title="Program Registrations Analytics"
         size="xl"
         actions={
-          <Button variant="secondary" onClick={closeView}>
-            Close
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              onClick={() => setActiveReportConfig(registrationsReportConfig)}
+              className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg"
+            >
+              <Printer className="h-4 w-4" /> Download / Print Report
+            </Button>
+            <Button variant="secondary" onClick={closeView}>
+              Close
+            </Button>
+          </div>
         }
       >
         <div className="space-y-4">
@@ -784,6 +857,14 @@ export const TeamPortalManager = React.memo(function TeamPortalManager({
           </div>
         )}
       </Modal>
+
+      {activeReportConfig && (
+        <ReportPrintModal
+          open={!!activeReportConfig}
+          onClose={() => setActiveReportConfig(null)}
+          config={activeReportConfig}
+        />
+      )}
     </>
   );
 });

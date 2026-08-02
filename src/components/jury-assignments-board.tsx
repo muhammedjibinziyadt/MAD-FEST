@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Calendar, CheckCircle2, ClipboardList, Clock, Filter, Layers, Search } from "lucide-react";
+import { Calendar, CheckCircle2, ClipboardList, Clock, Filter, Layers, Search, Printer } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { AssignedProgram } from "@/lib/types";
+import { ReportPrintModal } from "@/components/ui/report-print-modal";
 
 interface EnrichedAssignment {
   id: string;
@@ -75,8 +76,29 @@ export function JuryAssignmentsBoard({ assignments }: { assignments: EnrichedAss
     });
   }, [assignments, filter, query]);
 
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  const reportConfig = useMemo(() => ({
+    title: "JURY ASSIGNMENTS REPORT",
+    subtitle: filter !== "all" ? `${filter.toUpperCase()} PROGRAM ASSIGNMENTS` : "All Program Assignments",
+    columns: [
+      { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "60px" },
+      { header: "Program Name", render: (a: EnrichedAssignment) => a.programName, align: "left" as const },
+      { header: "Category", render: (a: EnrichedAssignment) => a.category || "GENERAL", align: "center" as const, width: "130px" },
+      { header: "Section", render: (a: EnrichedAssignment) => (a.section || "single").toUpperCase(), align: "center" as const, width: "110px" },
+      { header: "Status", render: (a: EnrichedAssignment) => a.status.toUpperCase(), align: "center" as const, width: "120px" },
+    ],
+    data: filteredAssignments,
+    filename: "jury_assignments_report",
+  }), [filter, filteredAssignments]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-white">
+      <ReportPrintModal
+        open={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        config={reportConfig}
+      />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: "Total Assigned", value: stats.total, icon: Layers },
@@ -120,6 +142,13 @@ export function JuryAssignmentsBoard({ assignments }: { assignments: EnrichedAss
                 {item.label}
               </Button>
             ))}
+            <Button
+              type="button"
+              onClick={() => setShowReportModal(true)}
+              className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg"
+            >
+              <Printer className="h-4 w-4" /> Download / Print Report
+            </Button>
           </div>
         </div>
       </div>

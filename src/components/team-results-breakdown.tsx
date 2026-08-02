@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Trophy, Award, Search, CheckCircle2, Clock, XCircle, Tag, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { Trophy, Award, Search, CheckCircle2, Clock, XCircle, Tag, Filter, ChevronDown, ChevronUp, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { ReportPrintModal } from "@/components/ui/report-print-modal";
 
 export interface TeamResultItem {
   id: string;
@@ -81,6 +82,25 @@ export function TeamResultsBreakdown({ items, onCloseLink }: TeamResultsBreakdow
 
     return result;
   }, [items, filter, categoryFilter, search]);
+
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  const reportConfig = useMemo(() => ({
+    title: "TEAM RESULTS BREAKDOWN REPORT",
+    subtitle: "Student Performance & Achievements",
+    columns: [
+      { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "50px" },
+      { header: "Student Name", render: (i: TeamResultItem) => i.studentName, align: "left" as const },
+      { header: "Chest", render: (i: TeamResultItem) => i.studentChest, align: "center" as const, width: "90px" },
+      { header: "Program Name", render: (i: TeamResultItem) => i.programName, align: "left" as const },
+      { header: "Category", render: (i: TeamResultItem) => i.category || "GENERAL", align: "center" as const, width: "110px" },
+      { header: "Position", render: (i: TeamResultItem) => (i.position ? `${i.position}st` : "-"), align: "center" as const, width: "80px" },
+      { header: "Grade", render: (i: TeamResultItem) => i.grade || "-", align: "center" as const, width: "70px" },
+      { header: "Points", render: (i: TeamResultItem) => i.score, align: "center" as const, width: "70px" },
+    ],
+    data: filteredItems,
+    filename: "team_results_breakdown_report",
+  }), [filteredItems]);
 
   // Group filtered items by category
   const groupedItems = useMemo(() => {
@@ -178,16 +198,31 @@ export function TeamResultsBreakdown({ items, onCloseLink }: TeamResultsBreakdow
 
       {/* Search and Category Filter Controls */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6">
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-          <input
-            type="text"
-            placeholder="Search student or program..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder:text-white/40 focus:outline-none focus:border-cyan-500"
-          />
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+            <input
+              type="text"
+              placeholder="Search student or program..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder:text-white/40 focus:outline-none focus:border-cyan-500"
+            />
+          </div>
+          <Button
+            type="button"
+            onClick={() => setShowReportModal(true)}
+            className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs shrink-0 shadow-lg"
+          >
+            <Printer className="h-4 w-4" /> Download / Print Report
+          </Button>
         </div>
+
+        <ReportPrintModal
+          open={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          config={reportConfig}
+        />
 
         {categories.length > 0 && (
           <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto no-scrollbar">

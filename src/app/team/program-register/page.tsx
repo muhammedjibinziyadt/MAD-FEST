@@ -14,9 +14,9 @@ import {
 } from "@/lib/team-data";
 
 function redirectWithMessage(message: string, type: "error" | "success" = "error") {
+  const paramKey = type === "success" ? "success" : "error";
   const params = new URLSearchParams({
-    message: encodeURIComponent(message),
-    toastType: type
+    [paramKey]: message,
   });
   redirect(`/team/program-register?${params.toString()}`);
 }
@@ -68,6 +68,7 @@ async function registerProgramAction(formData: FormData) {
     program.category !== "GENERAL" &&
     student.category &&
     student.category !== "none" &&
+    student.category !== "GENERAL" &&
     student.category !== program.category
   ) {
     redirectWithMessage(`Student "${student.name}" (${student.category}) is not eligible for ${program.name} (${program.category}).`);
@@ -91,7 +92,10 @@ async function registerProgramAction(formData: FormData) {
       teamName: team.teamName,
     });
   } catch (error: any) {
-    if (error.message.includes("already registered")) {
+    if (error?.digest?.startsWith?.("NEXT_REDIRECT") || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    if (error.message?.includes("already registered")) {
       redirectWithMessage(error.message);
     }
     redirectWithMessage(`Registration failed: ${error.message}`);
@@ -159,6 +163,7 @@ async function registerMultipleStudentsAction(formData: FormData) {
       program.category !== "GENERAL" &&
       student.category &&
       student.category !== "none" &&
+      student.category !== "GENERAL" &&
       student.category !== program.category
     ) {
       redirectWithMessage(`Student "${student.name}" (${student.category}) is not eligible for ${program.name} (${program.category}).`);
@@ -193,7 +198,10 @@ async function registerMultipleStudentsAction(formData: FormData) {
       });
       successCount++;
     } catch (error: any) {
-      if (error.message.includes("already registered")) {
+      if (error?.digest?.startsWith?.("NEXT_REDIRECT") || error?.message === "NEXT_REDIRECT") {
+        throw error;
+      }
+      if (error.message?.includes("already registered")) {
         registrationErrors.push(`${student.name}: ${error.message}`);
       } else {
         registrationErrors.push(`${student.name}: Registration failed - ${error.message}`);

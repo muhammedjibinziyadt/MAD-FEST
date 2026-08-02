@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Eye, Pencil, Search, Trash2, Calendar, User, Users, Award, FileText, Layers, Download, FileSpreadsheet } from "lucide-react";
+import { CheckCircle2, Eye, Pencil, Search, Trash2, Calendar, User, Users, Award, FileText, Layers, Download, FileSpreadsheet, Printer } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { SearchSelect } from "@/components/ui/search-select";
 import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { Program, ResultRecord, Jury, Student, Team, ProgramRegistration } from "@/lib/types";
+import { ReportPrintModal } from "@/components/ui/report-print-modal";
 
 interface ResultManagerProps {
   results: ResultRecord[];
@@ -198,6 +199,32 @@ export const ResultManager = React.memo(function ResultManager({
     return "";
   };
 
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  const reportTitle = isPending ? "PENDING RESULTS REPORT" : "APPROVED RESULTS REPORT";
+  const reportSubtitle = "Official Fest Competition Results";
+
+  const reportConfig = useMemo(() => ({
+    title: reportTitle,
+    subtitle: reportSubtitle,
+    columns: [
+      { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "60px" },
+      { header: "Program Name", render: (r: ResultRecord) => programMap.get(r.program_id)?.name || "Unknown", align: "left" as const },
+      { header: "Category", render: (r: ResultRecord) => programMap.get(r.program_id)?.category || "GENERAL", align: "center" as const, width: "120px" },
+      { header: "1st Place Winner", render: (r: ResultRecord) => {
+        const e1 = r.entries.find((e) => e.position === 1);
+        return e1 ? getWinnerName(e1) : "-";
+      }, align: "left" as const },
+      { header: "1st Team", render: (r: ResultRecord) => {
+        const e1 = r.entries.find((e) => e.position === 1);
+        return e1 ? getWinnerTeam(e1) : "-";
+      }, align: "left" as const },
+      { header: "Status", render: (r: ResultRecord) => r.status.toUpperCase(), align: "center" as const, width: "110px" },
+    ],
+    data: sortedResults,
+    filename: `${reportTitle.toLowerCase().replace(/\s+/g, "_")}_report`,
+  }), [reportTitle, reportSubtitle, sortedResults, programMap]);
+
   const exportToCSV = () => {
     const headers = [
       "Result ID",
@@ -382,16 +409,16 @@ export const ResultManager = React.memo(function ResultManager({
                     </button>
                     <button
                       type="button"
-                      onClick={async () => {
-                        await exportToPDF();
+                      onClick={() => {
+                        setShowReportModal(true);
                         setShowExportMenu(false);
                       }}
                       className="w-full flex items-center gap-3 rounded-xl px-4 py-2.5 text-left text-sm text-white transition hover:bg-white/5 cursor-pointer"
                     >
                       <FileText className="h-4 w-4 text-cyan-400" />
                       <div>
-                        <p className="font-semibold text-white">Export as PDF</p>
-                        <p className="text-xs text-white/50">Landscape report</p>
+                        <p className="font-semibold text-white">Print / Export PDF Report</p>
+                        <p className="text-xs text-white/50">Formatted report design</p>
                       </div>
                     </button>
                   </div>
@@ -826,6 +853,12 @@ export const ResultManager = React.memo(function ResultManager({
           </div>
         </Modal>
       )}
+
+      <ReportPrintModal
+        open={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        config={reportConfig}
+      />
     </div>
   );
 });

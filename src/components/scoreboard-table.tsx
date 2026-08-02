@@ -3,9 +3,10 @@
 import { useState, useMemo, Fragment } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Medal, ChevronRight, ChevronDown, MinusCircle, Tag } from "lucide-react";
+import { Trophy, Medal, ChevronRight, ChevronDown, MinusCircle, Tag, Printer } from "lucide-react";
 import type { Team, Program, ResultRecord, ResultEntry, Student } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { ReportPrintModal } from "@/components/ui/report-print-modal";
 
 interface ScoreboardTableProps {
   teams: Team[];
@@ -324,6 +325,21 @@ export function ScoreboardTable({
     });
   }, [filteredTeams, liveScores]);
 
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  const reportConfig = useMemo(() => ({
+    title: "FEST SCOREBOARD & LEADERBOARD",
+    subtitle: `${genderFilter.toUpperCase()} STANDINGS REPORT`,
+    columns: [
+      { header: "Rank", render: (t: any) => t.rank, align: "center" as const, width: "60px" },
+      { header: "Team Name", render: (t: any) => t.name, align: "left" as const },
+      { header: "Gender / Type", render: (t: any) => (t.gender || "mixed").toUpperCase(), align: "center" as const, width: "120px" },
+      { header: "Total Points", render: (t: any) => getTotalPointsForTeam(t.id), align: "center" as const, width: "110px" },
+    ],
+    data: rankedTeams,
+    filename: `scoreboard_${genderFilter}_standings`,
+  }), [genderFilter, rankedTeams, liveScores]);
+
   const renderMobileView = () => (
     <div className="space-y-8 pb-10">
       {/* Teams Grid */}
@@ -591,6 +607,22 @@ export function ScoreboardTable({
           </button>
         </div>
       </div>
+
+      {/* Download Report Button */}
+      <div className="flex justify-center mb-6">
+        <button
+          onClick={() => setShowReportModal(true)}
+          className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-amber-800 to-amber-950 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md hover:opacity-90 transition"
+        >
+          <Printer className="w-4 h-4 text-amber-300" /> Download / Print Report
+        </button>
+      </div>
+
+      <ReportPrintModal
+        open={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        config={reportConfig}
+      />
 
       {/* Category Filter Pills */}
       {availableCategories.length > 0 && (

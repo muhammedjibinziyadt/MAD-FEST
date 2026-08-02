@@ -10,6 +10,7 @@ import { Modal } from "@/components/ui/modal";
 import { SearchSelect } from "@/components/ui/search-select";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { Student, Team, Program, ProgramRegistration } from "@/lib/types";
+import { ReportPrintModal } from "@/components/ui/report-print-modal";
 
 interface StudentManagerProps {
   students: Student[];
@@ -100,6 +101,9 @@ export const StudentManager = React.memo(function StudentManager({
   const [pageSize, setPageSize] = useState<number>(Number(pageSizeOptions[0].value));
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+
+
 
   useEffect(() => {
     setPage(1);
@@ -131,6 +135,24 @@ export const StudentManager = React.memo(function StudentManager({
     }
     return list;
   }, [filteredStudents, sort]);
+
+  const selectedTeamObj = useMemo(() => teams.find((t) => t.id === teamFilter), [teams, teamFilter]);
+  const reportTitle = selectedTeamObj ? selectedTeamObj.name.toUpperCase() : "STUDENTS LIST REPORT";
+  const reportSubtitle = genderFilter === "boy" ? "Boys" : genderFilter === "girl" ? "Girls" : "All Students";
+
+  const reportConfig = useMemo(() => ({
+    title: reportTitle,
+    subtitle: reportSubtitle,
+    columns: [
+      { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "60px" },
+      { header: "Students name", render: (student: Student) => student.name, align: "left" as const },
+      { header: "Chest number", render: (student: Student) => student.chest_no, align: "center" as const, width: "130px" },
+      { header: "Team", render: (student: Student) => teams.find((t) => t.id === student.team_id)?.name || "Unknown", align: "left" as const },
+      { header: "Category", render: (student: Student) => student.category || "GENERAL", align: "center" as const, width: "160px" },
+    ],
+    data: sortedStudents,
+    filename: `${reportTitle.toLowerCase().replace(/\s+/g, "_")}_report`,
+  }), [reportTitle, reportSubtitle, sortedStudents, teams]);
 
   useEffect(() => {
     const available = new Set(sortedStudents.map((student) => student.id));
@@ -317,16 +339,16 @@ export const StudentManager = React.memo(function StudentManager({
                     </button>
                     <button
                       type="button"
-                      onClick={async () => {
-                        await exportToPDF();
+                      onClick={() => {
+                        setShowReportModal(true);
                         setShowExportMenu(false);
                       }}
                       className="w-full flex items-center gap-3 rounded-xl px-4 py-2.5 text-left text-sm text-white transition hover:bg-white/10"
                     >
                       <FileText className="h-4 w-4 text-red-400" />
                       <div>
-                        <p className="font-semibold">Export as PDF</p>
-                        <p className="text-xs text-white/60">Document format</p>
+                        <p className="font-semibold">Print / Export PDF Report</p>
+                        <p className="text-xs text-white/60">Formatted report design</p>
                       </div>
                     </button>
                   </div>
@@ -722,6 +744,12 @@ export const StudentManager = React.memo(function StudentManager({
           </SubmitButton>
         </form>
       </Modal>
+
+      <ReportPrintModal
+        open={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        config={reportConfig}
+      />
     </div>
   );
 });

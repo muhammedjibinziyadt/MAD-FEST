@@ -72,6 +72,7 @@ export function ReplacementRequestForm({
         selectedProgram.category !== "GENERAL" &&
         student.category &&
         student.category !== "none" &&
+        student.category !== "GENERAL" &&
         student.category !== selectedProgram.category
       ) {
         return null; // Cannot replace with student from a different category

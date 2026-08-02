@@ -36,15 +36,6 @@ async function createStudentAction(formData: FormData) {
     redirectWithMessage("Student name is required.");
   }
 
-  const students = await getPortalStudents();
-  if (
-    students.some(
-      (student) =>
-        student.teamId === team.id && student.name.toLowerCase() === name.toLowerCase(),
-    )
-  ) {
-    redirectWithMessage("Student name already exists for this team.");
-  }
 
   let gender: "boy" | "girl" | undefined = undefined;
   if (team.gender === "boys") {

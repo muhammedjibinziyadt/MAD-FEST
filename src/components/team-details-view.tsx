@@ -2,12 +2,13 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Download, FileText, FileSpreadsheet, Search, Users, Award, Calendar, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, FileText, FileSpreadsheet, Search, Users, Award, Calendar, Eye, ChevronLeft, ChevronRight, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SearchSelect } from "@/components/ui/search-select";
+import { ReportPrintModal } from "@/components/ui/report-print-modal";
 import type {
   PortalTeam,
   PortalStudent,
@@ -283,8 +284,32 @@ export function TeamDetailsView({
     }
   }
 
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  const reportTitle = selectedTeam ? selectedTeam.teamName.toUpperCase() : "ALL TEAMS DETAILS REPORT";
+  const reportSubtitle = selectedTeam ? `Leader: ${selectedTeam.leaderName}` : "Students & Registrations";
+
+  const reportConfig = useMemo(() => ({
+    title: reportTitle,
+    subtitle: reportSubtitle,
+    columns: [
+      { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "60px" },
+      { header: "Students name", render: (student: PortalStudent) => student.name, align: "left" as const },
+      { header: "Chest number", render: (student: PortalStudent) => student.chestNumber, align: "center" as const, width: "130px" },
+      { header: "Team", render: (student: PortalStudent) => student.teamName, align: "left" as const },
+      { header: "Score", render: (student: PortalStudent) => student.score, align: "center" as const, width: "80px" },
+    ],
+    data: filteredData.teamStudents,
+    filename: `${reportTitle.toLowerCase().replace(/\s+/g, "_")}_report`,
+  }), [reportTitle, reportSubtitle, filteredData.teamStudents]);
+
   return (
     <div className="space-y-8 text-white">
+      <ReportPrintModal
+        open={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        config={reportConfig}
+      />
       <div>
         <h1 className="text-3xl font-bold">Team Details & Management</h1>
         <p className="text-sm text-white/70">
@@ -379,9 +404,9 @@ export function TeamDetailsView({
             <FileSpreadsheet className="h-4 w-4" />
             CSV
           </Button>
-          <Button onClick={exportToPDF} variant="secondary" className="gap-2 flex-1">
-            <FileText className="h-4 w-4" />
-            PDF
+          <Button onClick={() => setShowReportModal(true)} className="gap-2 flex-1 bg-emerald-600 hover:bg-emerald-500 text-white">
+            <Printer className="h-4 w-4" />
+            Print / PDF Report
           </Button>
         </div>
       </div>
