@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { PortalStudent } from "@/lib/types";
 import { ReportPrintModal } from "@/components/ui/report-print-modal";
+import { sortStudentsByChestNumber } from "@/lib/chest-utils";
 
 interface Props {
   students: PortalStudent[];
@@ -39,21 +40,21 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
   const [searchQuery, setSearchQuery] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
 
-  // Filter students based on search query
+  // Filter and sort students based on search query and chest number
   const filteredStudents = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return students;
+    let result = students;
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = students.filter((student) => {
+        const nameMatch = student.name.toLowerCase().includes(query);
+        const chestMatch = student.chestNumber.toLowerCase().includes(query);
+        const teamMatch = student.teamName.toLowerCase().includes(query);
+        const genderMatch = (student.gender ?? "").toLowerCase().includes(query);
+        const categoryMatch = (student.category ?? "").toLowerCase().includes(query);
+        return nameMatch || chestMatch || teamMatch || genderMatch || categoryMatch;
+      });
     }
-    
-    const query = searchQuery.toLowerCase().trim();
-    return students.filter((student) => {
-      const nameMatch = student.name.toLowerCase().includes(query);
-      const chestMatch = student.chestNumber.toLowerCase().includes(query);
-      const teamMatch = student.teamName.toLowerCase().includes(query);
-      const genderMatch = (student.gender ?? "").toLowerCase().includes(query);
-      const categoryMatch = (student.category ?? "").toLowerCase().includes(query);
-      return nameMatch || chestMatch || teamMatch || genderMatch || categoryMatch;
-    });
+    return sortStudentsByChestNumber(result);
   }, [students, searchQuery]);
 
   const teamName = students[0]?.teamName || "TEAM REPORT";

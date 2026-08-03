@@ -12,6 +12,8 @@ import { useDebounce } from "@/hooks/use-debounce";
 import type { Student, Team, Program, ProgramRegistration } from "@/lib/types";
 import { ReportPrintModal } from "@/components/ui/report-print-modal";
 
+import { sortStudentsByChestNumber } from "@/lib/chest-utils";
+
 interface StudentManagerProps {
   students: Student[];
   teams: Team[];
@@ -93,7 +95,7 @@ export const StudentManager = React.memo(function StudentManager({
   const [programFilter, setProgramFilter] = useState("");
   const [genderFilter, setGenderFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [sort, setSort] = useState<SortOption>("latest");
+  const [sort, setSort] = useState<SortOption>("chest");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewStudentId, setViewStudentId] = useState<string | null>(null);
@@ -129,7 +131,7 @@ export const StudentManager = React.memo(function StudentManager({
     if (sort === "az") {
       list.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sort === "chest") {
-      list.sort((a, b) => a.chest_no.localeCompare(b.chest_no));
+      return sortStudentsByChestNumber(list);
     } else {
       list.sort((a, b) => b.id.localeCompare(a.id));
     }
