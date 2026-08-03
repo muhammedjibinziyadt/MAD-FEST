@@ -56,7 +56,6 @@ export function generateNextChestNumberSync(
   existingStudents: Array<{ chest_no?: string; chestNumber?: string; gender?: string; team_id?: string; teamId?: string }>
 ): string {
   const targetPrefix = getTeamPrefix(teamName, gender);
-  const targetGender = (gender?.toLowerCase() === "girl" || gender?.toLowerCase() === "girls") ? "girl" : "boy";
 
   const numbers: number[] = [];
 
@@ -67,13 +66,9 @@ export function generateNextChestNumberSync(
     const parsed = parseChestNumber(chest);
     if (!parsed) continue;
 
-    // Check if chest number matches target prefix (e.g., RB- or RB)
-    const matchesPrefix = chest.startsWith(targetPrefix) || chest.startsWith(targetPrefix.replace("-", ""));
+    const matchesPrefix = chest.startsWith(targetPrefix) || parsed.prefix === targetPrefix || parsed.prefix === targetPrefix.replace("-", "");
 
-    // Also check student gender if present
-    const studentGender = student.gender ? (student.gender.toLowerCase() === "girl" ? "girl" : "boy") : undefined;
-
-    if (matchesPrefix || (studentGender && studentGender === targetGender && chest.includes(targetPrefix.slice(0, 2)))) {
+    if (matchesPrefix) {
       numbers.push(parsed.number);
     }
   }
@@ -81,4 +76,23 @@ export function generateNextChestNumberSync(
   const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
   const nextNumber = maxNumber + 1;
   return formatChestNumber(targetPrefix, nextNumber);
+}
+
+/**
+ * Sorts an array of objects containing chest numbers in natural ascending numerical order by chest prefix and number.
+ * Example order: RB-001, RB-002, ..., RB-010, ..., RG-001, RG-002...
+ */
+export function sortStudentsByChestNumber<T extends { chest_no?: string; chestNumber?: string }>(students: T[]): T[] {
+  return [...students].sort((a, b) => {
+    const chestA = (a.chest_no || a.chestNumber || "").trim().toUpperCase();
+    const chestB = (b.chest_no || b.chestNumber || "").trim().toUpperCase();
+    const parsedA = parseChestNumber(chestA);
+    const parsedB = parseChestNumber(chestB);
+    if (parsedA && parsedB) {
+      const prefixCompare = parsedA.prefix.localeCompare(parsedB.prefix);
+      if (prefixCompare !== 0) return prefixCompare;
+      return parsedA.number - parsedB.number;
+    }
+    return chestA.localeCompare(chestB, undefined, { numeric: true, sensitivity: "base" });
+  });
 }

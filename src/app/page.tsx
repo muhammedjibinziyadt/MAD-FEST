@@ -19,9 +19,25 @@ async function getHomeData() {
   return { teams: sorted, live: scoreMap };
 }
 
-export const metadata = {
-  title: "Ishal Rabeeh '26 | Home",
-  description: "Welcome to Ishal Rabeeh '26. Explore live scores, results, and participant performances.",
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Ishal Rabeeh '26 - Showcasing Islamic Art & Culture",
+  description: "Official portal for Ishal Rabeeh '26. View real-time team standings, live scoreboards, program results, participant search, and cultural event updates.",
+  openGraph: {
+    title: "Ishal Rabeeh '26 - Showcasing Islamic Art & Culture",
+    description: "Real-time team standings, live scoreboards, program results, and candidate profiles for Ishal Rabeeh '26.",
+    url: process.env.NEXT_PUBLIC_APP_URL || "https://www.ishalrabeehbuhsm.online/",
+    siteName: "Ishal Rabeeh '26",
+    images: ["/img/assets/logo-new.png"],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ishal Rabeeh '26",
+    description: "Real-time team standings and live scoreboards for Ishal Rabeeh '26.",
+    images: ["/img/assets/logo-new.png"],
+  },
 };
 
 export default async function HomePage() {

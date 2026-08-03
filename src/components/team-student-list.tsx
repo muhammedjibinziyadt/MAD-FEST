@@ -37,6 +37,7 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
   const [editAvatar, setEditAvatar] = useState<File | null>(null);
   const [editAvatarError, setEditAvatarError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showReportModal, setShowReportModal] = useState(false);
 
   // Filter students based on search query
   const filteredStudents = useMemo(() => {
@@ -54,6 +55,22 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
       return nameMatch || chestMatch || teamMatch || genderMatch || categoryMatch;
     });
   }, [students, searchQuery]);
+
+  const teamName = students[0]?.teamName || "TEAM REPORT";
+  const subtitle = teamGender === "boys" ? "Boys" : teamGender === "girls" ? "Girls" : "Boys & Girls";
+
+  const reportConfig = useMemo(() => ({
+    title: teamName.toUpperCase(),
+    subtitle: subtitle,
+    columns: [
+      { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "60px" },
+      { header: "Students name", render: (student: PortalStudent) => student.name, align: "left" as const },
+      { header: "Chest number", render: (student: PortalStudent) => student.chestNumber, align: "center" as const, width: "140px" },
+      { header: "Category", render: (student: PortalStudent) => student.category || "GENERAL", align: "center" as const, width: "160px" },
+    ],
+    data: filteredStudents,
+    filename: `${teamName}_students_report`,
+  }), [teamName, subtitle, filteredStudents]);
 
   const handleEdit = (student: PortalStudent) => {
     setEditingId(student.id);
@@ -107,24 +124,6 @@ export function TeamStudentList({ students, updateAction, deleteAction, isRegist
       </Card>
     );
   }
-
-  const [showReportModal, setShowReportModal] = useState(false);
-
-  const teamName = students[0]?.teamName || "TEAM REPORT";
-  const subtitle = teamGender === "boys" ? "Boys" : teamGender === "girls" ? "Girls" : "Boys & Girls";
-
-  const reportConfig = useMemo(() => ({
-    title: teamName.toUpperCase(),
-    subtitle: subtitle,
-    columns: [
-      { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "60px" },
-      { header: "Students name", render: (student: PortalStudent) => student.name, align: "left" as const },
-      { header: "Chest number", render: (student: PortalStudent) => student.chestNumber, align: "center" as const, width: "140px" },
-      { header: "Category", render: (student: PortalStudent) => student.category || "GENERAL", align: "center" as const, width: "160px" },
-    ],
-    data: filteredStudents,
-    filename: `${teamName}_students_report`,
-  }), [teamName, subtitle, filteredStudents]);
 
   return (
     <div className="space-y-4">

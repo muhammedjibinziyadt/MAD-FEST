@@ -24,9 +24,19 @@ async function getScoreboardData() {
   return { teams, programs, results: sortedResults, students, liveScores: scoreMap };
 }
 
-export const metadata = {
-  title: "Live Scoreboard",
-  description: "View the live team standings and points table for Ishal Rabeeh. Track the leading teams in real-time.",
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Live Scoreboard & Team Standings",
+  description: "View the live team standings, house points, and leaderboard for Ishal Rabeeh '26. Track leading teams in real-time.",
+  openGraph: {
+    title: "Live Scoreboard & Team Standings | Ishal Rabeeh '26",
+    description: "Track real-time house points and category standings for Ishal Rabeeh '26.",
+    url: (process.env.NEXT_PUBLIC_APP_URL || "https://www.ishalrabeehbuhsm.online/") + "scoreboard",
+    siteName: "Ishal Rabeeh '26",
+    images: ["/img/assets/logo-new.png"],
+    type: "website",
+  },
 };
 
 export default async function ScoreboardPage() {

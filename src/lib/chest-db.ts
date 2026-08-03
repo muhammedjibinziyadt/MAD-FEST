@@ -14,18 +14,16 @@ export async function getNextChestNumberDB(
   await connectDB();
   const targetPrefix = getTeamPrefix(teamName, gender);
 
-  // Query existing students for this team and gender
+  // Query existing students for this team matching target prefix
   const students = await StudentModel.find({ team_id: teamId }).lean();
   let maxExistingNumber = 0;
 
   for (const student of students) {
     const chest = (student.chest_no || "").trim().toUpperCase();
-    const studentGender = student.gender || (gender as string);
-
-    // If chest starts with prefix or student is of target gender
-    if (chest.startsWith(targetPrefix) || studentGender === gender) {
-      const parsed = parseChestNumber(chest);
-      if (parsed && parsed.number > maxExistingNumber) {
+    const parsed = parseChestNumber(chest);
+    if (parsed) {
+      const matchesPrefix = chest.startsWith(targetPrefix) || parsed.prefix === targetPrefix || parsed.prefix === targetPrefix.replace("-", "");
+      if (matchesPrefix && parsed.number > maxExistingNumber) {
         maxExistingNumber = parsed.number;
       }
     }
@@ -35,7 +33,8 @@ export async function getNextChestNumberDB(
   const counter = await ChestCounterModel.findOne({ team_id: teamId, gender }).lean();
   const lastNumberInCounter = counter?.last_number || 0;
 
-  const highestAssigned = Math.max(lastNumberInCounter, maxExistingNumber);
+  // Highest assigned for this specific prefix
+  const highestAssigned = maxExistingNumber === 0 ? 0 : Math.max(lastNumberInCounter, maxExistingNumber);
   const nextNumber = highestAssigned + 1;
 
   return formatChestNumber(targetPrefix, nextNumber);
@@ -64,7 +63,7 @@ let hasMigrated = false;
 
 /**
  * Migrates existing student chest numbers in the database to the new Team+Gender format (e.g. RB-001, RG-001).
- * Idempotent: safe to call on startup.
+ * Idempotent: safe to call on startup. Recalibrates counters and fixes jumped chest numbers.
  */
 export async function migrateChestNumbers(): Promise<void> {
   if (hasMigrated) return;
@@ -81,129 +80,96 @@ export async function migrateChestNumbers(): Promise<void> {
       return;
     }
 
-    // Check if any student needs migration (e.g., chest_no does not match prefix format like RB-001)
     const validChestPattern = /^[A-Z][BG]-\d{3,}$/;
-    const needsMigration = students.some((s) => !validChestPattern.test((s.chest_no || "").trim().toUpperCase()));
 
-    // Always ensure counters exist in ChestCounterModel even if students are already formatted
+    // Process each team and gender to ensure proper prefix matching and sequential ordering
     for (const team of teams) {
       for (const gender of ["boy", "girl"] as const) {
         const prefix = getTeamPrefix(team.name, gender);
-        const teamGenderStudents = students.filter((s) => {
+
+        // Find all students belonging to this team and gender/prefix
+        const matchingStudents = students.filter((s) => {
           if (s.team_id !== team.id) return false;
-          const g = s.gender || (team.gender === "girls" ? "girl" : "boy");
-          return g === gender;
+          const chest = (s.chest_no || "").trim().toUpperCase();
+          const parsed = parseChestNumber(chest);
+          const studentGender = s.gender || (team.gender === "girls" ? "girl" : team.gender === "boys" ? "boy" : undefined);
+
+          if (parsed && (chest.startsWith(prefix) || parsed.prefix === prefix || parsed.prefix === prefix.replace("-", ""))) {
+            return true;
+          }
+          return studentGender === gender;
         });
 
-        let maxNum = 0;
-        for (const s of teamGenderStudents) {
-          const parsed = parseChestNumber(s.chest_no || "");
-          if (parsed && parsed.number > maxNum) {
-            maxNum = parsed.number;
-          }
-        }
-
-        if (maxNum > 0) {
+        if (!matchingStudents.length) {
+          // Reset counter if no students exist for this prefix
           await ChestCounterModel.updateOne(
             { team_id: team.id, gender },
-            { $max: { last_number: maxNum } },
+            { $set: { last_number: 0 } },
             { upsert: true }
           );
+          continue;
         }
-      }
-    }
 
-    if (!needsMigration) {
-      hasMigrated = true;
-      return;
-    }
+        // Sort matching students by current chest number
+        matchingStudents.sort((a, b) => {
+          const numA = parseChestNumber(a.chest_no || "")?.number || 0;
+          const numB = parseChestNumber(b.chest_no || "")?.number || 0;
+          return numA - numB;
+        });
 
-    console.log("🔄 Migrating existing student chest numbers to new Team+Gender format...");
+        let expectedNum = 1;
+        let highestNum = 0;
 
-    // Group students by team_id and gender
-    const groups = new Map<string, typeof students>();
+        for (const student of matchingStudents) {
+          const parsed = parseChestNumber(student.chest_no || "");
+          const currentNum = parsed?.number || 0;
 
-    for (const student of students) {
-      const team = teamMap.get(student.team_id);
-      let gender: "boy" | "girl" = "boy";
+          // Check if chest number is invalid or jumped (e.g. RG-012 when it should be RG-001)
+          const isFormatted = validChestPattern.test((student.chest_no || "").trim().toUpperCase());
+          const isJumped = (matchingStudents.length === 1 && currentNum > 1) ||
+                           (currentNum > expectedNum && !matchingStudents.some((s) => parseChestNumber(s.chest_no || "")?.number === expectedNum));
 
-      if (student.gender === "boy" || student.gender === "girl") {
-        gender = student.gender;
-      } else if (team?.gender === "girls") {
-        gender = "girl";
-      } else if (team?.gender === "boys") {
-        gender = "boy";
-      }
+          let assignedNum = currentNum;
+          if (!isFormatted || isJumped) {
+            assignedNum = expectedNum;
+            const newChestNo = formatChestNumber(prefix, assignedNum);
 
-      const key = `${student.team_id}_${gender}`;
-      if (!groups.has(key)) {
-        groups.set(key, []);
-      }
-      groups.get(key)!.push(student);
-    }
+            // Update Student
+            await StudentModel.updateOne(
+              { id: student.id },
+              { $set: { chest_no: newChestNo, gender } }
+            );
 
-    for (const [key, groupStudents] of groups.entries()) {
-      const [teamId, gender] = key.split("_") as [string, "boy" | "girl"];
-      const team = teamMap.get(teamId);
-      const teamName = team ? team.name : "Team";
-      const prefix = getTeamPrefix(teamName, gender);
+            // Update ProgramRegistration
+            await ProgramRegistrationModel.updateMany(
+              { studentId: student.id },
+              { $set: { studentChest: newChestNo } }
+            );
 
-      // Check existing valid chest numbers to avoid collision
-      const alreadyValid = groupStudents.filter((s) => validChestPattern.test((s.chest_no || "").trim().toUpperCase()));
-      const validNumbers = alreadyValid
-        .map((s) => parseChestNumber(s.chest_no)?.number || 0)
-        .filter((n) => n > 0);
+            // Update ReplacementRequest
+            await ReplacementRequestModel.updateMany(
+              { oldStudentId: student.id },
+              { $set: { oldStudentChest: newChestNo } }
+            );
+            await ReplacementRequestModel.updateMany(
+              { newStudentId: student.id },
+              { $set: { newStudentChest: newChestNo } }
+            );
+          }
 
-      let currentCounter = validNumbers.length > 0 ? Math.max(...validNumbers) : 0;
+          highestNum = Math.max(highestNum, assignedNum);
+          expectedNum = assignedNum + 1;
+        }
 
-      // Filter students needing conversion
-      const toConvert = groupStudents.filter((s) => !validChestPattern.test((s.chest_no || "").trim().toUpperCase()));
-      
-      // Sort toConvert by old chest number or ID for deterministic ordering
-      toConvert.sort((a, b) => (a.chest_no || "").localeCompare(b.chest_no || ""));
-
-      for (const student of toConvert) {
-        currentCounter++;
-        const newChestNo = formatChestNumber(prefix, currentCounter);
-
-        // Update Student
-        await StudentModel.updateOne(
-          { id: student.id },
-          { $set: { chest_no: newChestNo, gender } }
-        );
-
-        // Update ProgramRegistration
-        await ProgramRegistrationModel.updateMany(
-          { studentId: student.id },
-          { $set: { studentChest: newChestNo } }
-        );
-
-        // Update ReplacementRequest
-        await ReplacementRequestModel.updateMany(
-          { oldStudentId: student.id },
-          { $set: { oldStudentChest: newChestNo } }
-        );
-        await ReplacementRequestModel.updateMany(
-          { newStudentId: student.id },
-          { $set: { newStudentChest: newChestNo } }
-        );
-      }
-
-      const highestNumber = Math.max(
-        currentCounter,
-        ...(validNumbers.length ? validNumbers : [0])
-      );
-
-      if (highestNumber > 0) {
         await ChestCounterModel.updateOne(
-          { team_id: teamId, gender },
-          { $set: { last_number: highestNumber } },
+          { team_id: team.id, gender },
+          { $set: { last_number: highestNum } },
           { upsert: true }
         );
       }
     }
 
-    console.log("✅ Chest number migration completed successfully.");
+    console.log("✅ Chest number migration and counter sync completed successfully.");
     hasMigrated = true;
   } catch (error) {
     console.error("❌ Chest number migration failed:", error);

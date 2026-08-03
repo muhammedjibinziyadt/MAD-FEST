@@ -29,9 +29,19 @@ async function getResultsData() {
   };
 }
 
-export const metadata = {
-  title: "Live Results",
-  description: "Check the latest results of Ishal Rabeeh competitions. Real-time updates on winners and grades.",
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Live Competition Results",
+  description: "Check the latest published results of Ishal Rabeeh '26 competitions. Real-time updates on winners, 1st, 2nd, 3rd positions, and grade bonuses.",
+  openGraph: {
+    title: "Live Competition Results | Ishal Rabeeh '26",
+    description: "Real-time updates on winners, placements, and grades across all categories.",
+    url: (process.env.NEXT_PUBLIC_APP_URL || "https://www.ishalrabeehbuhsm.online/") + "results",
+    siteName: "Ishal Rabeeh '26",
+    images: ["/img/assets/logo-new.png"],
+    type: "website",
+  },
 };
 
 export default async function ResultsPage() {

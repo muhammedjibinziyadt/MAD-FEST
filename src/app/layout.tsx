@@ -78,7 +78,7 @@ export const metadata: Metadata = {
       "A premier platform for students to showcase their talents and highlight the rich art forms of Islamic culture.",
     url:
       process.env.NEXT_PUBLIC_APP_URL ||
-      "https://funoonfiesta.noorululama.org",
+      "https://www.ishalrabeehbuhsm.online/",
     siteName: "Ishal Rabeeh '26",
     images: [
       {
