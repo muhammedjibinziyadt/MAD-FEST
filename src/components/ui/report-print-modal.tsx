@@ -34,6 +34,7 @@ export function ReportPrintModal<T = any>({
   config,
 }: ReportPrintModalProps<T>) {
   const [mounted, setMounted] = useState(false);
+  const [zoom, setZoom] = useState<number>(100);
 
   React.useEffect(() => {
     setMounted(true);
@@ -159,7 +160,10 @@ export function ReportPrintModal<T = any>({
         title="Report Preview & Print"
         size="xl"
         actions={
-          <div className="flex items-center gap-3 w-full justify-between sm:justify-end">
+          <div className="flex flex-wrap items-center gap-3 w-full justify-between sm:justify-end">
+            <Button variant="secondary" onClick={onClose}>
+              Close
+            </Button>
             <Button variant="secondary" onClick={handleDownloadCSV} className="gap-2">
               <Download className="h-4 w-4" /> CSV Export
             </Button>
@@ -233,14 +237,40 @@ export function ReportPrintModal<T = any>({
         `}</style>
 
         {/* Modal Preview Body */}
-        <div className="space-y-4">
-          <p className="text-xs text-white/60">
-            Preview of your report document below. Click <strong>Print / Save PDF</strong> to print or download as vector PDF.
-          </p>
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-xs text-white/70">
+            <span>Showing <strong>{data.length}</strong> records</span>
+            <div className="flex items-center gap-2">
+              <span className="text-white/50 font-medium">Zoom:</span>
+              {[75, 100, 125].map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setZoom(level)}
+                  className={`px-2.5 py-1 rounded-lg border text-xs font-semibold transition ${
+                    zoom === level
+                      ? "bg-fuchsia-500/20 border-fuchsia-400 text-fuchsia-300"
+                      : "border-white/10 text-white/60 hover:text-white"
+                  }`}
+                >
+                  {level}%
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Report Canvas Container */}
-          <div className="overflow-x-auto rounded-xl border border-white/20 bg-white p-6 sm:p-10 text-slate-900 shadow-2xl">
-            {reportDocumentContent}
+          <div className="max-h-[56vh] overflow-y-auto overflow-x-auto rounded-xl border border-white/20 bg-slate-950/40 p-4 sm:p-6 shadow-inner">
+            <div
+              style={{
+                transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
+                transformOrigin: "top center",
+                transition: "transform 0.15s ease-in-out",
+              }}
+              className="bg-white p-6 sm:p-8 rounded-lg shadow-2xl border border-slate-300 text-slate-900 mx-auto"
+            >
+              {reportDocumentContent}
+            </div>
           </div>
         </div>
       </Modal>

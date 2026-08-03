@@ -93,6 +93,104 @@ function BulkDeleteSubmitButton({ count }: { count: number }) {
   );
 }
 
+function ProgramEditForm({
+  program,
+  candidateLimit,
+  updateAction,
+  onCancel,
+}: {
+  program: Program;
+  candidateLimit: number;
+  updateAction: (formData: FormData) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [section, setSection] = useState<Program["section"]>(program.section);
+  const [category, setCategory] = useState<Program["category"]>(
+    program.section === "general" ? "GENERAL" : program.category,
+  );
+
+  const handleSectionChange = (val: string) => {
+    const nextSection = val as Program["section"];
+    setSection(nextSection);
+    if (nextSection === "general") {
+      setCategory("GENERAL");
+    } else if (category === "GENERAL") {
+      setCategory(program.category !== "GENERAL" ? program.category : "KIDDIES");
+    }
+  };
+
+  const isGeneral = section === "general";
+
+  return (
+    <form
+      action={updateAction}
+      className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white md:grid-cols-2"
+    >
+      <input type="hidden" name="id" value={program.id} />
+      <Input name="name" defaultValue={program.name} placeholder="Program name" required />
+      <SearchSelect
+        name="section"
+        value={section}
+        onValueChange={handleSectionChange}
+        options={[
+          { value: "single", label: "Single" },
+          { value: "group", label: "Group" },
+          { value: "general", label: "General" },
+        ]}
+        placeholder="Select section"
+      />
+      <SearchSelect
+        name="category"
+        value={isGeneral ? "GENERAL" : category}
+        onValueChange={(val) => {
+          if (!isGeneral) {
+            setCategory(val as Program["category"]);
+          }
+        }}
+        disabled={isGeneral}
+        options={[
+          { value: "KIDDIES", label: "KIDDIES" },
+          { value: "SUB-JUNIOR", label: "SUB-JUNIOR" },
+          { value: "JUNIOR", label: "JUNIOR" },
+          { value: "SENIOR", label: "SENIOR" },
+          { value: "SUPER-SENIOR", label: "SUPER-SENIOR" },
+          { value: "GENERAL", label: "GENERAL" },
+          { value: "none", label: "None" },
+        ]}
+        placeholder="Select category"
+      />
+      <SearchSelect
+        name="stage"
+        defaultValue={program.stage ? "true" : "false"}
+        options={[
+          { value: "true", label: "On Stage" },
+          { value: "false", label: "Off Stage" },
+        ]}
+        placeholder="Select stage"
+      />
+      <Input
+        name="candidateLimit"
+        type="number"
+        min={1}
+        defaultValue={candidateLimit}
+        placeholder="Candidate limit"
+        required
+      />
+      <div className="flex items-center gap-3 md:col-span-2">
+        <UpdateSubmitButton />
+        <Button
+          type="button"
+          variant="secondary"
+          className="flex-1"
+          onClick={onCancel}
+        >
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export const ProgramManager = React.memo(function ProgramManager({
   programs,
   updateAction,
@@ -315,11 +413,10 @@ export const ProgramManager = React.memo(function ProgramManager({
               key={option.value}
               type="button"
               onClick={() => handleSortChange(option.value as SortOption)}
-              className={`rounded-full px-4 py-1 text-xs font-semibold transition ${
-                sort === option.value
-                  ? "bg-emerald-500/20 text-emerald-300"
-                  : "border border-white/10 text-white/60 hover:text-white"
-              }`}
+              className={`rounded-full px-4 py-1 text-xs font-semibold transition ${sort === option.value
+                ? "bg-emerald-500/20 text-emerald-300"
+                : "border border-white/10 text-white/60 hover:text-white"
+                }`}
             >
               {option.label}
             </button>
@@ -391,11 +488,10 @@ export const ProgramManager = React.memo(function ProgramManager({
                     {program.stage ? "On stage" : "Off stage"}
                   </span>
                   <span
-                    className={`rounded-full border px-3 py-1 ${
-                      registrationCount >= candidateLimit
-                        ? "border-amber-400 text-amber-200"
-                        : "border-emerald-400/40 text-emerald-200"
-                    }`}
+                    className={`rounded-full border px-3 py-1 ${registrationCount >= candidateLimit
+                      ? "border-amber-400 text-amber-200"
+                      : "border-emerald-400/40 text-emerald-200"
+                      }`}
                   >
                     Registered {registrationCount} / {candidateLimit}
                   </span>
@@ -430,65 +526,15 @@ export const ProgramManager = React.memo(function ProgramManager({
                   </form>
                 </div>
               </div>
+
+
               {isEditing && (
-                <form
-                  action={updateAction}
-                  className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white md:grid-cols-2"
-                >
-                  <input type="hidden" name="id" value={program.id} />
-                  <Input name="name" defaultValue={program.name} placeholder="Program name" />
-                  <SearchSelect
-                    name="section"
-                    defaultValue={program.section}
-                    options={[
-                      { value: "single", label: "Single" },
-                      { value: "group", label: "Group" },
-                      { value: "general", label: "General" },
-                    ]}
-                    placeholder="Select section"
-                  />
-                  <SearchSelect
-                    name="category"
-                    defaultValue={program.category}
-                    options={[
-                      { value: "KIDDIES", label: "KIDDIES" },
-                      { value: "SUB-JUNIOR", label: "SUB-JUNIOR" },
-                      { value: "JUNIOR", label: "JUNIOR" },
-                      { value: "SENIOR", label: "SENIOR" },
-                      { value: "SUPER-SENIOR", label: "SUPER-SENIOR" },
-                      { value: "GENERAL", label: "GENERAL" },
-                      { value: "none", label: "None" },
-                    ]}
-                    placeholder="Select category"
-                  />
-                  <SearchSelect
-                    name="stage"
-                    defaultValue={program.stage ? "true" : "false"}
-                    options={[
-                      { value: "true", label: "On Stage" },
-                      { value: "false", label: "Off Stage" },
-                    ]}
-                    placeholder="Select stage"
-                  />
-                  <Input
-                    name="candidateLimit"
-                    type="number"
-                    min={1}
-                    defaultValue={candidateLimit}
-                    placeholder="Candidate limit"
-                  />
-                  <div className="flex items-center gap-3 md:col-span-2">
-                    <UpdateSubmitButton />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="flex-1"
-                      onClick={() => setEditingId(null)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
+                <ProgramEditForm
+                  program={program}
+                  candidateLimit={candidateLimit}
+                  updateAction={updateAction}
+                  onCancel={() => setEditingId(null)}
+                />
               )}
             </div>
           );

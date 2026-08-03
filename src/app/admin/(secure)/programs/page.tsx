@@ -16,6 +16,7 @@ import {
 } from "@/lib/data";
 import { getProgramRegistrations, removeRegistrationsByProgram } from "@/lib/team-data";
 import { ProgramManager } from "@/components/program-manager";
+import { CreateProgramForm } from "@/components/create-program-form";
 import { redirectWithToast } from "@/lib/actions";
 
 // Allow larger candidate limits so that big group/general programs can have many participants.
@@ -63,12 +64,15 @@ async function mutateProgram(
   const categoryValue = formData.get("category");
   const candidateLimitValue = formData.get("candidateLimit") ?? formData.get("candidate_limit");
 
+  const section = sectionValue ? String(sectionValue) : "single";
+  const category = section === "general" ? "GENERAL" : (categoryValue ? String(categoryValue) : "KIDDIES");
+
   const parsed = programSchema.safeParse({
     id: idValue ? String(idValue) : undefined,
     name: nameValue ? String(nameValue).trim() : "",
-    section: sectionValue ? String(sectionValue) : "single",
+    section,
     stage: stageValue ? String(stageValue) : "true",
-    category: categoryValue ? String(categoryValue) : "A",
+    category,
     candidateLimit: candidateLimitValue ? String(candidateLimitValue) : "1",
   });
 
@@ -315,7 +319,7 @@ async function importProgramsAction(formData: FormData) {
         name: parsed.data.name,
         section: parsed.data.section,
         stage: parsed.data.stage,
-        category: parsed.data.category,
+        category: parsed.data.section === "general" ? "GENERAL" : parsed.data.category,
         candidateLimit: parsed.data.candidate_limit,
       });
       successCount++;
@@ -356,57 +360,7 @@ export default async function ProgramsPage() {
         <CardDescription className="mt-2">
           Add programs with section, stage and category metadata.
         </CardDescription>
-        <form
-          action={createProgramAction}
-          className="mt-6 grid gap-4 md:grid-cols-2"
-        >
-          <Input name="name" placeholder="Program name" required />
-          <SearchSelect
-            name="section"
-            defaultValue="single"
-            required
-            options={[
-              { value: "single", label: "Single" },
-              { value: "group", label: "Group" },
-              { value: "general", label: "General" },
-            ]}
-            placeholder="Select section"
-          />
-          <SearchSelect
-            name="category"
-            defaultValue="KIDDIES"
-            options={[
-              { value: "KIDDIES", label: "KIDDIES" },
-              { value: "SUB-JUNIOR", label: "SUB-JUNIOR" },
-              { value: "JUNIOR", label: "JUNIOR" },
-              { value: "SENIOR", label: "SENIOR" },
-              { value: "SUPER-SENIOR", label: "SUPER-SENIOR" },
-              { value: "GENERAL", label: "GENERAL" },
-              { value: "none", label: "None" },
-            ]}
-            placeholder="Select category"
-          />
-          <SearchSelect
-            name="stage"
-            defaultValue="true"
-            options={[
-              { value: "true", label: "On Stage" },
-              { value: "false", label: "Off Stage" },
-            ]}
-            placeholder="Select stage"
-          />
-          <Input
-            name="candidateLimit"
-            type="number"
-            min={1}
-            defaultValue={1}
-            placeholder="Candidate limit"
-            required
-          />
-          <Button type="submit" className="md:col-span-2">
-            Save Program
-          </Button>
-        </form>
+        <CreateProgramForm action={createProgramAction} />
       </Card>
       <Card className="h-full">
         <CardTitle>Bulk Import (CSV)</CardTitle>

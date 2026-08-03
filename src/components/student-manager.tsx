@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Image from "next/image";
-import { CheckCircle2, Eye, Pencil, Search, Trash2, Download, FileText, FileSpreadsheet, User } from "lucide-react";
+import { CheckCircle2, Eye, Pencil, Search, Trash2, Download, FileText, FileSpreadsheet, User, Printer } from "lucide-react";
 
 import { Button, SubmitButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -306,58 +306,14 @@ export const StudentManager = React.memo(function StudentManager({
           <h2 className="text-2xl font-semibold text-white">Manage participants</h2>
           <p className="text-sm text-white/60">Search, filter, edit, or bulk-delete student entries.</p>
         </div>
-        <div className="flex gap-2">
-          <div className="relative">
-            <Button
-              type="button"
-              variant="secondary"
-              className="gap-2"
-              onClick={() => setShowExportMenu(!showExportMenu)}
-            >
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-            {showExportMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowExportMenu(false)}
-                />
-                <div className="absolute right-0 top-full mt-2 z-50">
-                  <div className="rounded-2xl border border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-2xl p-2 min-w-[180px]">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        exportToCSV();
-                        setShowExportMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 rounded-xl px-4 py-2.5 text-left text-sm text-white transition hover:bg-white/10"
-                    >
-                      <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
-                      <div>
-                        <p className="font-semibold">Export as CSV</p>
-                        <p className="text-xs text-white/60">Spreadsheet format</p>
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowReportModal(true);
-                        setShowExportMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 rounded-xl px-4 py-2.5 text-left text-sm text-white transition hover:bg-white/10"
-                    >
-                      <FileText className="h-4 w-4 text-red-400" />
-                      <div>
-                        <p className="font-semibold">Print / Export PDF Report</p>
-                        <p className="text-xs text-white/60">Formatted report design</p>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            type="button"
+            onClick={() => setShowReportModal(true)}
+            className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg"
+          >
+            <Printer className="h-4 w-4" /> Download / Print Report
+          </Button>
           <Button
             type="button"
             variant="ghost"

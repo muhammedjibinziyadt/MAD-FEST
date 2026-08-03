@@ -375,57 +375,13 @@ export const ResultManager = React.memo(function ResultManager({
           </p>
         </div>
         <div className="flex gap-2 self-start sm:self-auto">
-          <div className="relative">
-            <Button
-              type="button"
-              variant="secondary"
-              className="gap-2 bg-white/5 border border-white/10 text-white hover:bg-white/10"
-              onClick={() => setShowExportMenu(!showExportMenu)}
-            >
-              <Download className="h-4 w-4 text-cyan-400" />
-              <span>Export Reports</span>
-            </Button>
-            {showExportMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowExportMenu(false)}
-                />
-                <div className="absolute right-0 top-full mt-2 z-50">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/95 backdrop-blur-xl shadow-2xl p-2 min-w-[190px]">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        exportToCSV();
-                        setShowExportMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 rounded-xl px-4 py-2.5 text-left text-sm text-white transition hover:bg-white/5 cursor-pointer"
-                    >
-                      <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
-                      <div>
-                        <p className="font-semibold text-white">Export as CSV</p>
-                        <p className="text-xs text-white/50">Spreadsheet format</p>
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowReportModal(true);
-                        setShowExportMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 rounded-xl px-4 py-2.5 text-left text-sm text-white transition hover:bg-white/5 cursor-pointer"
-                    >
-                      <FileText className="h-4 w-4 text-cyan-400" />
-                      <div>
-                        <p className="font-semibold text-white">Print / Export PDF Report</p>
-                        <p className="text-xs text-white/50">Formatted report design</p>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          <Button
+            type="button"
+            onClick={() => setShowReportModal(true)}
+            className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg"
+          >
+            <Printer className="h-4 w-4" /> Download / Print Report
+          </Button>
         </div>
       </div>
 
