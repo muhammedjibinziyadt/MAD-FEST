@@ -47,6 +47,9 @@ function BackupRestoreSection() {
         try {
             setLoading(true);
             const data = await getDatabaseStats();
+            if (!data) {
+                return;
+            }
             setStats(data);
         } catch (error) {
             console.error("Failed to fetch stats:", error);

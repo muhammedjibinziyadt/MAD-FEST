@@ -608,21 +608,7 @@ export function ScoreboardTable({
         </div>
       </div>
 
-      {/* Download Report Button */}
-      <div className="flex justify-center mb-6">
-        <button
-          onClick={() => setShowReportModal(true)}
-          className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-amber-800 to-amber-950 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md hover:opacity-90 transition"
-        >
-          <Printer className="w-4 h-4 text-amber-300" /> Download / Print Report
-        </button>
-      </div>
 
-      <ReportPrintModal
-        open={showReportModal}
-        onClose={() => setShowReportModal(false)}
-        config={reportConfig}
-      />
 
       {/* Category Filter Pills */}
       {availableCategories.length > 0 && (

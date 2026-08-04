@@ -21,7 +21,7 @@ import { revalidatePath } from "next/cache";
 
 export async function getDatabaseStats() {
     if (!(await isAdminAuthenticated())) {
-        throw new Error("Unauthorized");
+        return null;
     }
 
     await connectDB();
@@ -44,11 +44,11 @@ export async function getDatabaseStats() {
 
 export async function restoreDatabase(data: any) {
     if (!(await isAdminAuthenticated())) {
-        throw new Error("Unauthorized");
+        return { success: false, message: "Unauthorized. Please log in as admin." };
     }
 
     if (!data || typeof data !== "object") {
-        throw new Error("Invalid backup file format");
+        return { success: false, message: "Invalid backup file format" };
     }
 
     await connectDB();
@@ -88,7 +88,7 @@ export async function restoreDatabase(data: any) {
 
 export async function clearDatabaseData() {
     if (!(await isAdminAuthenticated())) {
-        throw new Error("Unauthorized");
+        return { success: false, message: "Unauthorized. Please log in as admin." };
     }
 
     await connectDB();

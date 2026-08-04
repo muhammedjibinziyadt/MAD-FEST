@@ -6,6 +6,8 @@ import Sidenavbar, {
 } from "@/components/ui/sidebar";
 import { ADMIN_COOKIE } from "@/lib/config";
 
+import { isAdminAuthenticated } from "@/lib/auth";
+
 export const dynamic = "force-dynamic";
 
 const adminNav: SidebarItem[] = [
@@ -41,11 +43,15 @@ async function logoutAction() {
   redirect("/admin/login");
 }
 
-export default function AdminSecureLayout({
+export default async function AdminSecureLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  if (!(await isAdminAuthenticated())) {
+    redirect("/admin/login");
+  }
+
   return (
     <div className="dark min-h-screen bg-slate-950/95 text-white">
       <Sidenavbar items={adminNav} heading="Admin Control">
