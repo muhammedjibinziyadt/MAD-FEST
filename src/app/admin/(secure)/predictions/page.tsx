@@ -19,6 +19,23 @@ interface ProgramSimple {
     category: string;
 }
 
+function getTomorrowDateString(): string {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function splitISOToDateTime(isoOrDateString?: string): { date: string; time: string } {
+    if (!isoOrDateString) return { date: getTomorrowDateString(), time: "18:00" };
+    const d = new Date(isoOrDateString);
+    if (isNaN(d.getTime())) return { date: getTomorrowDateString(), time: "18:00" };
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return { date, time };
+}
+
 export default function AdminPredictionsPage() {
     const [events, setEvents] = useState<PredictionEvent[]>([]);
     const [programs, setPrograms] = useState<ProgramSimple[]>([]);
@@ -33,7 +50,8 @@ export default function AdminPredictionsPage() {
         programName: "",
         question: "Who will win?",
         options: [{ id: "opt1", label: "" }, { id: "opt2", label: "" }],
-        deadline: "",
+        deadlineDate: getTomorrowDateString(),
+        deadlineTime: "18:00",
         points: 10
     });
 
@@ -41,7 +59,8 @@ export default function AdminPredictionsPage() {
     const [editingEvent, setEditingEvent] = useState<PredictionEvent | null>(null);
     const [editParams, setEditParams] = useState({
         question: "",
-        deadline: "",
+        deadlineDate: "",
+        deadlineTime: "18:00",
         points: 10
     });
     const [updating, setUpdating] = useState(false);
@@ -77,12 +96,18 @@ export default function AdminPredictionsPage() {
                 label: o.label
             }));
 
+            const deadline = `${newParams.deadlineDate}T${newParams.deadlineTime || "18:00"}`;
+
             const res = await fetch("/api/predictions", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    ...newParams,
-                    options: formattedOptions
+                    programId: newParams.programId,
+                    programName: newParams.programName,
+                    question: newParams.question,
+                    options: formattedOptions,
+                    deadline,
+                    points: newParams.points
                 })
             });
 
@@ -94,7 +119,8 @@ export default function AdminPredictionsPage() {
                     programId: "",
                     programName: "",
                     options: [{ id: "opt1", label: "" }, { id: "opt2", label: "" }],
-                    deadline: ""
+                    deadlineDate: getTomorrowDateString(),
+                    deadlineTime: "18:00"
                 }));
             }
         } catch (e) { toast.error("Create failed"); }
@@ -134,10 +160,15 @@ export default function AdminPredictionsPage() {
         if (!editingEvent) return;
         setUpdating(true);
         try {
+            const deadline = `${editParams.deadlineDate}T${editParams.deadlineTime || "18:00"}`;
             const res = await fetch(`/api/predictions/${editingEvent.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(editParams),
+                body: JSON.stringify({
+                    question: editParams.question,
+                    points: editParams.points,
+                    deadline
+                }),
             });
             if (res.ok) {
                 toast.success("Event updated");
@@ -275,23 +306,34 @@ export default function AdminPredictionsPage() {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-4">
                                     <div className="space-y-2">
                                         <Label>Points</Label>
                                         <Input
                                             type="number"
                                             value={newParams.points}
-                                            onChange={e => setNewParams({ ...newParams, points: parseInt(e.target.value) })}
+                                            onChange={e => setNewParams({ ...newParams, points: parseInt(e.target.value) || 0 })}
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label>Deadline</Label>
-                                        <Input
-                                            type="datetime-local"
-                                            value={newParams.deadline}
-                                            onChange={e => setNewParams({ ...newParams, deadline: e.target.value })}
-                                            required
-                                        />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>Deadline Date</Label>
+                                            <Input
+                                                type="date"
+                                                value={newParams.deadlineDate}
+                                                onChange={e => setNewParams({ ...newParams, deadlineDate: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Deadline Time</Label>
+                                            <Input
+                                                type="time"
+                                                value={newParams.deadlineTime}
+                                                onChange={e => setNewParams({ ...newParams, deadlineTime: e.target.value })}
+                                                required
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -418,10 +460,12 @@ export default function AdminPredictionsPage() {
                                                 <Dialog>
                                                     <DialogTrigger asChild>
                                                         <Button variant="ghost" size="sm" className="justify-start" onClick={() => {
+                                                            const { date, time } = splitISOToDateTime(evt.deadline);
                                                             setEditingEvent(evt);
                                                             setEditParams({
                                                                 question: evt.question,
-                                                                deadline: evt.deadline,
+                                                                deadlineDate: date,
+                                                                deadlineTime: time,
                                                                 points: evt.points
                                                             });
                                                         }}>
@@ -438,22 +482,34 @@ export default function AdminPredictionsPage() {
                                                                     onChange={(e) => setEditParams({ ...editParams, question: e.target.value })}
                                                                 />
                                                             </div>
-                                                            <div className="grid grid-cols-2 gap-4">
+                                                            <div className="space-y-4">
                                                                 <div className="space-y-2">
                                                                     <Label>Points</Label>
                                                                     <Input
                                                                         type="number"
                                                                         value={editParams.points}
-                                                                        onChange={(e) => setEditParams({ ...editParams, points: parseInt(e.target.value) })}
+                                                                        onChange={(e) => setEditParams({ ...editParams, points: parseInt(e.target.value) || 0 })}
                                                                     />
                                                                 </div>
-                                                                <div className="space-y-2">
-                                                                    <Label>Deadline</Label>
-                                                                    <Input
-                                                                        type="datetime-local"
-                                                                        value={editParams.deadline}
-                                                                        onChange={(e) => setEditParams({ ...editParams, deadline: e.target.value })}
-                                                                    />
+                                                                <div className="grid grid-cols-2 gap-4">
+                                                                    <div className="space-y-2">
+                                                                        <Label>Deadline Date</Label>
+                                                                        <Input
+                                                                            type="date"
+                                                                            value={editParams.deadlineDate}
+                                                                            onChange={(e) => setEditParams({ ...editParams, deadlineDate: e.target.value })}
+                                                                            required
+                                                                        />
+                                                                    </div>
+                                                                    <div className="space-y-2">
+                                                                        <Label>Deadline Time</Label>
+                                                                        <Input
+                                                                            type="time"
+                                                                            value={editParams.deadlineTime}
+                                                                            onChange={(e) => setEditParams({ ...editParams, deadlineTime: e.target.value })}
+                                                                            required
+                                                                        />
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>

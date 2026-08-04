@@ -17,6 +17,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           "focus-visible:border-fuchsia-500 focus-visible:ring-fuchsia-500/30 focus-visible:ring-offset-white",
           "dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-white/50 dark:hover:border-white/20",
           "dark:focus-visible:border-fuchsia-400/50 dark:focus-visible:ring-fuchsia-400/30 dark:focus-visible:ring-offset-slate-900 dark:focus-visible:bg-white/10",
+          "dark:[color-scheme:dark] [color-scheme:light]",
           className,
         )}
         ref={ref}

@@ -424,7 +424,7 @@ input[type="checkbox"]:disabled {
 
 /* 3D Carousel Responsive Offset Variables */
 .carousel-container {
-  --carousel-offset: 45%;
+  --carousel-offset: 42%;
 }
 
 @media (min-width: 640px) {

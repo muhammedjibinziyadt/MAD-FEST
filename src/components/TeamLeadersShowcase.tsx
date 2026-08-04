@@ -5,9 +5,9 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const leaders = [
-  "/img/leaders/leader-1-transparent.png",
-  "/img/leaders/leader-2-transparent.png",
-  "/img/leaders/leader-3-transparent.png",
+  "/img/leaders/leader-1-transparent.png?v=2",
+  "/img/leaders/leader-2-transparent.png?v=2",
+  "/img/leaders/leader-3-transparent.png?v=2",
 ];
 
 export function TeamLeadersShowcase() {
@@ -42,27 +42,27 @@ export function TeamLeadersShowcase() {
     }
 
     return {
-      transform: `translate(${translateX}, -50%) scale(${diff === 0 ? 1.12 : 0.85})`,
-      opacity: diff === 0 ? 1 : 0.35,
+      transform: `translate(${translateX}, -50%) scale(${diff === 0 ? 1.28 : 0.72})`,
+      opacity: diff === 0 ? 1 : 0.25,
       zIndex: diff === 0 ? 20 : 10,
     };
   };
 
   return (
-    <section className="relative py-12 md:py-16 overflow-hidden bg-[#FFFCF5] border-t border-b border-[#8B4513]/10">
+    <section className="relative py-8 md:py-16 overflow-hidden bg-[#FFFCF5] border-t border-b border-[#8B4513]/10">
       {/* Background decoration */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[#8B4513]/5 blur-[120px] rounded-full opacity-40" />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10 max-w-7xl text-center mb-6">
-        <h2 className="text-3xl md:text-5xl font-bold text-[#3A2D28] leading-tight tracking-tight">
+      <div className="container mx-auto px-4 relative z-10 max-w-7xl text-center mb-2 sm:mb-6">
+        <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-[#3A2D28] leading-tight tracking-tight">
           ഞങ്ങളുടെ മെന്റർമാരും നായകന്മാരും
         </h2>
       </div>
 
       {/* Interactive 3D Carousel */}
-      <div className="carousel-container relative max-w-5xl mx-auto px-2 sm:px-4 flex items-center justify-between gap-2 sm:gap-4 py-8 z-10">
+      <div className="carousel-container relative max-w-5xl mx-auto px-1 sm:px-4 flex items-center justify-between gap-1 sm:gap-4 py-4 sm:py-8 z-10">
         
         {/* Left Navigation Button */}
         <button
@@ -74,7 +74,7 @@ export function TeamLeadersShowcase() {
         </button>
 
         {/* Carousel Visual Area */}
-        <div className="relative flex-1 h-[200px] sm:h-[300px] md:h-[360px] overflow-visible">
+        <div className="relative flex-1 h-[290px] sm:h-[350px] md:h-[410px] overflow-visible">
           {leaders.map((img, i) => {
             const isActive = i === activeIndex;
             const style = getCardStyle(i);
@@ -89,8 +89,8 @@ export function TeamLeadersShowcase() {
                   position: "absolute",
                   left: "50%",
                   top: "50%",
-                  width: "75%",
-                  maxWidth: "480px",
+                  width: "88%",
+                  maxWidth: "540px",
                   transition: "all 600ms cubic-bezier(0.25, 1, 0.5, 1)",
                   ...style,
                 }}
@@ -102,6 +102,7 @@ export function TeamLeadersShowcase() {
                     src={img}
                     alt={`Team Leader ${i + 1}`}
                     fill
+                    unoptimized
                     sizes="(max-width: 640px) 240px, (max-width: 768px) 340px, 480px"
                     className={`object-contain transition-all duration-600 ${
                       isActive 
