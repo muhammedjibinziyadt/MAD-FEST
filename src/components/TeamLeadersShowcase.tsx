@@ -5,9 +5,18 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const leaders = [
-  "/img/leaders/leader-1-transparent.png?v=2",
-  "/img/leaders/leader-2-transparent.png?v=2",
-  "/img/leaders/leader-3-transparent.png?v=2",
+  {
+    img: "/img/leaders/leader-1-transparent.png?v=2",
+    name: "RAZMIYYA",
+  },
+  {
+    img: "/img/leaders/leader-2-transparent.png?v=2",
+    name: "THAZMIYYA",
+  },
+  {
+    img: "/img/leaders/leader-3-transparent.png?v=2",
+    name: "HAZMIYYA",
+  },
 ];
 
 export function TeamLeadersShowcase() {
@@ -75,7 +84,7 @@ export function TeamLeadersShowcase() {
 
         {/* Carousel Visual Area */}
         <div className="relative flex-1 h-[290px] sm:h-[350px] md:h-[410px] overflow-visible">
-          {leaders.map((img, i) => {
+          {leaders.map((item, i) => {
             const isActive = i === activeIndex;
             const style = getCardStyle(i);
 
@@ -99,8 +108,8 @@ export function TeamLeadersShowcase() {
               >
                 <div className="relative w-full h-full" suppressHydrationWarning>
                   <Image
-                    src={img}
-                    alt={`Team Leader ${i + 1}`}
+                    src={item.img}
+                    alt={item.name}
                     fill
                     unoptimized
                     sizes="(max-width: 640px) 240px, (max-width: 768px) 340px, 480px"
@@ -125,6 +134,15 @@ export function TeamLeadersShowcase() {
         >
           <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
         </button>
+      </div>
+
+      {/* Team Name Showcase Banner */}
+      <div className="flex flex-col items-center justify-center mt-2 z-20 relative">
+        <div className="px-6 py-2 rounded-full bg-[#8B4513]/10 border border-[#8B4513]/20 shadow-sm backdrop-blur-sm transition-all duration-300">
+          <span className="font-fn-charutha text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#8B4513] tracking-widest uppercase">
+            {leaders[activeIndex].name}
+          </span>
+        </div>
       </div>
 
       {/* Pagination dots indicator */}

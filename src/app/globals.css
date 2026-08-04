@@ -52,6 +52,19 @@
 }
 
 @font-face {
+  font-family: "Fn-Charutha";
+  src: url("/img/assets/fonts/FN-Charutha-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-charutha,
+.font-fn-charutha {
+  font-family: "Fn-Charutha", "Charutha", "NotoSerifMalayalam", sans-serif;
+}
+
+@font-face {
   font-family: "Bricolage";
   src: url("/img/assets/fonts/BricolageGrotesque.ttf") format("truetype");
   font-weight: normal;
