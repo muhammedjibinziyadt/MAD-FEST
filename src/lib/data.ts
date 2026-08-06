@@ -361,6 +361,11 @@ export async function deleteStudentById(id: string) {
   await StudentModel.deleteOne({ id });
   clearCache("students");
 
+  if (student?.team_id && student?.gender) {
+    const { recalibrateChestCounterDB } = await import("./chest-db");
+    await recalibrateChestCounterDB(student.team_id, student.gender as "boy" | "girl");
+  }
+
   // Emit real-time event (non-blocking)
   if (student?.team_id) {
     import("./pusher")

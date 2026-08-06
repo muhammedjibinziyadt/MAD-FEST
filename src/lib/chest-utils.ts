@@ -56,6 +56,7 @@ export function generateNextChestNumberSync(
   existingStudents: Array<{ chest_no?: string; chestNumber?: string; gender?: string; team_id?: string; teamId?: string }>
 ): string {
   const targetPrefix = getTeamPrefix(teamName, gender);
+  const normalizedTargetPrefix = targetPrefix.replace("-", "");
 
   const numbers: number[] = [];
 
@@ -66,9 +67,9 @@ export function generateNextChestNumberSync(
     const parsed = parseChestNumber(chest);
     if (!parsed) continue;
 
-    const matchesPrefix = chest.startsWith(targetPrefix) || parsed.prefix === targetPrefix || parsed.prefix === targetPrefix.replace("-", "");
+    const studentPrefix = parsed.prefix.replace("-", "");
 
-    if (matchesPrefix) {
+    if (studentPrefix === normalizedTargetPrefix) {
       numbers.push(parsed.number);
     }
   }

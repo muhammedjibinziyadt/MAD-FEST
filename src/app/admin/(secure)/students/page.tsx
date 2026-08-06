@@ -63,14 +63,14 @@ async function upsertStudent(formData: FormData, mode: "create" | "update") {
   const payload = parsed.data;
 
   let chest_no = payload.chest_no;
-  
+  const teams = await getTeams();
+  const team = teams.find((t) => t.id === payload.team_id);
+  if (!team) {
+    throw new Error("Team not found");
+  }
+  const genderToUse = payload.gender || (team.gender === "girls" ? "girl" : "boy");
+
   if (mode === "create" && !chest_no) {
-    const teams = await getTeams();
-    const team = teams.find((t) => t.id === payload.team_id);
-    if (!team) {
-      throw new Error("Team not found");
-    }
-    const genderToUse = payload.gender || (team.gender === "girls" ? "girl" : "boy");
     chest_no = await getNextChestNumberDB(team.id, team.name, genderToUse);
   } else if (mode === "update" && !chest_no) {
     const students = await getStudents();
@@ -86,7 +86,7 @@ async function upsertStudent(formData: FormData, mode: "create" | "update") {
       name: payload.name,
       team_id: payload.team_id,
       chest_no: chest_no!,
-      gender: payload.gender,
+      gender: genderToUse,
       category: payload.category,
     });
   } else {
@@ -95,7 +95,7 @@ async function upsertStudent(formData: FormData, mode: "create" | "update") {
       name: payload.name,
       team_id: payload.team_id,
       chest_no: chest_no!,
-      gender: payload.gender,
+      gender: genderToUse,
       category: payload.category,
     });
   }

@@ -4,7 +4,7 @@ import { getTeamPrefix, formatChestNumber, parseChestNumber } from "./chest-util
 
 /**
  * Database-backed next chest number generator.
- * Respects ChestCounterModel to ensure numbers are NEVER reused even after deletion.
+ * Calculates next number based on max existing student chest number in the DB.
  */
 export async function getNextChestNumberDB(
   teamId: string,
@@ -13,6 +13,7 @@ export async function getNextChestNumberDB(
 ): Promise<string> {
   await connectDB();
   const targetPrefix = getTeamPrefix(teamName, gender);
+  const normalizedTargetPrefix = targetPrefix.replace("-", "");
 
   // Query existing students for this team matching target prefix
   const students = await StudentModel.find({ team_id: teamId }).lean();
@@ -22,20 +23,17 @@ export async function getNextChestNumberDB(
     const chest = (student.chest_no || "").trim().toUpperCase();
     const parsed = parseChestNumber(chest);
     if (parsed) {
-      const matchesPrefix = chest.startsWith(targetPrefix) || parsed.prefix === targetPrefix || parsed.prefix === targetPrefix.replace("-", "");
-      if (matchesPrefix && parsed.number > maxExistingNumber) {
+      const studentPrefix = parsed.prefix.replace("-", "");
+      if (studentPrefix === normalizedTargetPrefix && parsed.number > maxExistingNumber) {
         maxExistingNumber = parsed.number;
       }
     }
   }
 
-  // Query ChestCounterModel
-  const counter = await ChestCounterModel.findOne({ team_id: teamId, gender }).lean();
-  const lastNumberInCounter = counter?.last_number || 0;
+  const nextNumber = maxExistingNumber + 1;
 
-  // Highest assigned for this specific prefix
-  const highestAssigned = maxExistingNumber === 0 ? 0 : Math.max(lastNumberInCounter, maxExistingNumber);
-  const nextNumber = highestAssigned + 1;
+  // Keep counter synchronized with max existing student number
+  await updateChestCounterDB(teamId, gender, nextNumber);
 
   return formatChestNumber(targetPrefix, nextNumber);
 }
@@ -51,9 +49,38 @@ export async function updateChestCounterDB(
   await connectDB();
   await ChestCounterModel.updateOne(
     { team_id: teamId, gender },
-    { $max: { last_number: assignedNumber } },
+    { $set: { last_number: assignedNumber } },
     { upsert: true }
   );
+}
+
+/**
+ * Recalibrates chest counter in database based on actual max student chest number present.
+ */
+export async function recalibrateChestCounterDB(
+  teamId: string,
+  gender: "boy" | "girl"
+): Promise<number> {
+  await connectDB();
+  const team = await TeamModel.findOne({ id: teamId }).lean();
+  if (!team) return 0;
+
+  const targetPrefix = getTeamPrefix(team.name, gender).replace("-", "");
+  const students = await StudentModel.find({ team_id: teamId }).lean();
+  let maxNum = 0;
+
+  for (const student of students) {
+    const chest = (student.chest_no || "").trim().toUpperCase();
+    const parsed = parseChestNumber(chest);
+    if (parsed && parsed.prefix.replace("-", "") === targetPrefix) {
+      if (parsed.number > maxNum) {
+        maxNum = parsed.number;
+      }
+    }
+  }
+
+  await updateChestCounterDB(teamId, gender, maxNum);
+  return maxNum;
 }
 
 /**

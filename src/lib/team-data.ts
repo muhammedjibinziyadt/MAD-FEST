@@ -188,6 +188,11 @@ export async function deletePortalStudent(studentId: string) {
   clearCache("students");
   clearCache("registrations");
 
+  if (student?.team_id && student?.gender) {
+    const { recalibrateChestCounterDB } = await import("./chest-db");
+    await recalibrateChestCounterDB(student.team_id, student.gender as "boy" | "girl");
+  }
+
   // Emit real-time event (non-blocking)
   if (student?.team_id) {
     import("./pusher")
