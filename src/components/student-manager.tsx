@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Image from "next/image";
-import { CheckCircle2, Eye, Pencil, Search, Trash2, Download, FileText, FileSpreadsheet, User, Printer } from "lucide-react";
+import { CheckCircle2, Eye, Pencil, Search, Trash2, Download, FileText, FileSpreadsheet, User, Printer, Copy, Check, ExternalLink, QrCode, Trophy, Shield, Tag, Sparkles } from "lucide-react";
 
 import { Button, SubmitButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,6 +104,7 @@ export const StudentManager = React.memo(function StudentManager({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
 
 
@@ -642,41 +643,189 @@ export const StudentManager = React.memo(function StudentManager({
       <Modal
         open={Boolean(viewStudent)}
         onClose={() => setViewStudentId(null)}
-        title={viewStudent?.name ?? ""}
+        title="Student Profile Details"
+        size="md"
         actions={
-          <Button variant="secondary" onClick={() => setViewStudentId(null)}>
-            Close
-          </Button>
+          <div className="flex flex-wrap items-center justify-between w-full gap-2">
+            {viewStudent && (
+              <a
+                href={`/participant/${viewStudent.chest_no}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-fuchsia-500/30 bg-fuchsia-500/10 px-3.5 py-1.5 text-xs font-semibold text-fuchsia-300 hover:bg-fuchsia-500/20 hover:text-white transition"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                View Candidate Page
+              </a>
+            )}
+            <Button variant="secondary" onClick={() => setViewStudentId(null)}>
+              Close
+            </Button>
+          </div>
         }
       >
         {viewStudent && (
-          <div className="space-y-4 text-sm text-white/80">
-            {viewStudent.avatar && (
-              <div className="flex justify-center">
-                <div className="relative h-32 w-32 overflow-hidden rounded-full border-4 border-fuchsia-500/30">
-                  <Image
-                    src={viewStudent.avatar}
-                    alt={viewStudent.name}
-                    width={128}
-                    height={128}
-                    className="h-full w-full object-cover"
-                  />
+          <div className="space-y-4 py-1">
+            {/* Header Hero Card */}
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950/80 p-5 shadow-lg">
+              <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-fuchsia-500/15 blur-2xl pointer-events-none" />
+              <div className="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-cyan-500/15 blur-2xl pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+                {viewStudent.avatar ? (
+                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 border-fuchsia-500/40 shadow-xl shadow-fuchsia-500/20">
+                    <Image
+                      src={viewStudent.avatar}
+                      alt={viewStudent.name}
+                      width={80}
+                      height={80}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-gradient-to-br from-fuchsia-500/20 via-purple-500/20 to-cyan-500/20 p-3 shadow-xl">
+                    <User className="h-10 w-10 text-fuchsia-300" />
+                  </div>
+                )}
+
+                <div className="flex-1 space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-0.5 text-xs font-mono font-bold text-emerald-300 shadow-sm">
+                      <Tag className="h-3 w-3" />
+                      Chest #{viewStudent.chest_no}
+                    </span>
+                    {viewStudent.gender && (
+                      <span
+                        className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ${
+                          viewStudent.gender === "boy"
+                            ? "border-sky-500/30 bg-sky-500/10 text-sky-400"
+                            : "border-pink-500/30 bg-pink-500/10 text-pink-400"
+                        }`}
+                      >
+                        {viewStudent.gender === "boy" ? "Boy" : "Girl"}
+                      </span>
+                    )}
+                    {viewStudent.category && viewStudent.category !== "none" && (
+                      <span className="rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-fuchsia-300">
+                        {viewStudent.category}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-xl font-bold text-white tracking-tight">{viewStudent.name}</h3>
+                  <p className="text-xs text-white/60 font-medium flex items-center justify-center gap-1.5 sm:justify-start">
+                    <Shield className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                    {teamMap.get(viewStudent.team_id) ?? "Unknown Team"}
+                  </p>
                 </div>
               </div>
-            )}
-            <div className="space-y-2">
-              <p>
-                <span className="text-white/55 font-semibold">Student ID:</span> {viewStudent.id}
-              </p>
-              <p>
-                <span className="text-white/55 font-semibold">Team:</span> {teamMap.get(viewStudent.team_id) ?? "Unknown"}
-              </p>
-              <p>
-                <span className="text-white/55 font-semibold">Chest number:</span> {viewStudent.chest_no}
-              </p>
-              <p>
-                <span className="text-white/55 font-semibold">Total Points:</span> {viewStudent.total_points ?? 0}
-              </p>
+            </div>
+
+            {/* Quick Stats & Detail Grid */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              {/* Chest Number Card */}
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3.5 transition hover:border-emerald-500/30">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+                    <Tag className="h-3.5 w-3.5 text-emerald-400" />
+                    Chest Number
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(viewStudent.chest_no);
+                      setCopiedKey("chest");
+                      setTimeout(() => setCopiedKey(null), 2000);
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition"
+                  >
+                    {copiedKey === "chest" ? (
+                      <>
+                        <Check className="h-3 w-3" /> Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3" /> Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="mt-1 text-lg font-mono font-bold text-emerald-300">{viewStudent.chest_no}</p>
+              </div>
+
+              {/* Total Points Card */}
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3.5 transition hover:border-amber-500/30">
+                <span className="text-xs font-medium text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+                  <Trophy className="h-3.5 w-3.5 text-amber-400" />
+                  Total Points
+                </span>
+                <p className="mt-1 text-lg font-bold text-amber-300">
+                  {viewStudent.total_points ?? 0} <span className="text-xs font-normal text-amber-400/70">pts</span>
+                </p>
+              </div>
+
+              {/* Team Name Card */}
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3.5 transition hover:border-cyan-500/30 sm:col-span-2">
+                <span className="text-xs font-medium text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+                  <Shield className="h-3.5 w-3.5 text-cyan-400" />
+                  Assigned Team
+                </span>
+                <p className="mt-1 text-sm font-semibold text-white">
+                  {teamMap.get(viewStudent.team_id) ?? "Unknown Team"}
+                </p>
+              </div>
+            </div>
+
+            {/* Registered Programs Section */}
+            {(() => {
+              const regSet = studentRegistrationsMap.get(viewStudent.id);
+              if (!regSet || regSet.size === 0) return null;
+              const registeredPrograms = Array.from(regSet).map((pid) => programMap.get(pid)).filter(Boolean);
+              if (registeredPrograms.length === 0) return null;
+
+              return (
+                <div className="space-y-2 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
+                  <div className="flex items-center justify-between text-xs font-medium text-white/60">
+                    <span className="uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-fuchsia-400" />
+                      Registered Events ({registeredPrograms.length})
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {registeredPrograms.map((progName, idx) => (
+                      <span
+                        key={idx}
+                        className="rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/10 px-2.5 py-1 text-xs font-medium text-fuchsia-200"
+                      >
+                        {progName}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Unique Student ID Footer Strip */}
+            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 px-3.5 py-2 text-xs text-white/50 font-mono">
+              <span className="truncate max-w-[240px] sm:max-w-none">ID: {viewStudent.id}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(viewStudent.id);
+                  setCopiedKey("id");
+                  setTimeout(() => setCopiedKey(null), 2000);
+                }}
+                className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold text-white/70 hover:text-white transition shrink-0"
+              >
+                {copiedKey === "id" ? (
+                  <>
+                    <Check className="h-3 w-3 text-emerald-400" /> Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3 w-3" /> Copy ID
+                  </>
+                )}
+              </button>
             </div>
           </div>
         )}
