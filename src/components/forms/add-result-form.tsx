@@ -215,6 +215,16 @@ export function AddResultForm({
     setDuplicateError("");
   }, [programId, initial]);
 
+  const registrationMap = useMemo(() => {
+    const map = new Map<string, ProgramRegistration[]>();
+    (registrations ?? []).forEach((registration) => {
+      const list = map.get(registration.programId) ?? [];
+      list.push(registration);
+      map.set(registration.programId, list);
+    });
+    return map;
+  }, [registrations]);
+
   const programOptions = useMemo(
     () =>
       programs.map((program) => {
@@ -250,16 +260,6 @@ export function AddResultForm({
       })),
     [teams],
   );
-
-  const registrationMap = useMemo(() => {
-    const map = new Map<string, ProgramRegistration[]>();
-    (registrations ?? []).forEach((registration) => {
-      const list = map.get(registration.programId) ?? [];
-      list.push(registration);
-      map.set(registration.programId, list);
-    });
-    return map;
-  }, [registrations]);
 
   const isSingle = selectedProgram?.section === "single";
   const isJuryMode = mode === "jury";
