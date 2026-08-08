@@ -49,6 +49,13 @@ const stageOptions = [
   { label: "Off Stage", value: "false" },
 ];
 
+const genderOptions = [
+  { label: "All Genders", value: "" },
+  { label: "Common", value: "common" },
+  { label: "Boys Only", value: "boys" },
+  { label: "Girls Only", value: "girls" },
+];
+
 const pageSizeOptions = [
   { label: "6 / page", value: "6" },
   { label: "10 / page", value: "10" },
@@ -168,6 +175,16 @@ function ProgramEditForm({
         ]}
         placeholder="Select stage"
       />
+      <SearchSelect
+        name="gender"
+        defaultValue={program.gender || "common"}
+        options={[
+          { value: "common", label: "Common (Boys & Girls)" },
+          { value: "boys", label: "Boys Only" },
+          { value: "girls", label: "Girls Only" },
+        ]}
+        placeholder="Select gender"
+      />
       <Input
         name="candidateLimit"
         type="number"
@@ -205,6 +222,7 @@ export const ProgramManager = React.memo(function ProgramManager({
   const [sectionFilter, setSectionFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [stageFilter, setStageFilter] = useState("");
+  const [genderFilter, setGenderFilter] = useState("");
   const [sort, setSort] = useState<SortOption>("latest");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -221,7 +239,7 @@ export const ProgramManager = React.memo(function ProgramManager({
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearchQuery, sectionFilter, categoryFilter, stageFilter, sort]);
+  }, [debouncedSearchQuery, sectionFilter, categoryFilter, stageFilter, genderFilter, sort]);
 
   useEffect(() => {
     setSelectedJuryId(juryOptions[0]?.value ?? "");
@@ -240,9 +258,10 @@ export const ProgramManager = React.memo(function ProgramManager({
       const matchesSection = sectionFilter ? program.section === sectionFilter : true;
       const matchesCategory = categoryFilter ? program.category === categoryFilter : true;
       const matchesStage = stageFilter ? String(program.stage) === stageFilter : true;
-      return matchesSearch && matchesSection && matchesCategory && matchesStage;
+      const matchesGender = genderFilter ? (program.gender || "common") === genderFilter : true;
+      return matchesSearch && matchesSection && matchesCategory && matchesStage && matchesGender;
     });
-  }, [programs, debouncedSearchQuery, sectionFilter, categoryFilter, stageFilter]);
+  }, [programs, debouncedSearchQuery, sectionFilter, categoryFilter, stageFilter, genderFilter]);
 
   const sortedPrograms = useMemo(() => {
     const list = [...filteredPrograms];
@@ -399,6 +418,13 @@ export const ProgramManager = React.memo(function ProgramManager({
           onValueChange={setStageFilter}
           placeholder="Filter by stage"
         />
+        <SearchSelect
+          name="gender_filter"
+          options={genderOptions}
+          value={genderFilter}
+          onValueChange={setGenderFilter}
+          placeholder="Filter by gender"
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -486,6 +512,17 @@ export const ProgramManager = React.memo(function ProgramManager({
                   </span>
                   <span className="rounded-full border border-white/15 px-3 py-1">
                     {program.stage ? "On stage" : "Off stage"}
+                  </span>
+                  <span
+                    className={`rounded-full border px-3 py-1 font-semibold ${
+                      (program.gender || "common") === "boys"
+                        ? "border-cyan-400/40 text-cyan-300"
+                        : (program.gender || "common") === "girls"
+                        ? "border-pink-400/40 text-pink-300"
+                        : "border-amber-400/40 text-amber-300"
+                    }`}
+                  >
+                    {(program.gender || "common") === "boys" ? "Boys" : (program.gender || "common") === "girls" ? "Girls" : "Common"}
                   </span>
                   <span
                     className={`rounded-full border px-3 py-1 ${registrationCount >= candidateLimit
@@ -605,6 +642,10 @@ export const ProgramManager = React.memo(function ProgramManager({
             <p>
               <span className="text-white/50">Stage:</span>{" "}
               {viewProgram.stage ? "On stage" : "Off stage"}
+            </p>
+            <p>
+              <span className="text-white/50">Gender:</span>{" "}
+              {(viewProgram.gender || "common").toUpperCase()}
             </p>
             <p>
               <span className="text-white/50">Candidate limit:</span>{" "}

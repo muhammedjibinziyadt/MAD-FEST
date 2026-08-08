@@ -39,6 +39,8 @@ export interface ChestCounter {
 
 
 
+export type ProgramGenderType = "boys" | "girls" | "common";
+
 export interface Program {
   id: string;
   name: string;
@@ -46,6 +48,7 @@ export interface Program {
   stage: boolean;
   category: CategoryType;
   candidateLimit?: number;
+  gender?: ProgramGenderType;
 }
 
 export interface Jury {

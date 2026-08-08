@@ -21,6 +21,7 @@ import {
   getPortalStudents, 
   getProgramRegistrations,
   getProgramsWithLimits,
+  isProgramAllowedForTeam,
   isRegistrationOpen
 } from "@/lib/team-data";
 import { getApprovedResults } from "@/lib/data";

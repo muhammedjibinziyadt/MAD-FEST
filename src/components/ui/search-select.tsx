@@ -38,6 +38,7 @@ export function SearchSelect({
   emptyMessage = "No matches found",
 }: SearchSelectProps) {
   const isControlled = value !== undefined;
+  const [mounted, setMounted] = useState(false);
   const [internalValue, setInternalValue] = useState(
     value ?? defaultValue ?? options[0]?.value ?? "",
   );
@@ -45,6 +46,10 @@ export function SearchSelect({
   const [query, setQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const selectedValue = isControlled ? value ?? "" : internalValue;
 
@@ -255,7 +260,7 @@ export function SearchSelect({
           </svg>
         </button>
       </div>
-      {typeof document !== "undefined" && createPortal(popupContent, document.body)}
+      {mounted && popupContent && createPortal(popupContent, document.body)}
     </>
   );
 }

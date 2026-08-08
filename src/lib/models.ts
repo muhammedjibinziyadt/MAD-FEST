@@ -69,6 +69,7 @@ const ProgramSchema = new Schema<Program>(
     stage: { type: Boolean, default: true },
     category: { type: String, enum: ["KIDDIES", "SUB-JUNIOR", "JUNIOR", "SENIOR", "SUPER-SENIOR", "GENERAL", "none"], default: "none" },
     candidateLimit: { type: Number, default: 1 },
+    gender: { type: String, enum: ["boys", "girls", "common"], default: "common" },
   },
   { timestamps: true },
 );

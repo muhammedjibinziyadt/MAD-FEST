@@ -202,12 +202,17 @@ function ProgramRegistrationCard({
         <div>
           <CardTitle>{program.name}</CardTitle>
           <CardDescription className="mt-1 text-white/70">
-            Section: {program.section} · Category: {program.category}
+            Section: {program.section} · Category: {program.category} · Gender: {(program.gender || "common").toUpperCase()}
           </CardDescription>
         </div>
-        <Badge tone={limitReached ? "pink" : "emerald"}>
-          Registered {registrations.length} / {program.candidateLimit}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge tone={(program.gender || "common") === "boys" ? "cyan" : (program.gender || "common") === "girls" ? "pink" : "amber"}>
+            {(program.gender || "common") === "boys" ? "Boys Only" : (program.gender || "common") === "girls" ? "Girls Only" : "Common"}
+          </Badge>
+          <Badge tone={limitReached ? "pink" : "emerald"}>
+            Registered {registrations.length} / {program.candidateLimit}
+          </Badge>
+        </div>
       </div>
 
       <div className="mt-4 space-y-2">

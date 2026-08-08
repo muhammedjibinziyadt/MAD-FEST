@@ -32,6 +32,7 @@ const programSchema = z.object({
     .min(1, "candidateLimit must be at least 1")
     .max(500, "candidateLimit must be at most 500")
     .default(1),
+  gender: z.enum(["boys", "girls", "common"]).default("common"),
 });
 
 const csvRowSchema = z.object({
@@ -50,6 +51,7 @@ const csvRowSchema = z.object({
     .coerce.number()
     .min(1, "candidate_limit must be at least 1")
     .max(500, "candidate_limit must be at most 500"),
+  gender: z.enum(["boys", "girls", "common"]).default("common"),
 });
 
 async function mutateProgram(
@@ -63,6 +65,7 @@ async function mutateProgram(
   const stageValue = formData.get("stage");
   const categoryValue = formData.get("category");
   const candidateLimitValue = formData.get("candidateLimit") ?? formData.get("candidate_limit");
+  const genderValue = formData.get("gender");
 
   const section = sectionValue ? String(sectionValue) : "single";
   const category = section === "general" ? "GENERAL" : (categoryValue ? String(categoryValue) : "KIDDIES");
@@ -74,6 +77,7 @@ async function mutateProgram(
     stage: stageValue ? String(stageValue) : "true",
     category,
     candidateLimit: candidateLimitValue ? String(candidateLimitValue) : "1",
+    gender: genderValue ? String(genderValue) : "common",
   });
 
   if (!parsed.success) {
@@ -91,6 +95,7 @@ async function mutateProgram(
       stage,
       category: payload.category,
       candidateLimit,
+      gender: payload.gender,
     });
   } else {
     if (!payload.id) throw new Error("Program ID required");
@@ -100,6 +105,7 @@ async function mutateProgram(
       stage,
       category: payload.category,
       candidateLimit,
+      gender: payload.gender,
     });
   }
 
@@ -365,7 +371,7 @@ export default async function ProgramsPage() {
       <Card className="h-full">
         <CardTitle>Bulk Import (CSV)</CardTitle>
         <CardDescription className="mt-2">
-          Required columns: <code>name, section, stage, category, candidate_limit</code>
+          Required columns: <code>name, section, stage, category, candidate_limit</code> (optional: <code>gender</code>)
         </CardDescription>
         <form
           action={importProgramsAction}

@@ -7,6 +7,7 @@ import {
   getPortalStudents,
   getProgramRegistrations,
   getProgramsWithLimits,
+  isProgramAllowedForTeam,
   isRegistrationOpen,
   registerCandidate,
   removeProgramRegistration,
@@ -39,6 +40,10 @@ async function registerProgramAction(formData: FormData) {
   const program = programs.find((item) => item.id === programId);
   if (!program) {
     redirectWithMessage("Program not found.");
+    return;
+  }
+  if (!isProgramAllowedForTeam(program, team.gender)) {
+    redirectWithMessage(`Program "${program.name}" is not eligible for your team's gender.`);
     return;
   }
   const candidateLimit = program.candidateLimit ?? 1;
@@ -126,6 +131,10 @@ async function registerMultipleStudentsAction(formData: FormData) {
   const program = programs.find((item) => item.id === programId);
   if (!program) {
     redirectWithMessage("Program not found.");
+    return;
+  }
+  if (!isProgramAllowedForTeam(program, team.gender)) {
+    redirectWithMessage(`Program "${program.name}" is not eligible for your team's gender.`);
     return;
   }
   const candidateLimit = program.candidateLimit ?? 1;
@@ -260,8 +269,14 @@ export default async function ProgramRegisterPage({
   const error = typeof params?.error === "string" ? params.error : undefined;
   const success = typeof params?.success === "string" ? params.success : undefined;
 
-  // SERIALIZATION FIX: Ensure 'programs' is a plain object without Mongoose buffers
-  const plainPrograms = JSON.parse(JSON.stringify(programs.map(p => ({ ...p, candidateLimit: p.candidateLimit ?? 1 }))));
+  // SERIALIZATION FIX: Ensure 'programs' is a plain object without Mongoose buffers & filter by team gender
+  const teamAllowedPrograms = programs.filter((p) => isProgramAllowedForTeam(p, team.gender));
+  const plainPrograms = JSON.parse(
+    JSON.stringify(teamAllowedPrograms.map((p) => ({ ...p, candidateLimit: p.candidateLimit ?? 1 }))),
+  );
+  const plainAllPrograms = JSON.parse(
+    JSON.stringify(programs.map((p) => ({ ...p, candidateLimit: p.candidateLimit ?? 1 }))),
+  );
 
   return (
     <div className="space-y-6 text-white">
@@ -286,7 +301,7 @@ export default async function ProgramRegisterPage({
 
       <TeamProgramRegister
         programs={plainPrograms}
-        allPrograms={plainPrograms}
+        allPrograms={plainAllPrograms}
         teamRegistrations={teamRegistrations}
         teamStudents={teamStudents}
         isOpen={open}

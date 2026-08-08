@@ -81,6 +81,16 @@ export function CreateProgramForm({ action }: CreateProgramFormProps) {
         ]}
         placeholder="Select stage"
       />
+      <SearchSelect
+        name="gender"
+        defaultValue="common"
+        options={[
+          { value: "common", label: "Common (Boys & Girls)" },
+          { value: "boys", label: "Boys Only" },
+          { value: "girls", label: "Girls Only" },
+        ]}
+        placeholder="Select gender"
+      />
       <Input
         name="candidateLimit"
         type="number"

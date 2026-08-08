@@ -26,6 +26,23 @@ function sanitizeColor(color?: string) {
   return /^#([0-9A-F]{3}){1,2}$/i.test(color) ? color : "#0ea5e9";
 }
 
+export function isProgramAllowedForTeam(
+  program: { gender?: "boys" | "girls" | "common" },
+  teamGender?: "boys" | "girls" | "mixed" | string,
+): boolean {
+  const progGender = program.gender || "common";
+  if (!teamGender || teamGender === "mixed") {
+    return true;
+  }
+  if (teamGender === "boys") {
+    return progGender === "boys" || progGender === "common";
+  }
+  if (teamGender === "girls") {
+    return progGender === "girls" || progGender === "common";
+  }
+  return true;
+}
+
 export async function getPortalTeams(): Promise<PortalTeam[]> {
   const teams = await getTeams();
   return teams.map((team) => ({
