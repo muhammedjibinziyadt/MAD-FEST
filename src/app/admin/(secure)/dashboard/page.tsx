@@ -32,6 +32,7 @@ async function getDashboardData() {
       { label: "Approved Results", value: approved.length },
     ],
     teams: teams,
+    students,
     pending,
     approved,
     liveScores,
@@ -41,9 +42,17 @@ async function getDashboardData() {
 export default async function AdminDashboardPage() {
   const data = await getDashboardData();
   const liveScoreMap = new Map(data.liveScores.map((item) => [item.team_id, item.total_points]));
+  const studentCountMap = new Map<string, number>();
+  data.students.forEach((s) => {
+    if (s.team_id) {
+      studentCountMap.set(s.team_id, (studentCountMap.get(s.team_id) || 0) + 1);
+    }
+  });
+
   const enrichedTeams = data.teams.map((team) => ({
     ...team,
     livePoints: liveScoreMap.get(team.id) ?? team.total_points,
+    memberCount: studentCountMap.get(team.id) ?? 0,
   }));
   const sortedTeams = [...enrichedTeams].sort((a, b) => b.livePoints - a.livePoints);
   const topTeam = sortedTeams[0];
@@ -180,7 +189,7 @@ export default async function AdminDashboardPage() {
       <section className="grid gap-6 md:grid-cols-2">
         <Card className="bg-white/5 border-white/10 rounded-3xl">
           <CardTitle>Team Highlights</CardTitle>
-          <CardDescription className="mt-2 text-white/70">Quick roster overview</CardDescription>
+          <CardDescription className="mt-2 text-white/70">Quick roster overview & team member counts</CardDescription>
           <div className="mt-6 space-y-4">
             {sortedTeams.slice(0, 6).map((team) => (
               <div
@@ -189,9 +198,13 @@ export default async function AdminDashboardPage() {
               >
                 <div>
                   <p className="text-lg font-semibold text-white">{team.name}</p>
-                  <p className="text-xs text-white/60">Leader · {team.leader}</p>
+                  <p className="text-xs text-white/60">
+                    Leader · {team.leader} • <span className="text-cyan-300 font-semibold">{team.memberCount} Members</span>
+                  </p>
                 </div>
-                <p className="text-2xl font-bold text-amber-200">{formatNumber(team.livePoints)}</p>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-amber-200">{formatNumber(team.livePoints)} pts</p>
+                </div>
               </div>
             ))}
           </div>
