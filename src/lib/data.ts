@@ -128,9 +128,7 @@ export async function getStudents(): Promise<Student[]> {
   if (cached) return cached;
 
   await ensureSeedData();
-  const { migrateChestNumbers } = await import("./chest-db");
   const { sortStudentsByChestNumber } = await import("./chest-utils");
-  await migrateChestNumbers();
   const students = await StudentModel.find().lean<Student[]>();
   const normalizedStudents = normalize(students);
   return setCached("students", sortStudentsByChestNumber(normalizedStudents));

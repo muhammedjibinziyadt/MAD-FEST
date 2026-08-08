@@ -234,16 +234,16 @@ export async function getProgramRegistrations(): Promise<ProgramRegistration[]> 
 
   await connectDB();
   const registrations = await ProgramRegistrationModel.find().lean();
-  const mapped = registrations.map((registration) => ({
-    id: registration.id,
-    programId: registration.programId,
-    programName: registration.programName,
-    studentId: registration.studentId,
-    studentName: registration.studentName,
-    studentChest: registration.studentChest,
-    teamId: registration.teamId,
-    teamName: registration.teamName,
-    timestamp: registration.timestamp,
+  const mapped: ProgramRegistration[] = registrations.map((registration: any) => ({
+    id: String(registration.id ?? registration._id ?? ""),
+    programId: String(registration.programId ?? registration.program_id ?? ""),
+    programName: String(registration.programName ?? registration.program_name ?? ""),
+    studentId: String(registration.studentId ?? registration.student_id ?? ""),
+    studentName: String(registration.studentName ?? registration.student_name ?? ""),
+    studentChest: String(registration.studentChest ?? registration.chest_no ?? ""),
+    teamId: String(registration.teamId ?? registration.team_id ?? ""),
+    teamName: String(registration.teamName ?? registration.team_name ?? ""),
+    timestamp: String(registration.timestamp ?? registration.createdAt ?? ""),
   }));
   return setCached("registrations", mapped);
 }

@@ -218,27 +218,40 @@ export function AddResultForm({
   const registrationMap = useMemo(() => {
     const map = new Map<string, ProgramRegistration[]>();
     (registrations ?? []).forEach((registration) => {
-      const list = map.get(registration.programId) ?? [];
+      const pId = String(registration.programId);
+      const list = map.get(pId) ?? [];
       list.push(registration);
-      map.set(registration.programId, list);
+      map.set(pId, list);
     });
     return map;
   }, [registrations]);
 
+  const uniquePrograms = useMemo(() => {
+    const map = new Map<string, Program>();
+    for (const prog of availablePrograms) {
+      const key = `${prog.name.trim().toLowerCase()}_${prog.category}_${prog.section}_${prog.stage}`;
+      if (!map.has(key)) {
+        map.set(key, prog);
+      }
+    }
+    return Array.from(map.values());
+  }, [availablePrograms]);
+
   const programOptions = useMemo(
     () =>
-      programs.map((program) => {
-        const count = registrationMap.get(program.id)?.length ?? 0;
-        const regText = count > 0 ? ` · ${count} candidate${count > 1 ? "s" : ""} registered` : " · 0 registered";
+      uniquePrograms.map((program) => {
+        const pId = String(program.id);
+        const count = registrationMap.get(pId)?.length ?? 0;
+        const regText = count > 0 ? ` · ⭐ ${count} candidate${count > 1 ? "s" : ""} registered` : " · 0 registered";
         return {
-          value: program.id,
-          label: `${program.name}${count > 0 ? " ⭐" : ""}`,
+          value: pId,
+          label: program.name,
           meta: `${program.section} · Cat ${program.category}${
             program.stage ? " · On stage" : " · Off stage"
           }${regText}`,
         };
       }),
-    [programs, registrationMap],
+    [uniquePrograms, registrationMap],
   );
 
   const studentOptions = useMemo(

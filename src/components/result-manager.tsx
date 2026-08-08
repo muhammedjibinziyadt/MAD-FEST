@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { Program, ResultRecord, Jury, Student, Team, ProgramRegistration } from "@/lib/types";
 import { ReportPrintModal } from "@/components/ui/report-print-modal";
+import { groupResultsByProgram } from "@/lib/utils";
 
 interface ResultManagerProps {
   results: ResultRecord[];
@@ -123,7 +124,8 @@ export const ResultManager = React.memo(function ResultManager({
   }, [results, debouncedSearchQuery, programFilter, juryFilter, programMap, juryMap]);
 
   const sortedResults = useMemo(() => {
-    const list = [...filteredResults];
+    const grouped = groupResultsByProgram(filteredResults);
+    const list = [...grouped];
     if (sort === "program") {
       list.sort((a, b) => {
         const aName = programMap.get(a.program_id)?.name ?? "";
@@ -211,14 +213,18 @@ export const ResultManager = React.memo(function ResultManager({
       { header: "no", render: (_: any, idx: number) => idx + 1, align: "center" as const, width: "60px" },
       { header: "Program Name", render: (r: ResultRecord) => programMap.get(r.program_id)?.name || "Unknown", align: "left" as const },
       { header: "Category", render: (r: ResultRecord) => programMap.get(r.program_id)?.category || "GENERAL", align: "center" as const, width: "120px" },
-      { header: "1st Place Winner", render: (r: ResultRecord) => {
-        const e1 = r.entries.find((e) => e.position === 1);
-        return e1 ? getWinnerName(e1) : "-";
-      }, align: "left" as const },
-      { header: "1st Team", render: (r: ResultRecord) => {
-        const e1 = r.entries.find((e) => e.position === 1);
-        return e1 ? getWinnerTeam(e1) : "-";
-      }, align: "left" as const },
+      {
+        header: "1st Place Winner", render: (r: ResultRecord) => {
+          const e1 = r.entries.find((e) => e.position === 1);
+          return e1 ? getWinnerName(e1) : "-";
+        }, align: "left" as const
+      },
+      {
+        header: "1st Team", render: (r: ResultRecord) => {
+          const e1 = r.entries.find((e) => e.position === 1);
+          return e1 ? getWinnerTeam(e1) : "-";
+        }, align: "left" as const
+      },
       { header: "Status", render: (r: ResultRecord) => r.status.toUpperCase(), align: "center" as const, width: "110px" },
     ],
     data: sortedResults,
@@ -475,10 +481,10 @@ export const ResultManager = React.memo(function ResultManager({
                     {/* Gender, Category, and Section Badges */}
                     <div className="flex flex-wrap items-center gap-2 mb-3">
                       <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${gender === "BOYS"
-                          ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
-                          : gender === "GIRLS"
-                            ? "bg-pink-500/20 text-pink-300 border-pink-500/40"
-                            : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                        : gender === "GIRLS"
+                          ? "bg-pink-500/20 text-pink-300 border-pink-500/40"
+                          : "bg-amber-500/20 text-amber-300 border-amber-500/40"
                         }`}>
                         {gender === "BOYS" ? "👦 BOYS" : gender === "GIRLS" ? "👧 GIRLS" : "👥 MIXED"}
                       </span>
@@ -648,10 +654,10 @@ export const ResultManager = React.memo(function ResultManager({
                       return (
                         <>
                           <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border ${gender === "BOYS"
-                              ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
-                              : gender === "GIRLS"
-                                ? "bg-pink-500/20 text-pink-300 border-pink-500/40"
-                                : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                            ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                            : gender === "GIRLS"
+                              ? "bg-pink-500/20 text-pink-300 border-pink-500/40"
+                              : "bg-amber-500/20 text-amber-300 border-amber-500/40"
                             }`}>
                             {gender === "BOYS" ? "👦 BOYS" : gender === "GIRLS" ? "👧 GIRLS" : "👥 MIXED"}
                           </span>

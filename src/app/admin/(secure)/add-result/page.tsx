@@ -10,6 +10,7 @@ import { ensureRegisteredCandidates } from "@/lib/registration-guard";
 import { submitResultToPending } from "@/lib/result-service";
 import { redirectWithToast } from "@/lib/actions";
 import { revalidatePath } from "next/cache";
+import type { Program } from "@/lib/types";
 
 type PenaltyFormPayload = {
   id: string;
@@ -155,15 +156,26 @@ export default async function AddResultPage() {
   // Map candidate registration counts per program
   const regCountMap = new Map<string, number>();
   registrations.forEach((reg) => {
-    regCountMap.set(reg.programId, (regCountMap.get(reg.programId) ?? 0) + 1);
+    const pId = String(reg.programId);
+    regCountMap.set(pId, (regCountMap.get(pId) ?? 0) + 1);
   });
 
   const unsubmittedPrograms = programs.filter((program) => !submittedProgramIds.has(program.id));
 
+  // Deduplicate unsubmitted programs so each unique program appears once
+  const uniqueProgramMap = new Map<string, Program>();
+  unsubmittedPrograms.forEach((prog) => {
+    const key = `${prog.name.trim().toLowerCase()}_${prog.category}_${prog.section}_${prog.stage}`;
+    if (!uniqueProgramMap.has(key)) {
+      uniqueProgramMap.set(key, prog);
+    }
+  });
+  const deduplicatedPrograms = Array.from(uniqueProgramMap.values());
+
   // Sort programs: programs with registered candidates come first (highest candidate count first)
-  const availablePrograms = [...unsubmittedPrograms].sort((a, b) => {
-    const countA = regCountMap.get(a.id) ?? 0;
-    const countB = regCountMap.get(b.id) ?? 0;
+  const availablePrograms = [...deduplicatedPrograms].sort((a, b) => {
+    const countA = regCountMap.get(String(a.id)) ?? 0;
+    const countB = regCountMap.get(String(b.id)) ?? 0;
     if (countA !== countB) {
       return countB - countA;
     }

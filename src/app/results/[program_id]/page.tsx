@@ -22,15 +22,15 @@ interface ProgramDetailPageProps {
 const getProgramDetail = cache(async (programId: string) => {
   await connectDB();
 
-  // 1. Fetch program and its approved result in parallel
-  const [program, result] = await Promise.all([
+  // 1. Fetch program and all its approved results in parallel
+  const [program, rawResults] = await Promise.all([
     ProgramModel.findOne({ id: programId }).lean(),
-    ApprovedResultModel.findOne({ program_id: programId }).lean(),
+    ApprovedResultModel.find({ program_id: programId }).lean(),
   ]);
 
-  if (!program || !result) {
+  if (!program || !rawResults || rawResults.length === 0) {
     return {
-      program: program || null,
+      program: program ? JSON.parse(JSON.stringify(program)) : null,
       result: null,
       programMap: new Map(),
       studentMap: new Map(),
@@ -39,36 +39,67 @@ const getProgramDetail = cache(async (programId: string) => {
     };
   }
 
-  // 2. Extract specific student IDs and team IDs from result entries/penalties
+  // 2. Extract specific student IDs and team IDs from all result entries/penalties
+  const mergedEntries: any[] = [];
+  const mergedPenalties: any[] = [];
+  const entryKeys = new Set<string>();
+  const penaltyKeys = new Set<string>();
   const studentIds = new Set<string>();
   const teamIds = new Set<string>();
 
-  result.entries.forEach((entry) => {
-    if (entry.student_id) studentIds.add(entry.student_id);
-    if (entry.team_id) teamIds.add(entry.team_id);
+  rawResults.forEach((res) => {
+    (res.entries || []).forEach((entry) => {
+      const key = `${entry.position}-${entry.student_id || entry.team_id || ""}`;
+      if (!entryKeys.has(key)) {
+        entryKeys.add(key);
+        mergedEntries.push(entry);
+        if (entry.student_id) studentIds.add(entry.student_id);
+        if (entry.team_id) teamIds.add(entry.team_id);
+      }
+    });
+
+    (res.penalties || []).forEach((penalty) => {
+      const key = `${penalty.student_id || penalty.team_id || ""}-${penalty.points}`;
+      if (!penaltyKeys.has(key)) {
+        penaltyKeys.add(key);
+        mergedPenalties.push(penalty);
+        if (penalty.student_id) studentIds.add(penalty.student_id);
+        if (penalty.team_id) teamIds.add(penalty.team_id);
+      }
+    });
   });
 
-  result.penalties?.forEach((penalty) => {
-    if (penalty.student_id) studentIds.add(penalty.student_id);
-    if (penalty.team_id) teamIds.add(penalty.team_id);
-  });
+  mergedEntries.sort((a, b) => a.position - b.position);
+  const primaryResult = rawResults[0];
+  const combinedResult = {
+    ...primaryResult,
+    entries: mergedEntries,
+    penalties: mergedPenalties,
+  };
 
   // 3. Fetch ONLY the required students, teams, and juries in parallel
   const [students, teams, jury] = await Promise.all([
     studentIds.size > 0 ? StudentModel.find({ id: { $in: Array.from(studentIds) } }).lean() : [],
     teamIds.size > 0 ? TeamModel.find({ id: { $in: Array.from(teamIds) } }).lean() : [],
-    result.jury_id ? JuryModel.findOne({ id: result.jury_id }).lean() : null,
+    primaryResult.jury_id ? JuryModel.findOne({ id: primaryResult.jury_id }).lean() : null,
   ]);
 
-  // 4. Construct maps
-  const programMap = new Map([[program.id, program]]);
-  const studentMap = new Map(students.map((s) => [s.id, s]));
-  const teamMap = new Map(teams.map((t) => [t.id, t]));
-  const juryMap = jury ? new Map([[jury.id, jury]]) : new Map();
+  // 4. Normalize objects to plain JSON structures for Server Component safety
+  const cleanProgram = program ? JSON.parse(JSON.stringify(program)) : null;
+  const cleanResult = combinedResult ? JSON.parse(JSON.stringify(combinedResult)) : null;
+  const cleanStudents = JSON.parse(JSON.stringify(students));
+  const cleanTeams = JSON.parse(JSON.stringify(teams));
+  const cleanJury = jury ? JSON.parse(JSON.stringify(jury)) : null;
+
+  // 5. Construct maps
+  const programMap = new Map(cleanProgram ? [[cleanProgram.id, cleanProgram]] : []);
+  const studentMap = new Map(cleanStudents.map((s: any) => [s.id, s]));
+  const teamMap = new Map(cleanTeams.map((t: any) => [t.id, t]));
+  const juryMap = cleanJury ? new Map([[cleanJury.id, cleanJury]]) : new Map();
 
   return {
-    program,
-    result,
+    program: cleanProgram,
+    result: cleanResult,
     programMap,
     studentMap,
     teamMap,
@@ -177,8 +208,8 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
           {/* Mobile: Horizontal Scroll, Desktop: Grid */}
           <div className="flex overflow-x-auto pb-6 gap-3 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-3 sm:gap-4 snap-x snap-mandatory scrollbar-hide">
             {data.result.entries
-              .sort((a, b) => a.position - b.position)
-              .map((entry, index) => {
+              .sort((a: any, b: any) => a.position - b.position)
+              .map((entry: any, index: number) => {
                 const student = entry.student_id ? data.studentMap.get(entry.student_id) : undefined;
                 const team = entry.team_id ? data.teamMap.get(entry.team_id) : (student ? data.teamMap.get(student.team_id) : undefined);
 
@@ -250,7 +281,7 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                 Penalties Applied
               </h4>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {data.result.penalties?.map((penalty, index) => {
+                {data.result.penalties?.map((penalty: any, index: number) => {
                   const student = penalty.student_id ? data.studentMap.get(penalty.student_id) : undefined;
                   const team = penalty.team_id && (!student || student.team_id === penalty.team_id) ? data.teamMap.get(penalty.team_id) : (student ? data.teamMap.get(student.team_id) : data.teamMap.get(penalty.team_id ?? ""));
                   return (

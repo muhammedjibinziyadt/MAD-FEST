@@ -54,7 +54,7 @@ export function SearchSelect({
   const selectedValue = isControlled ? value ?? "" : internalValue;
 
   const selectedOption = useMemo(
-    () => options.find((option) => option.value === selectedValue),
+    () => options.find((option) => String(option.value) === String(selectedValue)),
     [options, selectedValue],
   );
 
@@ -229,6 +229,7 @@ export function SearchSelect({
       />
       <button
         type="button"
+        suppressHydrationWarning
         className={cn(
           "flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-left text-sm text-white transition hover:border-fuchsia-400 focus:border-fuchsia-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40",
           disabled && "cursor-not-allowed opacity-60",
@@ -237,7 +238,7 @@ export function SearchSelect({
         onClick={() => !disabled && setOpen((prev) => !prev)}
         disabled={disabled}
       >
-        <span className={cn(!selectedOption && "text-white/50")}>
+        <span className={cn(!selectedOption && "text-white/50")} suppressHydrationWarning>
           {displayLabel}
         </span>
         <svg
