@@ -217,14 +217,18 @@ export function AddResultForm({
 
   const programOptions = useMemo(
     () =>
-      availablePrograms.map((program) => ({
-        value: program.id,
-        label: program.name,
-        meta: `${program.section} · Cat ${program.category}${
-          program.stage ? " · On stage" : " · Off stage"
-        }`,
-      })),
-    [availablePrograms],
+      programs.map((program) => {
+        const count = registrationMap.get(program.id)?.length ?? 0;
+        const regText = count > 0 ? ` · ${count} candidate${count > 1 ? "s" : ""} registered` : " · 0 registered";
+        return {
+          value: program.id,
+          label: `${program.name}${count > 0 ? " ⭐" : ""}`,
+          meta: `${program.section} · Cat ${program.category}${
+            program.stage ? " · On stage" : " · Off stage"
+          }${regText}`,
+        };
+      }),
+    [programs, registrationMap],
   );
 
   const studentOptions = useMemo(

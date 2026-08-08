@@ -1,7 +1,10 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { redirect } from "next/navigation";
 import { AddResultForm } from "@/components/forms/add-result-form";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
-import { getApprovedResults, getJuries, getPrograms, getStudents, getTeams, getOrCreateAdminJury } from "@/lib/data";
+import { getApprovedResults, getPendingResults, getJuries, getPrograms, getStudents, getTeams, getOrCreateAdminJury } from "@/lib/data";
 import { getProgramRegistrations } from "@/lib/team-data";
 import { ensureRegisteredCandidates } from "@/lib/registration-guard";
 import { submitResultToPending } from "@/lib/result-service";
@@ -108,6 +111,7 @@ async function submitResultAction(formData: FormData) {
         penalties,
       });
       revalidatePath("/admin/pending-results");
+      revalidatePath("/admin/add-result");
       redirectWithToast("/admin/pending-results", "Result submitted successfully! Waiting for approval.", "success");
     } catch (error: any) {
       // Handle published program error
@@ -131,22 +135,40 @@ async function submitResultAction(formData: FormData) {
 }
 
 export default async function AddResultPage() {
-  const [programs, students, teams, juries, registrations, approvedResults, adminJury] = await Promise.all([
+  const [programs, students, teams, juries, registrations, approvedResults, pendingResults, adminJury] = await Promise.all([
     getPrograms(),
     getStudents(),
     getTeams(),
     getJuries(),
     getProgramRegistrations(),
     getApprovedResults(),
+    getPendingResults(),
     getOrCreateAdminJury(),
   ]);
 
-  // Filter out programs that are already approved/published or have no registered candidates
-  const registeredProgramIds = new Set(registrations.map((registration) => registration.programId));
-  const approvedProgramIds = new Set(approvedResults.map((result) => result.program_id));
-  const availablePrograms = programs.filter(
-    (program) => !approvedProgramIds.has(program.id) && registeredProgramIds.has(program.id)
-  );
+  // Filter out programs that already have submitted results (approved or pending)
+  const submittedProgramIds = new Set([
+    ...approvedResults.map((result) => result.program_id),
+    ...pendingResults.map((result) => result.program_id),
+  ]);
+
+  // Map candidate registration counts per program
+  const regCountMap = new Map<string, number>();
+  registrations.forEach((reg) => {
+    regCountMap.set(reg.programId, (regCountMap.get(reg.programId) ?? 0) + 1);
+  });
+
+  const unsubmittedPrograms = programs.filter((program) => !submittedProgramIds.has(program.id));
+
+  // Sort programs: programs with registered candidates come first (highest candidate count first)
+  const availablePrograms = [...unsubmittedPrograms].sort((a, b) => {
+    const countA = regCountMap.get(a.id) ?? 0;
+    const countB = regCountMap.get(b.id) ?? 0;
+    if (countA !== countB) {
+      return countB - countA;
+    }
+    return a.name.localeCompare(b.name);
+  });
 
   if (availablePrograms.length === 0) {
     return (
@@ -155,7 +177,7 @@ export default async function AddResultPage() {
         <Card className="border-amber-500/40 bg-amber-500/10 p-6">
           <CardTitle>No Programs Available</CardTitle>
           <CardDescription className="mt-2">
-            No programs with registered candidates are currently available for result submission.
+            All programs have either been published or are currently pending approval.
           </CardDescription>
         </Card>
       </div>
