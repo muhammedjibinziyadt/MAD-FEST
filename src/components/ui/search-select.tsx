@@ -220,48 +220,46 @@ export function SearchSelect({
   );
 
   return (
-    <>
-      <div className={cn("relative", className)} ref={containerRef}>
-        <input
-          type="hidden"
-          name={name}
-          value={selectedValue}
-          required={required}
-        />
-        <button
-          type="button"
+    <div className={cn("relative", className)} ref={containerRef}>
+      <input
+        type="hidden"
+        name={name}
+        value={selectedValue}
+        required={required}
+      />
+      <button
+        type="button"
+        className={cn(
+          "flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-left text-sm text-white transition hover:border-fuchsia-400 focus:border-fuchsia-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40",
+          disabled && "cursor-not-allowed opacity-60",
+          open && "border-fuchsia-400 ring-2 ring-fuchsia-400/40",
+        )}
+        onClick={() => !disabled && setOpen((prev) => !prev)}
+        disabled={disabled}
+      >
+        <span className={cn(!selectedOption && "text-white/50")}>
+          {displayLabel}
+        </span>
+        <svg
           className={cn(
-            "flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-left text-sm text-white transition hover:border-fuchsia-400 focus:border-fuchsia-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40",
-            disabled && "cursor-not-allowed opacity-60",
-            open && "border-fuchsia-400 ring-2 ring-fuchsia-400/40",
+            "h-4 w-4 transition-transform",
+            open ? "rotate-180" : "rotate-0",
           )}
-          onClick={() => !disabled && setOpen((prev) => !prev)}
-          disabled={disabled}
+          viewBox="0 0 20 20"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <span className={cn(!selectedOption && "text-white/50")}>
-            {displayLabel}
-          </span>
-          <svg
-            className={cn(
-              "h-4 w-4 transition-transform",
-              open ? "rotate-180" : "rotate-0",
-            )}
-            viewBox="0 0 20 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M5 7.5L10 12.5L15 7.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      </div>
-      {mounted && popupContent && createPortal(popupContent, document.body)}
-    </>
+          <path
+            d="M5 7.5L10 12.5L15 7.5"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      {mounted && open && popupContent && createPortal(popupContent, document.body)}
+    </div>
   );
 }
 
