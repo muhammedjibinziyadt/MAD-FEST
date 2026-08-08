@@ -38,6 +38,7 @@ export function CreateProgramForm({ action }: CreateProgramFormProps) {
     <form
       action={action}
       className="mt-6 grid gap-4 md:grid-cols-2"
+      suppressHydrationWarning
     >
       <Input name="name" placeholder="Program name" required />
       <SearchSelect

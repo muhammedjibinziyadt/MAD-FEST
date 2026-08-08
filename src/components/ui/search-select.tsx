@@ -220,7 +220,7 @@ export function SearchSelect({
   );
 
   return (
-    <div className={cn("relative", className)} ref={containerRef}>
+    <div className={cn("relative", className)} ref={containerRef} suppressHydrationWarning>
       <input
         type="hidden"
         name={name}
