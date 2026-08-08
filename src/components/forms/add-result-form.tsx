@@ -138,9 +138,19 @@ export function AddResultForm({
     return [];
   });
 
+  const registeredProgramIds = useMemo(() => {
+    if (!registrations) return null;
+    return new Set(registrations.map((r) => r.programId));
+  }, [registrations]);
+
+  const availablePrograms = useMemo(() => {
+    if (lockProgram || !registeredProgramIds) return programs;
+    return programs.filter((p) => registeredProgramIds.has(p.id));
+  }, [programs, registeredProgramIds, lockProgram]);
+
   const selectedProgram = useMemo(
-    () => programs.find((program) => program.id === programId) ?? programs[0],
-    [programId, programs],
+    () => availablePrograms.find((program) => program.id === programId) ?? availablePrograms[0],
+    [programId, availablePrograms],
   );
 
   const [showReportModal, setShowReportModal] = useState(false);
@@ -207,14 +217,14 @@ export function AddResultForm({
 
   const programOptions = useMemo(
     () =>
-      programs.map((program) => ({
+      availablePrograms.map((program) => ({
         value: program.id,
         label: program.name,
         meta: `${program.section} · Cat ${program.category}${
           program.stage ? " · On stage" : " · Off stage"
         }`,
       })),
-    [programs],
+    [availablePrograms],
   );
 
   const studentOptions = useMemo(

@@ -141,9 +141,12 @@ export default async function AddResultPage() {
     getOrCreateAdminJury(),
   ]);
 
-  // Filter out programs that are already approved/published
+  // Filter out programs that are already approved/published or have no registered candidates
+  const registeredProgramIds = new Set(registrations.map((registration) => registration.programId));
   const approvedProgramIds = new Set(approvedResults.map((result) => result.program_id));
-  const availablePrograms = programs.filter((program) => !approvedProgramIds.has(program.id));
+  const availablePrograms = programs.filter(
+    (program) => !approvedProgramIds.has(program.id) && registeredProgramIds.has(program.id)
+  );
 
   if (availablePrograms.length === 0) {
     return (
@@ -152,7 +155,7 @@ export default async function AddResultPage() {
         <Card className="border-amber-500/40 bg-amber-500/10 p-6">
           <CardTitle>No Programs Available</CardTitle>
           <CardDescription className="mt-2">
-            All programs have been published. No results can be added at this time.
+            No programs with registered candidates are currently available for result submission.
           </CardDescription>
         </Card>
       </div>
