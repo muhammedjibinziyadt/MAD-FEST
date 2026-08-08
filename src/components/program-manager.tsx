@@ -386,8 +386,8 @@ export const ProgramManager = React.memo(function ProgramManager({
         </div>
       </div>
 
-      <div className="relative z-20 grid gap-3 md:grid-cols-4">
-        <div className="relative z-20 md:col-span-2 flex items-center rounded-2xl border border-white/10 bg-white/5 px-4 transition-all duration-200 hover:border-white/20 focus-within:border-fuchsia-400/50 focus-within:ring-2 focus-within:ring-fuchsia-400/30 focus-within:bg-white/10">
+      <div className="relative z-20 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="relative z-20 sm:col-span-2 lg:col-span-2 flex items-center rounded-2xl border border-white/10 bg-white/5 px-4 transition-all duration-200 hover:border-white/20 focus-within:border-fuchsia-400/50 focus-within:ring-2 focus-within:ring-fuchsia-400/30 focus-within:bg-white/10">
           <Search className="mr-2 h-4 w-4 text-white/50 flex-shrink-0" />
           <Input
             type="text"
